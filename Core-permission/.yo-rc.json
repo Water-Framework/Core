@@ -1,0 +1,10 @@
+{
+    "generator-water": {
+        "inner-project": true,
+        "project-type": "custom",
+        "projectName": "Core",
+        "projectGroupId": "it.water.core",
+        "projectVersion": "3.0.0",
+        "projectFolder": "Core-permission"
+    }
+}

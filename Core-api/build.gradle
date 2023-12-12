@@ -1,0 +1,19 @@
+dependencies {
+	//SLF4J
+	implementation group: 'org.slf4j', name: 'slf4j-api', version: project.slf4jVersion
+	implementation group: 'org.bouncycastle', name: 'bcmail-jdk15on', version: project.bouncyCastleVersion
+	//Atteo
+	implementation 'org.atteo.classindex:classindex:' + project.atteoClassIndexVersion
+	//lombok
+	implementation group: 'org.projectlombok', name: 'lombok', version: project.lombokVersion
+	annotationProcessor 'org.projectlombok:lombok:'+project.lombokVersion
+}
+
+
+publishing {
+	publications {
+		water(MavenPublication) {
+			from components.java
+		}
+	}
+}

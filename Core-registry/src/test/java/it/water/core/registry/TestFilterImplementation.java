@@ -1,0 +1,53 @@
+/*
+ Copyright 2019-2023 ACSoftware
+
+ Licensed under the Apache License, Version 2.0 (the "License")
+ you may not use this file except in compliance with the License.
+ You may obtain a copy of the License at
+
+     http://www.apache.org/licenses/LICENSE-2.0
+
+ Unless required by applicable law or agreed to in writing, software
+ distributed under the License is distributed on an "AS IS" BASIS,
+ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ See the License for the specific language governing permissions and
+ limitations under the License.
+
+ */
+package it.water.core.registry;
+
+import it.water.core.api.registry.filter.*;
+
+public class TestFilterImplementation implements FilterImplementation {
+    @Override
+    public String transform(ComponentFilter filter) {
+        return FilterImplementation.super.transform(filter);
+    }
+
+    @Override
+    public String transform(ComponentFilterAndCondition andCondition) {
+        String andConditionStr = andCondition.getFirst().getFilter() + " AND " + andCondition.getSecond().getFilter();
+        StringBuilder sb = new StringBuilder();
+        if (andCondition.isNot())
+            sb.append("NOT(").append(andConditionStr).append(")");
+        else
+            sb.append(andConditionStr);
+        return sb.toString();
+    }
+
+    @Override
+    public String transform(ComponentFilterOrCondition orCondition) {
+        String orConditionStr = orCondition.getFirst().getFilter() + " OR " + orCondition.getSecond().getFilter();
+        StringBuilder sb = new StringBuilder();
+        if (orCondition.isNot())
+            sb.append("NOT(").append(orConditionStr).append(")");
+        else
+            sb.append(orConditionStr);
+        return sb.toString();
+    }
+
+    @Override
+    public String transform(ComponentPropertyFilter propertyFilter) {
+        return propertyFilter.getName() + " = " + propertyFilter.getValue();
+    }
+}
