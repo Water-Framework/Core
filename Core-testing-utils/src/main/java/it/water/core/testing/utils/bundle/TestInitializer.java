@@ -91,7 +91,7 @@ public class TestInitializer extends RuntimeInitializer<Object, TestComponentReg
     /**
      * In test projects it is ok to scan all packages since the amount of classes to scan for each module
      * should be small. For runtime it's better to use libraries which index annotated classes such as
-     * ClassIndex which is used by default.
+     * ClassIndex used by default.
      *
      * @param annotationClass Annotation that has to be searched
      * @return
