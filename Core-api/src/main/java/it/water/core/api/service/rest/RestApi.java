@@ -15,6 +15,8 @@
  */
 package it.water.core.api.service.rest;
 
+import it.water.core.api.service.Service;
+
 /**
  * @Author Aristide Cittadino
  * Generic interface which identifies a Rest API.
@@ -22,5 +24,5 @@ package it.water.core.api.service.rest;
  * <p>
  * Your Rest Api should be annotated with @FrameworkRestApi and should extend this interface
  */
-public interface RestApi {
+public interface RestApi extends Service {
 }
