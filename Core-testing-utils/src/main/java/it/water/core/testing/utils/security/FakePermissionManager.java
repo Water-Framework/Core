@@ -26,11 +26,6 @@ import it.water.core.api.permission.PermissionManager;
  * Use it just for test purpose
  */
 public class FakePermissionManager implements PermissionManager {
-    private boolean alwaysPass;
-
-    public FakePermissionManager(boolean alwaysPass) {
-        this.alwaysPass = alwaysPass;
-    }
 
     @Override
     public boolean userHasRoles(String username, String[] rolesNames) {
@@ -68,8 +63,6 @@ public class FakePermissionManager implements PermissionManager {
     }
 
     private boolean checkByTestUsername(String username) {
-        if (alwaysPass)
-            return true;
         return username.equalsIgnoreCase("usernameOk");
     }
 }

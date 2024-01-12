@@ -22,6 +22,7 @@ import it.water.core.api.permission.PermissionManager;
 import it.water.core.api.permission.PermissionUtil;
 import it.water.core.api.permission.SecurityContext;
 import it.water.core.api.security.EncryptionUtil;
+import it.water.core.api.service.Service;
 import it.water.core.permission.action.ActionFactory;
 import it.water.core.permission.action.CrudAction;
 import it.water.core.permission.action.DefaultResourceAction;
@@ -30,13 +31,15 @@ import it.water.core.security.model.context.BasicSecurityContext;
 import it.water.core.security.model.principal.RolePrincipal;
 import it.water.core.security.model.principal.UserPrincipal;
 import it.water.core.security.service.*;
-import it.water.core.testing.utils.bundle.TestInitializer;
+import it.water.core.testing.utils.bundle.TestRuntimeInitializer;
+import it.water.core.testing.utils.junit.WaterTestExtension;
 import it.water.core.testing.utils.security.FakePermissionManager;
 import org.bouncycastle.openssl.PEMException;
 import org.bouncycastle.operator.OperatorCreationException;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 
 import javax.crypto.BadPaddingException;
 import javax.crypto.IllegalBlockSizeException;
@@ -47,14 +50,14 @@ import java.security.*;
 import java.security.spec.InvalidKeySpecException;
 import java.util.*;
 
-class SecurityTest {
-    private static TestInitializer initializer;
+@ExtendWith(WaterTestExtension.class)
+class SecurityTest implements Service {
+    private static TestRuntimeInitializer initializer;
 
     @BeforeAll
     static void initializeTestFramework() {
-        initializer = new TestInitializer();
-        initializer.withFakePermissionManager();
-        initializer.start();
+        initializer = TestRuntimeInitializer.getInstance();
+        initializer.setFakePermissionManager();
         DefaultResourceAction<TestProtectedEntity> resourceAction = ActionFactory.createResourceAction(TestProtectedEntity.class, CrudAction.SAVE);
         initializer.getComponentRegistry().registerComponent(Action.class, resourceAction.getAction(), null);
     }

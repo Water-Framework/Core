@@ -16,8 +16,10 @@
 package it.water.core.service;
 
 import it.water.core.api.bundle.ApplicationProperties;
+import it.water.core.api.service.Service;
 import it.water.core.service.api.TestServiceApi;
-import it.water.core.testing.utils.bundle.TestInitializer;
+import it.water.core.testing.utils.bundle.TestRuntimeInitializer;
+import it.water.core.testing.utils.junit.WaterTestExtension;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
@@ -25,17 +27,16 @@ import org.junit.jupiter.api.TestInstance;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.junit.jupiter.MockitoExtension;
 
-@ExtendWith(MockitoExtension.class)
+@ExtendWith({MockitoExtension.class, WaterTestExtension.class})
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
-class WaterServiceTest {
+class WaterServiceTest implements Service {
 
-    private TestInitializer initializer;
+    private TestRuntimeInitializer initializer;
 
     @BeforeAll
     public void initializeTestFramework() {
-        initializer = new TestInitializer();
-        initializer.withFakePermissionManager()
-                .start();
+        initializer = TestRuntimeInitializer.getInstance();
+        initializer.setFakePermissionManager();
     }
 
     /**

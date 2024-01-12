@@ -135,14 +135,18 @@ public abstract class WaterAbstractInterceptor<S extends Service> implements it.
      * @throws NoSuchMethodException
      */
     private void interceptAnnotationsOnMethod(S service, Method method, Object[] args, Object result, Class<? extends MethodInterceptor> interceptorClass) throws NoSuchMethodException {
-        Annotation[] annotations = service.getClass().getMethod(method.getName(), method.getParameterTypes()).getDeclaredAnnotations();
-        for (int i = 0; i < annotations.length; i++) {
-            Annotation annotation = annotations[i];
-            //trying to intercept first looking at annotation definition, if it contains WaterInterceptorExecutor annotation definition which specifies the implementation
-            boolean intercepted = interceptBasedOnAnnotationInterceptorExecutor(annotation, null, service, method, args, result, interceptorClass);
-            //if no annotation WaterInterceptorExecutor is found then we search inside the registry for an implementation for that interceptor
-            if (!intercepted)
-                interceptBasedOnRegisterdInterceptorExecutor(annotation, null, service, method, args, result, interceptorClass);
+        try {
+            Annotation[] annotations = service.getClass().getMethod(method.getName(), method.getParameterTypes()).getDeclaredAnnotations();
+            for (int i = 0; i < annotations.length; i++) {
+                Annotation annotation = annotations[i];
+                //trying to intercept first looking at annotation definition, if it contains WaterInterceptorExecutor annotation definition which specifies the implementation
+                boolean intercepted = interceptBasedOnAnnotationInterceptorExecutor(annotation, null, service, method, args, result, interceptorClass);
+                //if no annotation WaterInterceptorExecutor is found then we search inside the registry for an implementation for that interceptor
+                if (!intercepted)
+                    interceptBasedOnRegisterdInterceptorExecutor(annotation, null, service, method, args, result, interceptorClass);
+            }
+        } catch (NoSuchMethodException e){
+            log.debug(e.getMessage(),e);
         }
     }
 

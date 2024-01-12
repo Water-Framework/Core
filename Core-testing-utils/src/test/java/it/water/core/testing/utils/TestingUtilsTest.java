@@ -21,12 +21,13 @@ import it.water.core.api.model.User;
 import it.water.core.api.permission.PermissionManager;
 import it.water.core.api.permission.Role;
 import it.water.core.api.permission.SecurityContext;
-import it.water.core.api.registry.ComponentRegistration;
 import it.water.core.api.registry.ComponentRegistry;
 import it.water.core.api.registry.filter.ComponentFilter;
-import it.water.core.testing.utils.bundle.TestInitializer;
+import it.water.core.api.service.Service;
+import it.water.core.testing.utils.bundle.TestRuntimeInitializer;
 import it.water.core.testing.utils.filter.TestComponentFilterBuilder;
 import it.water.core.testing.utils.interceptors.TestServiceProxy;
+import it.water.core.testing.utils.junit.WaterTestExtension;
 import it.water.core.testing.utils.model.TestHUser;
 import it.water.core.testing.utils.model.TestRole;
 import org.junit.jupiter.api.Assertions;
@@ -41,16 +42,14 @@ import java.lang.reflect.Proxy;
 import java.util.Arrays;
 import java.util.Properties;
 
-@ExtendWith(MockitoExtension.class)
+@ExtendWith({MockitoExtension.class, WaterTestExtension.class})
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
-class TestingUtilsTest {
-    private TestInitializer initializer;
-
+class TestingUtilsTest implements Service {
+    private TestRuntimeInitializer initializer;
     @BeforeAll
     public void initializeTestFramework() {
-        initializer = new TestInitializer();
-        initializer.withFakePermissionManager()
-                .start();
+        initializer = TestRuntimeInitializer.getInstance();
+        initializer.setFakePermissionManager();
     }
 
     @Test

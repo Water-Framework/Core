@@ -1,0 +1,71 @@
+/*
+ * Copyright 2024 Aristide Cittadino
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License")
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+package it.water.core.testing.utils.junit;
+
+import it.water.core.api.registry.ComponentRegistry;
+import it.water.core.api.service.Service;
+import it.water.core.interceptors.WaterAbstractInterceptor;
+import it.water.core.model.exceptions.WaterRuntimeException;
+import it.water.core.testing.utils.bundle.TestRuntimeInitializer;
+import org.apache.cxf.transport.servlet.CXFServlet;
+import org.eclipse.jetty.server.Server;
+import org.eclipse.jetty.servlet.ServletContextHandler;
+import org.eclipse.jetty.servlet.ServletHolder;
+import org.junit.jupiter.api.extension.BeforeAllCallback;
+import org.junit.jupiter.api.extension.BeforeEachCallback;
+import org.junit.jupiter.api.extension.Extension;
+import org.junit.jupiter.api.extension.ExtensionContext;
+
+import java.lang.reflect.Method;
+
+public class WaterTestExtension extends WaterAbstractInterceptor implements Extension, BeforeEachCallback, BeforeAllCallback {
+
+    @Override
+    protected ComponentRegistry getComponentsRegistry() {
+        return TestRuntimeInitializer.getInstance().getComponentRegistry();
+    }
+
+    @Override
+    public void beforeAll(ExtensionContext extensionContext) throws Exception {
+        startJetty();
+        TestRuntimeInitializer.getInstance().start();
+    }
+
+    @Override
+    public void beforeEach(ExtensionContext extensionContext) throws Exception {
+        if (!(extensionContext.getRequiredTestInstance() instanceof Service))
+            throw new WaterRuntimeException("Please implement it.water.core.api.service.Service interface in your test class");
+        Method m = extensionContext.getRequiredTestMethod();
+        //forcing test method to be visible
+        extensionContext.getRequiredTestClass().getDeclaredMethod(m.getName(), m.getParameterTypes()).setAccessible(true);
+        this.executeInterceptorBeforeMethod((Service) extensionContext.getRequiredTestInstance(), m, m.getParameters());
+    }
+
+    private void startJetty() throws Exception {
+        if (TestRuntimeInitializer.getInstance().hasRestApi()) {
+            Server server = new Server(8080);
+            // Register and map the dispatcher servlet
+            final ServletHolder servletHolder = new ServletHolder(new CXFServlet());
+            final ServletContextHandler context = new ServletContextHandler();
+            context.setContextPath("/");
+            context.addServlet(servletHolder, "/water/*");
+            server.setHandler(context);
+            server.start();
+        }
+    }
+
+}

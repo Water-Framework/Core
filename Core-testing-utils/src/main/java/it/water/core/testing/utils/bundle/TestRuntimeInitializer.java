@@ -19,8 +19,10 @@ import it.water.core.api.bundle.ApplicationProperties;
 import it.water.core.api.bundle.Runtime;
 import it.water.core.api.permission.PermissionManager;
 import it.water.core.api.registry.ComponentConfiguration;
+import it.water.core.api.registry.ComponentRegistration;
 import it.water.core.api.registry.ComponentRegistry;
 import it.water.core.api.registry.filter.ComponentFilterBuilder;
+import it.water.core.api.service.rest.FrameworkRestController;
 import it.water.core.bundle.RuntimeInitializer;
 import it.water.core.registry.model.ComponentConfigurationFactory;
 import it.water.core.testing.utils.filter.TestComponentFilterBuilder;
@@ -33,11 +35,23 @@ import org.reflections.Reflections;
 import org.reflections.util.ClasspathHelper;
 import org.reflections.util.ConfigurationBuilder;
 
-public class TestInitializer extends RuntimeInitializer<Object, TestComponentRegistration<Object>> {
+public class TestRuntimeInitializer extends RuntimeInitializer<Object, TestComponentRegistration<Object>> {
     private ComponentRegistry componentRegistry;
     private Runtime testRuntime;
     private PermissionManager defaultPermissionManager;
+    private ComponentRegistration<PermissionManager, Object> permissionManagerRegistration;
     private ApplicationProperties waterApplicationProperties;
+    private static TestRuntimeInitializer instance;
+
+    private TestRuntimeInitializer() {
+    }
+
+    public static TestRuntimeInitializer getInstance() {
+        if (instance == null) {
+            instance = new TestRuntimeInitializer();
+        }
+        return instance;
+    }
 
     @Override
     public ComponentRegistry getComponentRegistry() {
@@ -45,27 +59,33 @@ public class TestInitializer extends RuntimeInitializer<Object, TestComponentReg
         return componentRegistry;
     }
 
-    public TestInitializer withPermissionManager(PermissionManager permissionManager) {
+    public TestRuntimeInitializer withPermissionManager(PermissionManager permissionManager) {
         this.defaultPermissionManager = permissionManager;
         return this;
     }
 
-    public TestInitializer withFakePermissionManager(boolean alwaysPass) {
-        this.withPermissionManager(new FakePermissionManager(alwaysPass));
-        return this;
+    public void setFakePermissionManager() {
+        this.withPermissionManager(new FakePermissionManager());
+        this.refreshPermissionManagerRegistration();
     }
 
-    public TestInitializer withFakePermissionManager() {
-        this.withPermissionManager(new FakePermissionManager(false));
-        return this;
+    public void setPermissionManager(PermissionManager permissionManager) {
+        this.withPermissionManager(permissionManager);
+        this.refreshPermissionManagerRegistration();
+    }
+
+    public void refreshPermissionManagerRegistration() {
+        if (permissionManagerRegistration != null)
+            this.getComponentRegistry().unregisterComponent(permissionManagerRegistration);
+
+        if (this.defaultPermissionManager != null) {
+            ComponentConfiguration config = ComponentConfigurationFactory.createNewComponentPropertyFactory().withPriority(1).withProp("it.water.core.security.permission.implementation", "default").build();
+            permissionManagerRegistration = this.getComponentRegistry().registerComponent(PermissionManager.class, defaultPermissionManager, config);
+        }
     }
 
     public void start() {
         this.setupApplicationProperties();
-        if (this.defaultPermissionManager != null) {
-            ComponentConfiguration config = ComponentConfigurationFactory.createNewComponentPropertyFactory().withPriority(1).withProp("it.water.core.security.permission.implementation", "default").build();
-            this.getComponentRegistry().registerComponent(PermissionManager.class, defaultPermissionManager, config);
-        }
         //registering test component filter builder
         ComponentConfiguration config = ComponentConfigurationFactory.createNewComponentPropertyFactory().withPriority(1).build();
         this.getComponentRegistry().registerComponent(ComponentFilterBuilder.class, new TestComponentFilterBuilder(), config);
@@ -96,6 +116,10 @@ public class TestInitializer extends RuntimeInitializer<Object, TestComponentReg
 
     public PermissionManager getPermissionManager() {
         return this.getComponentRegistry().findComponent(PermissionManager.class, null);
+    }
+
+    public boolean hasRestApi() {
+        return getAnnotatedClasses(FrameworkRestController.class).iterator().hasNext();
     }
 
     /**
