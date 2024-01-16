@@ -6,11 +6,15 @@ dependencies {
     //lombok
     implementation group: 'org.projectlombok', name: 'lombok', version: project.lombokVersion
     annotationProcessor 'org.projectlombok:lombok:' + project.lombokVersion
+    //Atteo ClassIndex
+    implementation 'org.atteo.classindex:classindex:' + project.atteoClassIndexVersion
+    annotationProcessor('org.atteo.classindex:classindex:' + project.atteoClassIndexVersion)
 
     implementation 'org.hibernate.validator:hibernate-validator:' + project.hibernateValidatorVersion
 
     implementation project(":Core-model")
     implementation project(":Core-api")
+    implementation project(":Core-interceptors")
 
     testAnnotationProcessor 'org.projectlombok:lombok:' + project.lombokVersion
     testImplementation 'org.mockito:mockito-core:4.6.1'

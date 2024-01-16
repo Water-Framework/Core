@@ -25,5 +25,8 @@ import it.water.core.api.permission.SecurityContext;
  * Abstraction of API Service.
  */
 public abstract class BaseAbstractService extends AbstractService {
-    protected abstract SecurityContext getSecurityContext();
+    protected SecurityContext getSecurityContext() {
+        //todo: undestand how to retrieve a valid Security Context object
+        return null;
+    }
 }

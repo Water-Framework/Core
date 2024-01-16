@@ -19,6 +19,7 @@ package it.water.core.validation.validators;
 
 import it.water.core.api.model.Resource;
 import it.water.core.api.validation.WaterValidator;
+import it.water.core.interceptors.annotations.FrameworkComponent;
 import it.water.core.model.exceptions.ValidationException;
 import it.water.core.model.validation.ValidationError;
 import jakarta.validation.*;
@@ -30,7 +31,11 @@ import org.slf4j.LoggerFactory;
 
 import java.util.*;
 
-
+/**
+ * @Author Aristide Cittadino
+ * Default validator for Jakarta Library
+ */
+@FrameworkComponent(priority = 1,services = WaterValidator.class)
 public class WaterJakartaValidator implements WaterValidator {
     private static Logger log = LoggerFactory.getLogger(WaterJakartaValidator.class);
     private Validator instance;

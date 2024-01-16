@@ -19,6 +19,7 @@ package it.water.core.validation.javax.validators;
 
 import it.water.core.api.model.Resource;
 import it.water.core.api.validation.WaterValidator;
+import it.water.core.interceptors.annotations.FrameworkComponent;
 import it.water.core.model.exceptions.ValidationException;
 import it.water.core.model.validation.ValidationError;
 import org.hibernate.validator.HibernateValidator;
@@ -30,7 +31,11 @@ import javax.validation.*;
 import javax.validation.spi.ValidationProvider;
 import java.util.*;
 
-
+/**
+ * @Author Aristide Cittadino
+ * Default validator for Javax Validation Library
+ */
+@FrameworkComponent(priority = 1,services = WaterValidator.class)
 public class WaterJavaxValidator implements WaterValidator {
     private static Logger log = LoggerFactory.getLogger(WaterJavaxValidator.class);
     private Validator instance;

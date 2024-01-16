@@ -17,10 +17,24 @@
 
 package it.water.core.service;
 
+import it.water.core.api.model.Resource;
+import it.water.core.api.validation.WaterValidator;
+import it.water.core.interceptors.annotations.Inject;
+import lombok.Setter;
+
 /**
  * @Author Aristide Cittadino.
  * Model class of WaterBaseSystemServiceImpl.
  */
 public abstract class BaseSystemServiceImpl extends BaseAbstractSystemService {
+    @Inject
+    @Setter
+    private WaterValidator waterValidator;
 
+    @Override
+    protected void validate(Resource resource) {
+        if (waterValidator != null) {
+            waterValidator.validate(resource);
+        }
+    }
 }
