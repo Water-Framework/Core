@@ -46,7 +46,12 @@ public interface BaseEntity extends Resource {
     /**
      * @return the entity version
      */
-    int getEntityVersion();
+    Integer getEntityVersion();
+
+    /**
+     * @return set entity version
+     */
+    void setEntityVersion(Integer entityVersion);
 
     /**
      * @return the full package and class name of the system class who manages this entity
