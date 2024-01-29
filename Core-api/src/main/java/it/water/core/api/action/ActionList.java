@@ -19,7 +19,34 @@ import it.water.core.api.model.Resource;
 
 import java.util.List;
 
+/**
+ * @Author Aristide Cittadino
+ * @param <T> The resource related to this action list
+ */
 public interface ActionList<T extends Resource>{
+    /**
+     *
+     * @param action action to add to the current resource action list
+     */
     void addAction(Action action);
+
+    /**
+     *
+     * @param actionName
+     * @return true if the current action list contains an action with the given actionName
+     */
+    boolean containsActionName(String actionName);
+
+    /**
+     *
+     * @param actionName
+     * @return the specific action related to the action name
+     */
+    Action getAction(String actionName);
+
+    /**
+     *
+     * @return Read-only copy of the action list
+     */
     List<ResourceAction<T>> getList();
 }

@@ -22,10 +22,7 @@ import it.water.core.api.action.ResourceAction;
 import it.water.core.api.model.Resource;
 import it.water.core.model.exceptions.WaterRuntimeException;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.List;
+import java.util.*;
 
 
 /**
@@ -62,6 +59,28 @@ public class DefaultActionList<T extends Resource> implements ActionList<T> {
     }
 
     /**
+     * @param actionName
+     * @return true if the action lists contains the specified action name
+     */
+    public boolean containsActionName(String actionName) {
+        return this.actions.stream().anyMatch(action -> action.getAction().getActionName().equalsIgnoreCase(actionName));
+    }
+
+    /**
+     * @param actionName
+     * @return the action associated with the action name
+     */
+    @Override
+    public Action getAction(String actionName) {
+        if (containsActionName(actionName)) {
+            Optional<ResourceAction<T>> actionOptional = this.actions.stream().filter(action -> action.getAction().getActionName().equalsIgnoreCase(actionName)).findFirst();
+            if (actionOptional.isPresent())
+                return actionOptional.get().getAction();
+        }
+        return null;
+    }
+
+    /**
      * Gets an actions list
      *
      * @return actions list
@@ -88,4 +107,16 @@ public class DefaultActionList<T extends Resource> implements ActionList<T> {
         return sb.toString();
     }
 
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        DefaultActionList<?> that = (DefaultActionList<?>) o;
+        return resourceClass.equals(that.resourceClass);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(resourceClass);
+    }
 }

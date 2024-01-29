@@ -16,14 +16,13 @@
 package it.water.core.security.service;
 
 import it.water.core.interceptors.annotations.FrameworkComponent;
-import it.water.core.permission.action.WebAPIAction;
 import it.water.core.permission.annotations.AllowPermissions;
 
 @FrameworkComponent(services = {TestEntityService1.class})
 public class TestEntityServiceImpl1 implements TestEntityService1 {
     private TestProtectedEntity resource = new TestProtectedEntity();
 
-    @AllowPermissions(actions = WebAPIAction.ActionNames.GET, checkById = true, systemApiRef = "it.water.core.security.service.TestEntitySystemService")
+    @AllowPermissions(actions = WebAPIActions.ActionNames.GET, checkById = true, systemApiRef = "it.water.core.security.service.TestEntitySystemService")
     public boolean alternativeSpecificPermissionMethod(long resourceId) {
         return true;
     }

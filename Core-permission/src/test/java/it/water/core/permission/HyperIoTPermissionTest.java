@@ -15,12 +15,11 @@
  */
 package it.water.core.permission;
 
-import it.water.core.api.action.Action;
+import it.water.core.api.action.ActionList;
 import it.water.core.api.model.Resource;
 import it.water.core.api.permission.PermissionManager;
 import it.water.core.model.exceptions.WaterRuntimeException;
 import it.water.core.permission.action.*;
-import it.water.core.permission.action.model.TestActionsManager;
 import it.water.core.permission.action.model.TestResource;
 import it.water.core.permission.exceptions.UnauthorizedException;
 import org.junit.jupiter.api.Assertions;
@@ -29,9 +28,7 @@ import org.junit.jupiter.api.Test;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -89,10 +86,10 @@ class WaterPermissionTest {
         Assertions.assertNotNull(ActionFactory.createEmptyActionList(TestResource.class));
         Resource resource = new TestResource();
         assertEquals(resource.getResourceName(), resource.getClass().getName());
-        DefaultResourceAction resourceAction = ActionFactory.createResourceAction(TestResource.class, CrudAction.FIND);
+        DefaultResourceAction resourceAction = ActionFactory.createResourceAction(TestResource.class, ActionFactory.createGenericAction(TestResource.class, CrudActions.FIND, 1));
         assertNotNull(resourceAction);
-        Assertions.assertEquals(4, resourceAction.getAction().getActionId());
-        Assertions.assertEquals(CrudAction.FIND, resourceAction.getAction());
+        Assertions.assertEquals(1, resourceAction.getAction().getActionId());
+        Assertions.assertEquals(CrudActions.FIND, resourceAction.getAction().getActionName());
         Constructor<ActionFactory> constructor = ActionFactory.class.getDeclaredConstructor();
         constructor.setAccessible(true);
         assertThrows(InvocationTargetException.class, () -> {
@@ -101,66 +98,46 @@ class WaterPermissionTest {
     }
 
     @Test
-    void crudActionShouldWorkAsExcepted() {
-        CrudAction action = CrudAction.FIND;
-        Assertions.assertEquals(CrudAction.FIND.getActionId(), action.getActionId());
-        Assertions.assertEquals(CrudAction.FIND.getActionName(), action.getActionName());
-        Assertions.assertEquals(CrudAction.FIND.getActionType(), action.getActionType());
-    }
-
-    @Test
-    void apiActionShouldWorkAsExcepted() {
-        WebAPIAction action = WebAPIAction.GET;
-        Assertions.assertEquals(WebAPIAction.GET.getActionId(), action.getActionId());
-        Assertions.assertEquals(WebAPIAction.GET.getActionName(), action.getActionName());
-        Assertions.assertEquals(WebAPIAction.GET.getActionType(), action.getActionType());
-    }
-
-    @Test
-    void shareActionShouldWorkAsExcepted() {
-        ShareAction action = ShareAction.SHARE;
-        Assertions.assertEquals(ShareAction.SHARE.getActionId(), action.getActionId());
-        Assertions.assertEquals(ShareAction.SHARE.getActionName(), action.getActionName());
-        Assertions.assertEquals(ShareAction.SHARE.getActionType(), action.getActionType());
-    }
-
-    @Test
     void actionListShouldWorkAsExpected() {
         DefaultActionList actionList = ActionFactory.createBaseCrudActionList(TestResource.class);
         //adding one action that should maintain the order
-        actionList.addAction(WebAPIAction.GET);
+        actionList.addAction(ActionFactory.createGenericAction(TestResource.class, ShareAction.SHARE, 16));
         Assertions.assertNotNull(actionList.toString());
         List<DefaultResourceAction> resourceActions = actionList.getList();
-        Map<String, List<Action>> actionsTypesMap = new HashMap<>();
+        List<String> actionsListNames = new ArrayList<>();
         //same order as they are put inside actions factory
-        actionsTypesMap.put(CrudAction.class.getName(), new ArrayList<>());
-        actionsTypesMap.put(WebAPIAction.class.getName(), new ArrayList<>());
-        actionsTypesMap.get(CrudAction.SAVE.getActionType()).add(CrudAction.SAVE);
-        actionsTypesMap.get(CrudAction.UPDATE.getActionType()).add(CrudAction.UPDATE);
-        actionsTypesMap.get(CrudAction.REMOVE.getActionType()).add(CrudAction.REMOVE);
-        actionsTypesMap.get(CrudAction.FIND.getActionType()).add(CrudAction.FIND);
-        actionsTypesMap.get(WebAPIAction.GET.getActionType()).add(WebAPIAction.GET);
-
+        actionsListNames.add(CrudActions.SAVE);
+        actionsListNames.add(CrudActions.UPDATE);
+        actionsListNames.add(CrudActions.REMOVE);
+        actionsListNames.add(CrudActions.FIND);
+        actionsListNames.add(ShareAction.SHARE);
         //should be ordered
-
         for (int i = 0; i < resourceActions.size(); i++) {
             DefaultResourceAction resourceAction = resourceActions.get(i);
             long actionId = resourceAction.getAction().getActionId();
             //assert pow of two
             Assertions.assertEquals(TestResource.class, resourceAction.getResourceClass());
             assertEquals(0, (actionId & (actionId - 1)));
-            assertTrue(actionsTypesMap.get(resourceAction.getAction().getActionType()).contains(resourceAction.getAction()));
-            actionsTypesMap.get(resourceAction.getAction().getActionType()).remove(resourceAction.getAction());
-            if (actionsTypesMap.get(resourceAction.getAction().getActionType()).isEmpty())
-                actionsTypesMap.remove(resourceAction.getAction().getActionType());
+            assertTrue(actionsListNames.contains(resourceAction.getAction().getActionName()));
+            actionsListNames.remove(resourceAction.getAction().getActionName());
         }
-        assertTrue(actionsTypesMap.isEmpty());
+        assertTrue(actionsListNames.isEmpty());
     }
 
     @Test
-    void testStandardActionsManager() {
-        TestActionsManager testActionsManager = new TestActionsManager();
-        testActionsManager.registerActions();
-        Assertions.assertFalse(testActionsManager.getActions().isEmpty());
+    void actionManagerShouldRegisterResourceActions() {
+        DefaultActionsManager defaultActionsManager = new DefaultActionsManager();
+        defaultActionsManager.setPermissionManager(new FakePermissionManager());
+        defaultActionsManager.setRoleManager(new FakeRoleManager());
+        ProtectedEntity protectedEntity = new ProtectedEntity();
+        protectedEntity.setEntityVersion(1);
+        defaultActionsManager.registerActions(protectedEntity);
+        ActionList<?> actions = defaultActionsManager.getActions().get(protectedEntity.getResourceName());
+        Assertions.assertTrue(actions.containsActionName(CrudActions.SAVE));
+        Assertions.assertTrue(actions.containsActionName(CrudActions.UPDATE));
+        Assertions.assertTrue(actions.containsActionName(CrudActions.REMOVE));
+        Assertions.assertTrue(actions.containsActionName(CrudActions.FIND));
+        Assertions.assertFalse(actions.containsActionName(ShareAction.SHARE));
     }
+
 }

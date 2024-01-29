@@ -19,7 +19,6 @@ import it.water.core.api.model.PaginableResult;
 import it.water.core.api.repository.query.Query;
 import it.water.core.api.repository.query.QueryOrder;
 import it.water.core.interceptors.annotations.FrameworkComponent;
-import it.water.core.permission.action.WebAPIAction;
 import it.water.core.permission.annotations.AllowGenericPermissions;
 import it.water.core.permission.annotations.AllowPermissions;
 import it.water.core.permission.annotations.AllowPermissionsOnReturn;
@@ -29,32 +28,32 @@ import it.water.core.permission.annotations.AllowRoles;
 public class TestEntityServiceImpl implements TestEntityService {
     private TestProtectedEntity resource = new TestProtectedEntity();
 
-    @AllowGenericPermissions(actions = WebAPIAction.ActionNames.GET, resourceName = "it.water.core.security.TestProtectedResource")
+    @AllowGenericPermissions(actions = WebAPIActions.ActionNames.GET, resourceName = "it.water.core.security.TestProtectedResource")
     public boolean genericPermissionMethod() {
         return true;
     }
 
-    @AllowGenericPermissions(actions = WebAPIAction.ActionNames.GET, resourceName = "it.water.core.security.TestProtectedResource")
+    @AllowGenericPermissions(actions = WebAPIActions.ActionNames.GET, resourceName = "it.water.core.security.TestProtectedResource")
     public boolean genericPermissionMethodWithoutResourceName() {
         return true;
     }
 
-    @AllowPermissions(actions = WebAPIAction.ActionNames.GET, checkById = true)
+    @AllowPermissions(actions = WebAPIActions.ActionNames.GET, checkById = true)
     public boolean specificPermissionMethod(long resourceId) {
         return true;
     }
 
-    @AllowPermissions(actions = WebAPIAction.ActionNames.GET)
+    @AllowPermissions(actions = WebAPIActions.ActionNames.GET)
     public boolean specificPermissionMethodWithoutIdIndex(TestProtectedEntity resourceId) {
         return true;
     }
 
-    @AllowPermissions(actions = WebAPIAction.ActionNames.GET, checkById = true, systemApiRef = "it.water.core.security.service.TestEntitySystemService")
+    @AllowPermissions(actions = WebAPIActions.ActionNames.GET, checkById = true, systemApiRef = "it.water.core.security.service.TestEntitySystemService")
     public boolean specificPermissionMethodWithSystemApi(long resourceId) {
         return true;
     }
 
-    @AllowPermissionsOnReturn(actions = WebAPIAction.ActionNames.GET)
+    @AllowPermissionsOnReturn(actions = WebAPIActions.ActionNames.GET)
     public TestProtectedEntity permissionOnReturnMethod() {
         TestProtectedEntity r = new TestProtectedEntity();
         return r;

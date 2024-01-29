@@ -19,6 +19,7 @@ package it.water.core.permission.action;
 
 import it.water.core.api.action.Action;
 import it.water.core.api.model.Resource;
+import it.water.core.model.exceptions.WaterRuntimeException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -51,11 +52,29 @@ public class ActionFactory {
     public static <T extends Resource> DefaultActionList<T> createBaseCrudActionList(Class<T> resourceClass) {
         log.debug("Invoking createBaseCrudActionList for resource {}", resourceClass);
         DefaultActionList<T> actionList = new DefaultActionList<>(resourceClass);
-        actionList.addAction(CrudAction.SAVE);
-        actionList.addAction(CrudAction.UPDATE);
-        actionList.addAction(CrudAction.REMOVE);
-        actionList.addAction(CrudAction.FIND);
+        actionList.addAction(createGenericAction(resourceClass,CrudActions.SAVE,1));
+        actionList.addAction(createGenericAction(resourceClass,CrudActions.UPDATE,2));
+        actionList.addAction(createGenericAction(resourceClass,CrudActions.REMOVE,4));
+        actionList.addAction(createGenericAction(resourceClass,CrudActions.FIND,8));
         return actionList;
+    }
+
+    /**
+     * @param resourceClass water resource
+     * @param actionName    action name
+     * @param actionId      action id (pow of 2 in order to allow bitwise operations)
+     * @param <T>
+     * @return
+     */
+    public static <T extends Resource> Action createGenericAction(Class<T> resourceClass, String actionName, long actionId) {
+        log.debug("Invoking createAction for resource {} with action name {}", resourceClass.getName(), actionName);
+        if (actionId > 1 && actionId % 2 != 0)
+            throw new WaterRuntimeException("Action id should be power of 2");
+        GenericAction genericAction = new GenericAction();
+        genericAction.setActionId(actionId);
+        genericAction.setActionName(actionName);
+        genericAction.setActionType(GenericAction.class.getName());
+        return genericAction;
     }
 
     /**

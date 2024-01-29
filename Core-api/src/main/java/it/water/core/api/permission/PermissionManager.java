@@ -44,6 +44,13 @@ public interface PermissionManager extends Service {
     boolean userHasRoles(String username, String[] rolesNames);
 
     /**
+     *
+     * @param r
+     * @param action
+     */
+    void addPermissionIfNotExists(Role r,Action action);
+
+    /**
      * Checks if an existing user has permissions for action of Action.
      * Moreover every user, if protected, is set as a base entity of the
      * platform.

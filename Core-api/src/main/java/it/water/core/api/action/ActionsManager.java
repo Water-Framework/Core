@@ -32,15 +32,18 @@ public interface ActionsManager extends Service {
     /**
      * Registers actions inside the current context
      */
-    void registerActions();
+    void registerActions(Resource resource);
 
     /**
      * Unregisters actions inside the current context
      */
-    void unregisterActions();
+    void unregisterActions(String resourceClass);
 
     /**
+     * Key is resource class name
+     * Value is actionList for each resource
+     *
      * @return actions that must be registered inside the context for each resource
      */
-    <T extends Resource> Map<String, ActionList<T>> getActions();
+    Map<String, ActionList<Resource>> getActions();
 }

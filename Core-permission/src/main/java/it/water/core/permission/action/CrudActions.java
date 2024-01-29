@@ -20,13 +20,16 @@ package it.water.core.permission.action;
 import lombok.AccessLevel;
 import lombok.NoArgsConstructor;
 
+
 /**
  * @Author Aristide Cittadino.
- * Class that enumerate SHARE action. Sharing is the possibility to mark an Entity as Sharable.
- * Sharing entity or resource let other users can see and operate on them.
+ * Class that enumerates all CRUD base actions.
+ * Note that all base actions are used by entities.
  */
 @NoArgsConstructor(access = AccessLevel.PRIVATE)
-public abstract class ShareAction {
-    public static final String SHARE = "share";
-
+public abstract class CrudActions {
+    public static final String SAVE = "save";
+    public static final String UPDATE = "update";
+    public static final String FIND = "find";
+    public static final String REMOVE = "remove";
 }

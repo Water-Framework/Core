@@ -16,19 +16,18 @@
 package it.water.core.security.service;
 
 import it.water.core.interceptors.annotations.FrameworkComponent;
-import it.water.core.permission.action.WebAPIAction;
 import it.water.core.permission.annotations.AllowGenericPermissions;
 import it.water.core.permission.annotations.AllowRoles;
 
 @FrameworkComponent(services = {TestResourceService.class})
 public class TestResourceServiceImpl implements TestResourceService {
 
-    @AllowGenericPermissions(actions = WebAPIAction.ActionNames.GET, resourceName = "it.water.core.security.TestProtectedResource")
+    @AllowGenericPermissions(actions = WebAPIActions.ActionNames.GET, resourceName = "it.water.core.security.TestProtectedResource")
     public boolean genericPermissionMethod() {
         return true;
     }
 
-    @AllowGenericPermissions(actions = WebAPIAction.ActionNames.GET, resourceParamName = "name")
+    @AllowGenericPermissions(actions = WebAPIActions.ActionNames.GET, resourceParamName = "name")
     public boolean genericPermissionMethodWithResourceParamName(String name) {
         return true;
     }

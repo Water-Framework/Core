@@ -1,4 +1,3 @@
-
 /*
  * Copyright 2024 Aristide Cittadino
  *
@@ -15,18 +14,21 @@
  * limitations under the License.
  */
 
-package it.water.core.permission.action;
+package it.water.core.permission.annotations;
 
-import lombok.AccessLevel;
-import lombok.NoArgsConstructor;
+import java.lang.annotation.ElementType;
+import java.lang.annotation.Retention;
+import java.lang.annotation.RetentionPolicy;
+import java.lang.annotation.Target;
 
 /**
- * @Author Aristide Cittadino.
- * Class that enumerate SHARE action. Sharing is the possibility to mark an Entity as Sharable.
- * Sharing entity or resource let other users can see and operate on them.
+ * Author Aristide Cittadino
+ * Annotation which allows to specify which roles have default permission on a resource.
  */
-@NoArgsConstructor(access = AccessLevel.PRIVATE)
-public abstract class ShareAction {
-    public static final String SHARE = "share";
+@Target({ElementType.LOCAL_VARIABLE})
+@Retention(value = RetentionPolicy.RUNTIME)
+public @interface DefaultRoleAccess {
+    String roleName() default "";
 
+    String[] actions() default {};
 }

@@ -1,4 +1,3 @@
-
 /*
  * Copyright 2024 Aristide Cittadino
  *
@@ -17,16 +16,19 @@
 
 package it.water.core.permission.action;
 
-import lombok.AccessLevel;
+import it.water.core.api.action.Action;
+import lombok.Data;
 import lombok.NoArgsConstructor;
 
 /**
- * @Author Aristide Cittadino.
- * Class that enumerate SHARE action. Sharing is the possibility to mark an Entity as Sharable.
- * Sharing entity or resource let other users can see and operate on them.
+ * @Author Aristide Cittadino
+ * Generic action, used to wrap all user defined actions inside the system.
  */
-@NoArgsConstructor(access = AccessLevel.PRIVATE)
-public abstract class ShareAction {
-    public static final String SHARE = "share";
+@Data
+@NoArgsConstructor
+public class GenericAction implements Action {
+    String actionName;
+    String actionType;
+    long actionId;
 
 }

@@ -16,8 +16,19 @@
 package it.water.core.permission;
 
 
+import it.water.core.permission.action.CrudActions;
+import it.water.core.permission.annotations.AccessControl;
+import it.water.core.permission.annotations.DefaultRoleAccess;
+
 import java.util.Date;
 
+@AccessControl(
+        availableActions = {CrudActions.SAVE,CrudActions.UPDATE,CrudActions.REMOVE,CrudActions.FIND},
+        rolesPermissions = {
+                @DefaultRoleAccess(roleName = "Role1",actions = {CrudActions.SAVE,CrudActions.UPDATE}),
+                @DefaultRoleAccess(roleName = "Role2",actions = {CrudActions.FIND,CrudActions.REMOVE})
+        }
+)
 public class ProtectedEntity implements it.water.core.api.permission.ProtectedEntity {
     @Override
     public long getId() {
@@ -35,10 +46,14 @@ public class ProtectedEntity implements it.water.core.api.permission.ProtectedEn
     }
 
     @Override
-    public int getEntityVersion() {
+    public Integer getEntityVersion() {
         return 0;
     }
 
+    @Override
+    public void setEntityVersion(Integer entityVersion) {
+        //do nothing
+    }
     @Override
     public String getSystemApiClassName() {
         return null;
