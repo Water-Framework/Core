@@ -22,12 +22,12 @@ import it.water.core.permission.annotations.AllowRoles;
 @FrameworkComponent(services = {TestResourceService.class})
 public class TestResourceServiceImpl implements TestResourceService {
 
-    @AllowGenericPermissions(actions = WebAPIActions.ActionNames.GET, resourceName = "it.water.core.security.TestProtectedResource")
+    @AllowGenericPermissions(actions = "GET", resourceName = "it.water.core.security.TestProtectedResource")
     public boolean genericPermissionMethod() {
         return true;
     }
 
-    @AllowGenericPermissions(actions = WebAPIActions.ActionNames.GET, resourceParamName = "name")
+    @AllowGenericPermissions(actions = "GET", resourceParamName = "name")
     public boolean genericPermissionMethodWithResourceParamName(String name) {
         return true;
     }

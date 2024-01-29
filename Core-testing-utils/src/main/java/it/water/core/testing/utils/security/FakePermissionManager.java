@@ -19,13 +19,22 @@ import it.water.core.api.action.Action;
 import it.water.core.api.model.Resource;
 import it.water.core.api.model.User;
 import it.water.core.api.permission.PermissionManager;
+import it.water.core.api.permission.Role;
+import it.water.core.interceptors.annotations.FrameworkComponent;
 
 /**
  * @Author Aristide Cittadino
  * Fake permission Manager which allows every action coming from username with "usernameOk" and deny others.
  * Use it just for test purpose
  */
+@FrameworkComponent(priority = 0,properties = "it.water.core.security.permission.implementation=default")
 public class FakePermissionManager implements PermissionManager {
+
+    @Override
+    public void addPermissionIfNotExists(Role r, Action action) {
+        //todo add some logic here
+        //do nothing at the moment
+    }
 
     @Override
     public boolean userHasRoles(String username, String[] rolesNames) {

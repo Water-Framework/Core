@@ -16,13 +16,16 @@
 
 package it.water.core.bundle;
 
+import it.water.core.api.action.ActionsManager;
 import it.water.core.api.bundle.Runtime;
+import it.water.core.api.model.Resource;
 import it.water.core.api.registry.ComponentRegistration;
 import it.water.core.api.registry.ComponentRegistry;
 import it.water.core.api.service.rest.FrameworkRestApi;
 import it.water.core.api.service.rest.FrameworkRestController;
 import it.water.core.api.service.rest.RestApiManager;
 import it.water.core.interceptors.annotations.FrameworkComponent;
+import it.water.core.permission.annotations.AccessControl;
 import it.water.core.registry.model.exception.NoComponentRegistryFoundException;
 import lombok.Getter;
 import org.atteo.classindex.ClassIndex;
@@ -77,6 +80,26 @@ public abstract class AbstractInitializer<T, K> {
      * @param framworkComponents
      */
     protected abstract void setupFrameworkComponents(Iterable<Class<?>> framworkComponents);
+
+    /**
+     * This method register all access controlled entities with permission
+     *
+     * @param <N>
+     */
+    protected <N extends Resource> void initializeResourcePermissionsAndActions() {
+        Iterable<Class<?>> accessControlledClasses = getAnnotatedClasses(AccessControl.class);
+        accessControlledClasses.forEach(accessControlledClass -> {
+            ActionsManager manager = this.getComponentRegistry().findComponent(ActionsManager.class, null);
+            try {
+                if (Resource.class.isAssignableFrom(accessControlledClass)) {
+                    Class<N> resourceClass = (Class<N>) accessControlledClass;
+                    manager.registerActions(resourceClass);
+                }
+            } catch (Exception e) {
+                log.error(e.getMessage(), e);
+            }
+        });
+    }
 
     /**
      * Register all @FrameworkRestApi classes as rest services.

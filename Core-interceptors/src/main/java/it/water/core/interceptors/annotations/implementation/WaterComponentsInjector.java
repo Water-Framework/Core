@@ -21,6 +21,7 @@ import it.water.core.api.service.Service;
 import it.water.core.api.registry.ComponentRegistry;
 import it.water.core.interceptors.annotations.FrameworkComponent;
 import it.water.core.interceptors.annotations.Inject;
+import it.water.core.registry.model.exception.NoComponentRegistryFoundException;
 import lombok.Setter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -70,7 +71,13 @@ public class WaterComponentsInjector implements BeforeMethodFieldInterceptor<Inj
     public static <S extends Service> void inject(ComponentRegistry componentRegistry, S destination, List<Field> fields) {
         log.debug("Injecting Water Components into fields");
         fields.forEach(annotatedField -> {
-            Object service = componentRegistry.findComponent(annotatedField.getType(), null);
+            Object service = null;
+            try {
+                 service = componentRegistry.findComponent(annotatedField.getType(), null);
+            }catch (NoComponentRegistryFoundException e){
+                log.error(e.getMessage(),e);
+            }
+
             try {
                 Method setterMethod = findSetterMethod(destination, annotatedField);
                 log.debug("Setting field {} on {}", annotatedField.getName(), destination.getClass().getName());

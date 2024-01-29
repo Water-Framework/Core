@@ -20,6 +20,7 @@ import it.water.core.api.action.Action;
 import it.water.core.api.model.Resource;
 import it.water.core.api.model.User;
 import it.water.core.api.permission.PermissionManager;
+import it.water.core.api.permission.Role;
 
 import java.util.*;
 
@@ -108,5 +109,10 @@ public class TestPermissionManager implements PermissionManager {
     public boolean checkUserOwnsResource(User user, Object resource) {
         //todo check how to do it
         return false;
+    }
+
+    @Override
+    public void addPermissionIfNotExists(Role r, Action action) {
+        //todo add default logic
     }
 }

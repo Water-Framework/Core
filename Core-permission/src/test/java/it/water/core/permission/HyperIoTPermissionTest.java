@@ -131,7 +131,7 @@ class WaterPermissionTest {
         defaultActionsManager.setRoleManager(new FakeRoleManager());
         ProtectedEntity protectedEntity = new ProtectedEntity();
         protectedEntity.setEntityVersion(1);
-        defaultActionsManager.registerActions(protectedEntity);
+        defaultActionsManager.registerActions(ProtectedEntity.class);
         ActionList<?> actions = defaultActionsManager.getActions().get(protectedEntity.getResourceName());
         Assertions.assertTrue(actions.containsActionName(CrudActions.SAVE));
         Assertions.assertTrue(actions.containsActionName(CrudActions.UPDATE));

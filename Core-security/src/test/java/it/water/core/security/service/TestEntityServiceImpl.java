@@ -28,32 +28,32 @@ import it.water.core.permission.annotations.AllowRoles;
 public class TestEntityServiceImpl implements TestEntityService {
     private TestProtectedEntity resource = new TestProtectedEntity();
 
-    @AllowGenericPermissions(actions = WebAPIActions.ActionNames.GET, resourceName = "it.water.core.security.TestProtectedResource")
+    @AllowGenericPermissions(actions = "GET", resourceName = "it.water.core.security.TestProtectedResource")
     public boolean genericPermissionMethod() {
         return true;
     }
 
-    @AllowGenericPermissions(actions = WebAPIActions.ActionNames.GET, resourceName = "it.water.core.security.TestProtectedResource")
+    @AllowGenericPermissions(actions = "GET", resourceName = "it.water.core.security.TestProtectedResource")
     public boolean genericPermissionMethodWithoutResourceName() {
         return true;
     }
 
-    @AllowPermissions(actions = WebAPIActions.ActionNames.GET, checkById = true)
+    @AllowPermissions(actions = "GET", checkById = true)
     public boolean specificPermissionMethod(long resourceId) {
         return true;
     }
 
-    @AllowPermissions(actions = WebAPIActions.ActionNames.GET)
+    @AllowPermissions(actions = "GET")
     public boolean specificPermissionMethodWithoutIdIndex(TestProtectedEntity resourceId) {
         return true;
     }
 
-    @AllowPermissions(actions = WebAPIActions.ActionNames.GET, checkById = true, systemApiRef = "it.water.core.security.service.TestEntitySystemService")
+    @AllowPermissions(actions = "GET", checkById = true, systemApiRef = "it.water.core.security.service.TestEntitySystemService")
     public boolean specificPermissionMethodWithSystemApi(long resourceId) {
         return true;
     }
 
-    @AllowPermissionsOnReturn(actions = WebAPIActions.ActionNames.GET)
+    @AllowPermissionsOnReturn(actions = "GET")
     public TestProtectedEntity permissionOnReturnMethod() {
         TestProtectedEntity r = new TestProtectedEntity();
         return r;

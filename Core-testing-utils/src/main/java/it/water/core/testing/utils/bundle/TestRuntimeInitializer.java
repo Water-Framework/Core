@@ -19,7 +19,6 @@ import it.water.core.api.bundle.ApplicationProperties;
 import it.water.core.api.bundle.Runtime;
 import it.water.core.api.permission.PermissionManager;
 import it.water.core.api.registry.ComponentConfiguration;
-import it.water.core.api.registry.ComponentRegistration;
 import it.water.core.api.registry.ComponentRegistry;
 import it.water.core.api.registry.filter.ComponentFilterBuilder;
 import it.water.core.api.service.rest.FrameworkRestController;
@@ -29,7 +28,6 @@ import it.water.core.testing.utils.filter.TestComponentFilterBuilder;
 import it.water.core.testing.utils.registry.TestComponentRegistration;
 import it.water.core.testing.utils.registry.TestComponentRegistry;
 import it.water.core.testing.utils.runtime.TestRuntime;
-import it.water.core.testing.utils.security.FakePermissionManager;
 import it.water.core.testing.utils.security.TestSecurityContext;
 import org.reflections.Reflections;
 import org.reflections.util.ClasspathHelper;
@@ -38,8 +36,6 @@ import org.reflections.util.ConfigurationBuilder;
 public class TestRuntimeInitializer extends RuntimeInitializer<Object, TestComponentRegistration<Object>> {
     private ComponentRegistry componentRegistry;
     private Runtime testRuntime;
-    private PermissionManager defaultPermissionManager;
-    private ComponentRegistration<PermissionManager, Object> permissionManagerRegistration;
     private ApplicationProperties waterApplicationProperties;
     private static TestRuntimeInitializer instance;
 
@@ -59,37 +55,13 @@ public class TestRuntimeInitializer extends RuntimeInitializer<Object, TestCompo
         return componentRegistry;
     }
 
-    public TestRuntimeInitializer withPermissionManager(PermissionManager permissionManager) {
-        this.defaultPermissionManager = permissionManager;
-        return this;
-    }
-
-    public void setFakePermissionManager() {
-        this.withPermissionManager(new FakePermissionManager());
-        this.refreshPermissionManagerRegistration();
-    }
-
-    public void setPermissionManager(PermissionManager permissionManager) {
-        this.withPermissionManager(permissionManager);
-        this.refreshPermissionManagerRegistration();
-    }
-
-    public void refreshPermissionManagerRegistration() {
-        if (permissionManagerRegistration != null)
-            this.getComponentRegistry().unregisterComponent(permissionManagerRegistration);
-
-        if (this.defaultPermissionManager != null) {
-            ComponentConfiguration config = ComponentConfigurationFactory.createNewComponentPropertyFactory().withPriority(1).withProp("it.water.core.security.permission.implementation", "default").build();
-            permissionManagerRegistration = this.getComponentRegistry().registerComponent(PermissionManager.class, defaultPermissionManager, config);
-        }
-    }
-
     public void start() {
         this.setupApplicationProperties();
         //registering test component filter builder
         ComponentConfiguration config = ComponentConfigurationFactory.createNewComponentPropertyFactory().withPriority(1).build();
         this.getComponentRegistry().registerComponent(ComponentFilterBuilder.class, new TestComponentFilterBuilder(), config);
         this.initializeFrameworkComponents();
+        this.initializeResourcePermissionsAndActions();
         this.initializeRestApis();
     }
 

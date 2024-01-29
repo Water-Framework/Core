@@ -27,6 +27,11 @@ public class TestProtectedEntity implements ProtectedEntity {
     }
 
     @Override
+    public void setEntityVersion(Integer entityVersion) {
+        this.setEntityVersion(entityVersion);
+    }
+
+    @Override
     public Date getEntityCreateDate() {
         return new Date();
     }
@@ -37,7 +42,7 @@ public class TestProtectedEntity implements ProtectedEntity {
     }
 
     @Override
-    public int getEntityVersion() {
+    public Integer getEntityVersion() {
         return 0;
     }
 

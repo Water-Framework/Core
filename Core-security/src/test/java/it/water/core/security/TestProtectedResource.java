@@ -16,7 +16,11 @@
 package it.water.core.security;
 
 import it.water.core.api.model.ProtectedResource;
+import it.water.core.permission.action.CrudActions;
+import it.water.core.permission.annotations.AccessControl;
 
+
+@AccessControl(availableActions = CrudActions.SAVE)
 public class TestProtectedResource implements ProtectedResource {
     @Override
     public String getResourceId() {

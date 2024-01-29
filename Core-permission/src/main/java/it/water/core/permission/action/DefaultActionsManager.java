@@ -60,47 +60,47 @@ public class DefaultActionsManager implements it.water.core.api.action.ActionsMa
     /**
      * Registers a list of actions that have to be registered as components
      */
-    public void registerActions(Resource resource) {
-        log.debug("Invoking registerActions of {}", resource.getResourceName());
-        Optional<Annotation> accessControlAnnotationOptional = Arrays.stream(resource.getClass().getDeclaredAnnotations()).filter(AccessControl.class::isInstance).findAny();
+    public <T extends Resource> void registerActions(Class<T> resourceClass) {
+        log.debug("Invoking registerActions of {}", resourceClass.getName());
+        Optional<Annotation> accessControlAnnotationOptional = Arrays.stream(resourceClass.getDeclaredAnnotations()).filter(AccessControl.class::isInstance).findAny();
         if (accessControlAnnotationOptional.isPresent()) {
             AccessControl accessControlAnnotation = (AccessControl) accessControlAnnotationOptional.get();
             String[] availableActions = accessControlAnnotation.availableActions();
             DefaultRoleAccess[] defaultRoleAccesses = accessControlAnnotation.rolesPermissions();
             //Registers all available actions
-            registerActions(resource, availableActions);
+            registerActions(resourceClass, availableActions);
             //Define permission for default roles
-            addDefaultRoles(resource, defaultRoleAccesses);
+            addDefaultRoles(resourceClass, defaultRoleAccesses);
         }
     }
 
     /**
-     * @param resource
+     * @param resourceClass
      * @param availableActions
      */
-    private void registerActions(Resource resource, String[] availableActions) {
-        ActionList<?> actionList = ActionFactory.createEmptyActionList(resource.getClass());
+    private <T extends Resource> void registerActions(Class<T> resourceClass, String[] availableActions) {
+        ActionList<?> actionList = ActionFactory.createEmptyActionList(resourceClass);
         for (int i = 0; i < availableActions.length; i++) {
-            actionList.addAction(ActionFactory.createGenericAction(resource.getClass(), availableActions[i], (long) Math.pow(2, i)));
+            actionList.addAction(ActionFactory.createGenericAction(resourceClass, availableActions[i], (long) Math.pow(2, i)));
         }
-        if (!actionList.getList().isEmpty() && !actionsRegistry.containsKey(resource.getResourceName())) {
-            log.info("Registering actions {} for Protected Resource: {}", actionList, resource.getResourceName());
-            actionsRegistry.put(resource.getResourceName(), actionList);
+        if (!actionList.getList().isEmpty() && !actionsRegistry.containsKey(resourceClass.getName())) {
+            log.info("Registering actions {} for Protected Resource: {}", actionList, resourceClass.getName());
+            actionsRegistry.put(resourceClass.getName(), actionList);
         }
     }
 
     /**
-     * @param resource
+     * @param resourceClass
      * @param defaultRoleAccesses
      */
-    private void addDefaultRoles(Resource resource, DefaultRoleAccess[] defaultRoleAccesses) {
+    private <T extends Resource> void addDefaultRoles(Class<T> resourceClass, DefaultRoleAccess[] defaultRoleAccesses) {
         if (this.roleManager != null) {
             Arrays.stream(defaultRoleAccesses).forEach(defaultRoleAccess -> {
                 Role r = this.roleManager.createIfNotExists(defaultRoleAccess.roleName());
                 if (this.permissionManager != null) {
                     Arrays.stream(defaultRoleAccess.actions()).forEach(actionName -> {
-                        if (this.actionsRegistry.containsKey(resource.getResourceName()) && this.actionsRegistry.get(resource.getResourceName()).containsActionName(actionName)) {
-                            this.permissionManager.addPermissionIfNotExists(r, this.actionsRegistry.get(resource.getResourceName()).getAction(actionName));
+                        if (this.actionsRegistry.containsKey(resourceClass.getName()) && this.actionsRegistry.get(resourceClass.getName()).containsActionName(actionName)) {
+                            this.permissionManager.addPermissionIfNotExists(r, this.actionsRegistry.get(resourceClass.getName()).getAction(actionName));
                         }
                     });
                 }
@@ -111,9 +111,9 @@ public class DefaultActionsManager implements it.water.core.api.action.ActionsMa
     /**
      * Unregisters an action that have to be registered as components
      */
-    public void unregisterActions(String resourceClass) {
+    public <T extends Resource> void unregisterActions(Class<T> resourceClass) {
         log.debug("Invoking registerActions of {}", resourceClass);
-        this.actionsRegistry.remove(resourceClass);
+        this.actionsRegistry.remove(resourceClass.getName());
     }
 
 

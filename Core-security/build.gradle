@@ -21,6 +21,7 @@ dependencies {
     testImplementation 'org.mockito:mockito-junit-jupiter:4.6.1'
     testImplementation 'org.junit.jupiter:junit-jupiter-api:' + project.junitJupiterVersion
     testImplementation 'org.junit.jupiter:junit-jupiter-engine:' + project.junitJupiterVersion
+    testAnnotationProcessor 'org.projectlombok:lombok:'+project.lombokVersion
 
     testImplementation project(":Core-testing-utils")
 }

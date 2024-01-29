@@ -11,6 +11,7 @@ dependencies {
     implementation project(":Core-interceptors")
     implementation project(":Core-registry")
     implementation project(":Core-model")
+    implementation project(":Core-permission")
 
     testAnnotationProcessor('org.atteo.classindex:classindex:' + project.atteoClassIndexVersion)
     testImplementation 'org.atteo.classindex:classindex:' + project.atteoClassIndexVersion

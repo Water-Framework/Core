@@ -5,6 +5,9 @@ dependencies {
 	//lombok
 	implementation group: 'org.projectlombok', name: 'lombok', version: project.lombokVersion
 	annotationProcessor 'org.projectlombok:lombok:'+project.lombokVersion
+	//Atteo
+	implementation 'org.atteo.classindex:classindex:' + project.atteoClassIndexVersion
+	annotationProcessor('org.atteo.classindex:classindex:' + project.atteoClassIndexVersion)
 
 	implementation project(":Core-api")
 	implementation project(":Core-model")

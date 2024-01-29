@@ -22,7 +22,7 @@ import it.water.core.permission.annotations.AllowPermissions;
 public class TestEntityServiceImpl1 implements TestEntityService1 {
     private TestProtectedEntity resource = new TestProtectedEntity();
 
-    @AllowPermissions(actions = WebAPIActions.ActionNames.GET, checkById = true, systemApiRef = "it.water.core.security.service.TestEntitySystemService")
+    @AllowPermissions(actions = "GET", checkById = true, systemApiRef = "it.water.core.security.service.TestEntitySystemService")
     public boolean alternativeSpecificPermissionMethod(long resourceId) {
         return true;
     }
