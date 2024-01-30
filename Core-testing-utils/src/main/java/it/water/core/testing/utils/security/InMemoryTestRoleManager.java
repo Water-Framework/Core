@@ -20,50 +20,75 @@ import it.water.core.api.permission.Role;
 import it.water.core.api.permission.RoleManager;
 import it.water.core.interceptors.annotations.FrameworkComponent;
 
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 /**
  * @Author Aristide Cittadino
  * Simple In memory Role Manager.
  */
 @FrameworkComponent(priority = 0)
-public class InMemoryRoleManager implements RoleManager {
-    Map<Long, Set<String>> userRoles = new HashMap<>();
-    Set<String> roles = new HashSet<>();
+public class InMemoryTestRoleManager implements RoleManager {
+    Map<Long, Set<Role>> userRoles = new HashMap<>();
+    Set<Role> roles = new HashSet<>();
 
     @Override
     public Role createIfNotExists(String roleName) {
-        roles.add(roleName);
-        return new Role() {
+        Role r = new Role() {
             @Override
             public String getName() {
                 return roleName;
             }
+
+            @Override
+            public int hashCode() {
+                return this.getName().hashCode();
+            }
+
+            @Override
+            public boolean equals(Object obj) {
+                if (!(obj instanceof Role))
+                    return false;
+                return ((Role) obj).getName().equals(getName());
+            }
         };
+        roles.add(r);
+        return r;
+    }
+
+    @Override
+    public Role getRole(String roleName) {
+        Optional<Role> roleOpt = roles.stream().filter(role -> role.getName().equals(roleName)).findFirst();
+        if (roleOpt.isPresent())
+            return roleOpt.get();
+        return null;
     }
 
     @Override
     public boolean exists(String roleName) {
-        return roles.contains(roleName);
+        return roles.stream().anyMatch(role -> role.getName().equalsIgnoreCase(roleName));
     }
 
     @Override
     public boolean hasRole(long userId, String roleName) {
-        return userRoles.containsKey(userId) && userRoles.get(userId).contains(roleName);
+        return userRoles.containsKey(userId) && userRoles.get(userId).stream().anyMatch(role -> role.getName().equals(roleName));
+    }
+
+    @Override
+    public Set<Role> getUserRoles(long userId) {
+        if(!this.userRoles.containsKey(userId))
+            return Collections.emptySet();
+        return Collections.unmodifiableSet(this.userRoles.get(userId));
     }
 
     @Override
     public boolean addRole(long userId, Role role) {
         userRoles.computeIfAbsent(userId, key -> new HashSet<>());
-        return userRoles.get(userId).add(role.getName());
+        return userRoles.get(userId).add(role);
     }
 
     @Override
     public boolean removeRole(long userId, Role role) {
         userRoles.computeIfAbsent(userId, key -> new HashSet<>());
-        return userRoles.get(userId).remove(role.getName());
+        return userRoles.get(userId).remove(role);
     }
 }

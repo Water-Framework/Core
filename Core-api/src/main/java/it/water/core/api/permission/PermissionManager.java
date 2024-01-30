@@ -48,7 +48,7 @@ public interface PermissionManager extends Service {
      * @param r
      * @param action
      */
-    void addPermissionIfNotExists(Role r,Action action);
+    void addPermissionIfNotExists(Role r,Class<? extends Resource> resourceClass,Action action);
 
     /**
      * Checks if an existing user has permissions for action of Action.

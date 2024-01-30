@@ -49,9 +49,4 @@ public interface SecurityContext extends Service {
      */
     long getLoggedEntityId();
 
-    /**
-     * @return the permission manager from the security context
-     */
-    PermissionManager getPermissionManager();
-
 }

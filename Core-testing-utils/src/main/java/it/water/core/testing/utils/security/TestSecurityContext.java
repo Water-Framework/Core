@@ -15,20 +15,17 @@
  */
 package it.water.core.testing.utils.security;
 
-import it.water.core.api.permission.PermissionManager;
 import it.water.core.api.permission.SecurityContext;
 
 public class TestSecurityContext implements SecurityContext {
     private String loggedUserName;
     private boolean isAdmin;
     private long id;
-    private PermissionManager permissionManager;
 
-    private TestSecurityContext(String loggedUserName, boolean isAdmin, long id, PermissionManager permissionManager) {
+    private TestSecurityContext(String loggedUserName, boolean isAdmin, long id) {
         this.loggedUserName = loggedUserName;
         this.isAdmin = isAdmin;
         this.id = id;
-        this.permissionManager = permissionManager;
     }
 
     @Override
@@ -51,13 +48,8 @@ public class TestSecurityContext implements SecurityContext {
         return id;
     }
 
-    @Override
-    public PermissionManager getPermissionManager() {
-        return permissionManager;
-    }
-
-    public static final TestSecurityContext createContext(long id, String username, boolean isAdmin, PermissionManager permissionManager) {
-        return new TestSecurityContext(username, isAdmin, id, permissionManager);
+    public static final TestSecurityContext createContext(long id, String username, boolean isAdmin) {
+        return new TestSecurityContext(username, isAdmin, id);
     }
 
 }

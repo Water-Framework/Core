@@ -57,25 +57,29 @@ public abstract class ApplicationInitializer<T, K> extends AbstractInitializer<T
             Dictionary<String, Object> dictionary = getComponentProperties(frameworkComponentAnnotation.properties());
             List<Class<?>> services = getDeclaredServices(frameworkComponentAnnotation, component);
             log.debug("Component: {} implementing services {} with properties :\n {}", component.getName(), services, Arrays.stream(frameworkComponentAnnotation.properties()).toArray());
-            services.forEach(componentClass -> {
-                try {
-                    Object service = defaultConstructor.get().newInstance();
-                    injectFields(service);
-                    ComponentRegistry registry = getComponentRegistry();
-                    //framework component is registered with the given priority
-                    ComponentConfiguration componentConfiguration = ComponentConfigurationFactory.createNewComponentPropertyFactory()
-                            .withPriority(frameworkComponentAnnotation.priority())
-                            .fromStringDictionary(dictionary)
-                            .build();
-                    ComponentRegistration<T, K> registration = (ComponentRegistration<T, K>) registry.registerComponent(componentClass, service, componentConfiguration);
-                    if (registration.getComponent() != null) {
-                        registeredServices.add(registration);
-                        log.debug("Component: {} succesfully registered!", component.getName());
+            try {
+                Object service = defaultConstructor.get().newInstance();
+                injectFields(service);
+                ComponentRegistry registry = getComponentRegistry();
+                services.forEach(componentClass -> {
+                    try {
+                        //framework component is registered with the given priority
+                        ComponentConfiguration componentConfiguration = ComponentConfigurationFactory.createNewComponentPropertyFactory()
+                                .withPriority(frameworkComponentAnnotation.priority())
+                                .fromStringDictionary(dictionary)
+                                .build();
+                        ComponentRegistration<T, K> registration = (ComponentRegistration<T, K>) registry.registerComponent(componentClass, service, componentConfiguration);
+                        if (registration.getComponent() != null) {
+                            registeredServices.add(registration);
+                            log.debug("Component: {} succesfully registered!", component.getName());
+                        }
+                    } catch (Exception e) {
+                        log.error(e.getMessage(), e);
                     }
-                } catch (Exception e) {
-                    log.error(e.getMessage(), e);
-                }
-            });
+                });
+            } catch (InstantiationException | InvocationTargetException | IllegalAccessException e){
+                log.error("Cannot instantiate new class of {}: {}",services.getClass().getName(),e.getMessage());
+            }
         });
     }
 

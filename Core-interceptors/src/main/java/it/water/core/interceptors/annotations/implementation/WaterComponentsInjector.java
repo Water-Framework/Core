@@ -17,8 +17,8 @@
 package it.water.core.interceptors.annotations.implementation;
 
 import it.water.core.api.interceptors.BeforeMethodFieldInterceptor;
-import it.water.core.api.service.Service;
 import it.water.core.api.registry.ComponentRegistry;
+import it.water.core.api.service.Service;
 import it.water.core.interceptors.annotations.FrameworkComponent;
 import it.water.core.interceptors.annotations.Inject;
 import it.water.core.registry.model.exception.NoComponentRegistryFoundException;
@@ -73,16 +73,14 @@ public class WaterComponentsInjector implements BeforeMethodFieldInterceptor<Inj
         fields.forEach(annotatedField -> {
             Object service = null;
             try {
-                 service = componentRegistry.findComponent(annotatedField.getType(), null);
-            }catch (NoComponentRegistryFoundException e){
-                log.error(e.getMessage(),e);
-            }
-
-            try {
+                service = componentRegistry.findComponent(annotatedField.getType(), null);
                 Method setterMethod = findSetterMethod(destination, annotatedField);
                 log.debug("Setting field {} on {}", annotatedField.getName(), destination.getClass().getName());
                 setterMethod.invoke(destination, service);
-            } catch (IllegalAccessException | NoSuchMethodException | InvocationTargetException e) {
+            } catch (NoComponentRegistryFoundException e) {
+                log.error(e.getMessage(), e);
+            } catch (IllegalAccessException | NoSuchMethodException |
+                     InvocationTargetException e) {
                 log.error("Cannot inject {} field, error while invoking setter method {},", annotatedField, e.getMessage(), e);
             }
         });
@@ -101,7 +99,10 @@ public class WaterComponentsInjector implements BeforeMethodFieldInterceptor<Inj
         String setterMethodName = "set" + annotatedField.getName().substring(0, 1).toUpperCase() + annotatedField.getName().substring(1);
         while (objClass != null) {
             try {
-                return objClass.getDeclaredMethod(setterMethodName, annotatedField.getType());
+                Method m = objClass.getDeclaredMethod(setterMethodName, annotatedField.getType());
+                //forcing setter to be accessible
+                m.setAccessible(true);
+                return m;
             } catch (NoSuchMethodException e) {
                 log.warn("No setter method {} found on {}, trying with superclass ", setterMethodName, destination.getClass().getName());
             }

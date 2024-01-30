@@ -172,7 +172,6 @@ public abstract class WaterAbstractSecurityContext implements SecurityContext {
     /**
      * @return Permission Manager based on the value of the permissionImplementation String
      */
-    @Override
     public PermissionManager getPermissionManager() {
         this.permissionImplementation = this.permissionImplementation == null ? SecurityConstants.PERMISSION_MANAGER_DEFAULT_IMPLEMENTATION : this.permissionImplementation;
         ComponentFilterBuilder componentFilterBuilder = componentRegistry.getComponentFilterBuilder();

@@ -29,7 +29,7 @@ public class FakePermissionManager implements PermissionManager {
     }
 
     @Override
-    public void addPermissionIfNotExists(Role r, Action action) {
+    public void addPermissionIfNotExists(Role r, Class<? extends Resource> resourceClass, Action action) {
 
     }
 

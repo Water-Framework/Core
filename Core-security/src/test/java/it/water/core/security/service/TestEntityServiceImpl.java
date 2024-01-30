@@ -23,6 +23,7 @@ import it.water.core.permission.annotations.AllowGenericPermissions;
 import it.water.core.permission.annotations.AllowPermissions;
 import it.water.core.permission.annotations.AllowPermissionsOnReturn;
 import it.water.core.permission.annotations.AllowRoles;
+import it.water.core.security.TestProtectedResource;
 
 @FrameworkComponent(services = {TestEntityService.class})
 public class TestEntityServiceImpl implements TestEntityService {
@@ -59,7 +60,7 @@ public class TestEntityServiceImpl implements TestEntityService {
         return r;
     }
 
-    @AllowRoles(rolesNames = "ROLE")
+    @AllowRoles(rolesNames = TestProtectedResource.TEST_ROLE_NAME)
     public boolean allowRolesMethod() {
         return true;
     }

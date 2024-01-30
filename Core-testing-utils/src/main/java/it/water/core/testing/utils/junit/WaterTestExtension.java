@@ -25,6 +25,7 @@ import org.apache.cxf.transport.servlet.CXFServlet;
 import org.eclipse.jetty.server.Server;
 import org.eclipse.jetty.servlet.ServletContextHandler;
 import org.eclipse.jetty.servlet.ServletHolder;
+import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.extension.BeforeAllCallback;
 import org.junit.jupiter.api.extension.BeforeEachCallback;
 import org.junit.jupiter.api.extension.Extension;
@@ -32,7 +33,7 @@ import org.junit.jupiter.api.extension.ExtensionContext;
 
 import java.lang.reflect.Method;
 
-public class WaterTestExtension extends WaterAbstractInterceptor implements Extension, BeforeEachCallback, BeforeAllCallback {
+public class WaterTestExtension extends WaterAbstractInterceptor<Service> implements Extension, BeforeEachCallback, BeforeAllCallback {
 
     @Override
     protected ComponentRegistry getComponentsRegistry() {
@@ -43,6 +44,24 @@ public class WaterTestExtension extends WaterAbstractInterceptor implements Exte
     public void beforeAll(ExtensionContext extensionContext) throws Exception {
         startJetty();
         TestRuntimeInitializer.getInstance().start();
+        Method m = findBeforeAllMethod(extensionContext.getRequiredTestClass());
+        if (m != null) {
+            //forcing test class and method to be visible
+            m.setAccessible(true);
+            this.executeInterceptorBeforeMethod((Service) extensionContext.getRequiredTestInstance(), m, m.getParameters());
+        }
+    }
+
+    private Method findBeforeAllMethod(Class<?> testClass) {
+        Method[] methods = testClass.getDeclaredMethods();
+
+        for (Method method : methods) {
+            if (method.isAnnotationPresent(BeforeAll.class)) {
+                return method;
+            }
+        }
+
+        return null;
     }
 
     @Override
@@ -50,7 +69,7 @@ public class WaterTestExtension extends WaterAbstractInterceptor implements Exte
         if (!(extensionContext.getRequiredTestInstance() instanceof Service))
             throw new WaterRuntimeException("Please implement it.water.core.api.service.Service interface in your test class");
         Method m = extensionContext.getRequiredTestMethod();
-        //forcing test method to be visible
+        //forcing test class and method to be visible
         extensionContext.getRequiredTestClass().getDeclaredMethod(m.getName(), m.getParameterTypes()).setAccessible(true);
         this.executeInterceptorBeforeMethod((Service) extensionContext.getRequiredTestInstance(), m, m.getParameters());
     }

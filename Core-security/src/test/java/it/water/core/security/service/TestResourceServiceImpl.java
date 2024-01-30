@@ -18,6 +18,7 @@ package it.water.core.security.service;
 import it.water.core.interceptors.annotations.FrameworkComponent;
 import it.water.core.permission.annotations.AllowGenericPermissions;
 import it.water.core.permission.annotations.AllowRoles;
+import it.water.core.security.TestProtectedResource;
 
 @FrameworkComponent(services = {TestResourceService.class})
 public class TestResourceServiceImpl implements TestResourceService {
@@ -32,7 +33,7 @@ public class TestResourceServiceImpl implements TestResourceService {
         return true;
     }
 
-    @AllowRoles(rolesNames = "ROLE")
+    @AllowRoles(rolesNames = TestProtectedResource.TEST_ROLE_NAME)
     public boolean allowRolesMethod() {
         return true;
     }

@@ -21,7 +21,7 @@
     "hasRestServices": false,
     "hasActions": false,
     "hasModel": true,
-    "projectPath":"Core",
+    "projectPath": "Core",
     "projectApiPath": "Core/Core-api",
     "projectActionsPath": "Core/Core-actions",
     "projectFeaturesPath": "Core/Core-features",
@@ -45,6 +45,8 @@
     "serviceRestPackagePath": "/src/main/java/it/water/core/service/rest",
     "testPackagePath": "/src/test/java/it/water/core/test",
     "publishModule": true,
-    "publishRepoHasCredentials": true
+    "publishRepoHasCredentials": true,
+    "WaterVersion": "3.0.0",
+    "projectsConfiguration": {}
   }
 }

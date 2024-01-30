@@ -19,9 +19,8 @@ import it.water.core.api.action.Action;
 import it.water.core.api.action.ActionsManager;
 import it.water.core.api.bundle.ApplicationProperties;
 import it.water.core.api.interceptors.BeforeMethodInterceptor;
-import it.water.core.api.permission.PermissionManager;
-import it.water.core.api.permission.PermissionUtil;
-import it.water.core.api.permission.SecurityContext;
+import it.water.core.api.model.User;
+import it.water.core.api.permission.*;
 import it.water.core.api.registry.ComponentRegistry;
 import it.water.core.api.security.EncryptionUtil;
 import it.water.core.api.service.Service;
@@ -32,14 +31,16 @@ import it.water.core.security.model.context.BasicSecurityContext;
 import it.water.core.security.model.principal.RolePrincipal;
 import it.water.core.security.model.principal.UserPrincipal;
 import it.water.core.security.service.*;
+import it.water.core.testing.utils.api.TestPermissionManager;
 import it.water.core.testing.utils.bundle.TestRuntimeInitializer;
 import it.water.core.testing.utils.junit.WaterTestExtension;
-import it.water.core.testing.utils.security.FakePermissionManager;
 import lombok.Setter;
 import org.bouncycastle.openssl.PEMException;
 import org.bouncycastle.operator.OperatorCreationException;
 import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.TestInstance;
 import org.junit.jupiter.api.extension.ExtendWith;
 
 import javax.crypto.BadPaddingException;
@@ -52,6 +53,7 @@ import java.security.spec.InvalidKeySpecException;
 import java.util.*;
 
 @ExtendWith(WaterTestExtension.class)
+@TestInstance(TestInstance.Lifecycle.PER_CLASS)
 class SecurityTest implements Service {
     private static TestRuntimeInitializer initializer = TestRuntimeInitializer.getInstance();
     @Inject
@@ -67,6 +69,30 @@ class SecurityTest implements Service {
     @Setter
     private BeforeMethodInterceptor beforeMethodInterceptor;
 
+    @Inject
+    @Setter
+    //injecting test permission manager in order to perform some basic security tests
+    private TestPermissionManager testPermissionManager;
+    @Inject
+    @Setter
+    private RoleManager roleManager;
+    //User who has right permission
+    private User userOk;
+    //User who does not have permissions
+    private User userKo;
+    //Default role for protected resource
+    private Role testRole;
+
+    @BeforeAll
+    void beforeAll() {
+        this.userOk = testPermissionManager.addUser("usernameOk", "username", "username", "email@mail.com");
+        this.userKo = testPermissionManager.addUser("usernameKo", "usernameKo", "usernameKo", "email1@mail.com");
+        this.testRole = roleManager.getRole(TestProtectedResource.TEST_ROLE_NAME);
+        Action saveAction = this.actionsManager.getActions().get(TestProtectedResource.class.getName()).getAction(CrudActions.SAVE);
+        roleManager.addRole(this.userOk.hashCode(), testRole);
+        testPermissionManager.addPermissionIfNotExists(testRole, TestProtectedResource.class, saveAction);
+    }
+
     /**
      * Checking wether all framework components have been initialized correctly
      */
@@ -76,6 +102,7 @@ class SecurityTest implements Service {
         Assertions.assertNotNull(applicationProperties);
         Assertions.assertNotNull(beforeMethodInterceptor);
         Assertions.assertNotNull(actionsManager);
+        Assertions.assertNotNull(testPermissionManager);
     }
 
     /**
@@ -94,36 +121,20 @@ class SecurityTest implements Service {
         Assertions.assertTrue(this.actionsManager.getActions().containsKey(TestProtectedResource.class.getName()));
         Action saveAction = this.actionsManager.getActions().get(TestProtectedResource.class.getName()).getAction(CrudActions.SAVE);
         //pass
-        initializer.impersonate("usernameOk", false, 1);
+        initializer.impersonate(this.userOk);
         Assertions.assertTrue(permissionUtil.checkPermission(res, saveAction));
         Assertions.assertTrue(permissionUtil.checkPermission(res.getResourceName(), saveAction));
         Assertions.assertTrue(permissionUtil.checkPermissionAndOwnership(res, saveAction));
         Assertions.assertTrue(permissionUtil.checkPermissionAndOwnership(res.getResourceName(), saveAction));
-        Assertions.assertTrue(permissionUtil.userHasRoles("usernameOk", new String[]{"ROLE"}));
+        Assertions.assertTrue(permissionUtil.userHasRoles("usernameOk", new String[]{TestProtectedResource.TEST_ROLE_NAME}));
         //deny
-        initializer.impersonate("username", false, 1);
+        initializer.impersonate(this.userKo);
         Assertions.assertFalse(permissionUtil.checkPermission(res, saveAction));
         Assertions.assertFalse(permissionUtil.checkPermission(res.getResourceName(), saveAction));
         Assertions.assertFalse(permissionUtil.checkPermissionAndOwnership(res, saveAction));
         Assertions.assertFalse(permissionUtil.checkPermissionAndOwnership(res.getResourceName(), saveAction));
-        Assertions.assertFalse(permissionUtil.userHasRoles("username", new String[]{"ROLE"}));
-
-        initializer.impersonate("usernameOk", false, 1);
-        initializer.getComponentRegistry().unregisterComponent(PermissionManager.class, initializer.getPermissionManager());
-        Assertions.assertFalse(permissionUtil.checkPermission(res, saveAction));
-        Assertions.assertFalse(permissionUtil.checkPermission(res.getResourceName(), saveAction));
-        Assertions.assertFalse(permissionUtil.checkPermissionAndOwnership(res, saveAction));
-        Assertions.assertFalse(permissionUtil.checkPermissionAndOwnership(res.getResourceName(), saveAction));
-        Assertions.assertFalse(permissionUtil.userHasRoles("username", new String[]{"ROLE"}));
-        //not protected entity with permission manager null should pass the security check
-        NotProtectedEntity notProtectedEntity = new NotProtectedEntity();
-        Assertions.assertTrue(permissionUtil.checkPermission(notProtectedEntity, saveAction));
-        Assertions.assertTrue(permissionUtil.checkPermission(notProtectedEntity.getClass().getName(), saveAction));
-        Assertions.assertTrue(permissionUtil.checkPermissionAndOwnership(notProtectedEntity, saveAction));
-        Assertions.assertTrue(permissionUtil.checkPermissionAndOwnership(notProtectedEntity.getClass().getName(), saveAction));
-        //registering again permission manager
-        initializer.getComponentRegistry().registerComponent(PermissionManager.class, new FakePermissionManager(), null);
-        Assertions.assertNotNull(initializer.getPermissionManager());
+        Assertions.assertFalse(permissionUtil.userHasRoles("usernameKo", new String[]{TestProtectedResource.TEST_ROLE_NAME}));
+        initializer.impersonate(this.userKo);
     }
 
     /**
@@ -133,7 +144,7 @@ class SecurityTest implements Service {
     @Test
     void testPermissionAnnotationImplementations() {
         //testing entities
-        initializer.impersonate("usernameOk", false, 1);
+        initializer.impersonate(this.userOk);
         TestEntityService testService = initializer.getComponentRegistry().findComponent(TestEntityService.class, null);
         TestEntityService1 alternativeService = initializer.getComponentRegistry().findComponent(TestEntityService1.class, null);
         Assertions.assertNotNull(testService);
@@ -145,7 +156,7 @@ class SecurityTest implements Service {
         Assertions.assertTrue(testService.specificPermissionMethodWithSystemApi(1));
         Assertions.assertTrue(alternativeService.alternativeSpecificPermissionMethod(1));
         Assertions.assertNotNull(testService.permissionOnReturnMethod());
-        initializer.impersonate("usernameKo", false, 1);
+        initializer.impersonate(this.userKo);
         TestProtectedEntity entity = new TestProtectedEntity();
         Assertions.assertThrows(UnauthorizedException.class, () -> testService.genericPermissionMethod());
         Assertions.assertThrows(UnauthorizedException.class, () -> testService.genericPermissionMethodWithoutResourceName());
@@ -155,7 +166,7 @@ class SecurityTest implements Service {
         Assertions.assertThrows(UnauthorizedException.class, () -> testService.specificPermissionMethodWithSystemApi(1));
         Assertions.assertThrows(UnauthorizedException.class, () -> testService.permissionOnReturnMethod());
         //testing protected resource that are not entities
-        initializer.impersonate("usernameOk", false, 1);
+        initializer.impersonate(this.userOk);
         TestResourceService testResourceService = initializer.getComponentRegistry().findComponent(TestResourceService.class, null);
         Assertions.assertNotNull(testResourceService);
         Assertions.assertTrue(testResourceService.genericPermissionMethod());
@@ -183,13 +194,10 @@ class SecurityTest implements Service {
      */
     @Test
     void testSecurityContext() {
-        initializer.impersonate("usernameOk", false, 1);
+        initializer.impersonate(this.userOk);
         SecurityContext context = initializer.getRuntime().getSecurityContext();
-        Assertions.assertNotNull(context.getPermissionManager());
+        Assertions.assertNotNull(testPermissionManager);
         Assertions.assertEquals("usernameOk", context.getLoggedUsername());
-        Assertions.assertEquals(1, context.getLoggedEntityId());
-        List<Class<?>> interfaces = new ArrayList<>(Arrays.asList(context.getPermissionManager().getClass().getInterfaces()));
-        Assertions.assertTrue(interfaces.contains(PermissionManager.class));
 
         //Testing principals and Security Context general behaviour
         Principal user1Princpal = new UserPrincipal("user1", false, 1, "test");
@@ -200,7 +208,7 @@ class SecurityTest implements Service {
         Set<Principal> principals = new HashSet<>();
         principals.add(user1Princpal);
         principals.add(role1Principal);
-        ExampleSecurityContext exampleSecurityContext = new ExampleSecurityContext(context.getPermissionManager(), principals);
+        ExampleSecurityContext exampleSecurityContext = new ExampleSecurityContext(testPermissionManager, principals);
         Assertions.assertNotNull(exampleSecurityContext.getLoggedPrincipals());
         Assertions.assertFalse(exampleSecurityContext.isSecure());
         Assertions.assertEquals("none", exampleSecurityContext.getAuthenticationScheme());
@@ -216,7 +224,7 @@ class SecurityTest implements Service {
         //Simulating security context for an administrator
         principals = new HashSet<>();
         principals.add(userAdminPrincipal);
-        exampleSecurityContext = new ExampleSecurityContext(context.getPermissionManager(), principals);
+        exampleSecurityContext = new ExampleSecurityContext(testPermissionManager, principals);
         Assertions.assertEquals("admin", exampleSecurityContext.getLoggedUsername());
         Assertions.assertEquals(2, exampleSecurityContext.getLoggedEntityId());
         Assertions.assertEquals("admin", exampleSecurityContext.getUserPrincipal().getName());
@@ -226,10 +234,10 @@ class SecurityTest implements Service {
         Assertions.assertFalse(exampleSecurityContext.isUserInRole("role2"));
 
         //Testing empty context
-        exampleSecurityContext = new ExampleSecurityContext(context.getPermissionManager(), null);
+        exampleSecurityContext = new ExampleSecurityContext(testPermissionManager, null);
         Assertions.assertFalse(exampleSecurityContext.isLoggedIn());
         Assertions.assertNotNull(exampleSecurityContext.toString());
-        exampleSecurityContext = new ExampleSecurityContext(null, "permissionImplementation", context.getPermissionManager());
+        exampleSecurityContext = new ExampleSecurityContext(null, "permissionImplementation", testPermissionManager);
         Assertions.assertFalse(exampleSecurityContext.isLoggedIn());
         Assertions.assertNotNull(exampleSecurityContext.toString());
         Assertions.assertEquals("permissionImplementation", exampleSecurityContext.getPermissionImplementation());

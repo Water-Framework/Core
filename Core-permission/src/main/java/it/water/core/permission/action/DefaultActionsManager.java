@@ -100,7 +100,7 @@ public class DefaultActionsManager implements it.water.core.api.action.ActionsMa
                 if (this.permissionManager != null) {
                     Arrays.stream(defaultRoleAccess.actions()).forEach(actionName -> {
                         if (this.actionsRegistry.containsKey(resourceClass.getName()) && this.actionsRegistry.get(resourceClass.getName()).containsActionName(actionName)) {
-                            this.permissionManager.addPermissionIfNotExists(r, this.actionsRegistry.get(resourceClass.getName()).getAction(actionName));
+                            this.permissionManager.addPermissionIfNotExists(r, resourceClass,this.actionsRegistry.get(resourceClass.getName()).getAction(actionName));
                         }
                     });
                 }

@@ -16,6 +16,8 @@
 
 package it.water.core.api.permission;
 
+import java.util.Set;
+
 /**
  * @Author Aristide Cittadino
  * Class which has the ownership of managing roles inside the platform.
@@ -43,6 +45,13 @@ public interface RoleManager {
     boolean hasRole(long userId, String roleName);
 
     /**
+     * Return all user roles
+     * @param userId
+     * @return
+     */
+    Set<Role> getUserRoles(long userId);
+
+    /**
      * Adds a new role to the specified user id
      *
      * @param userId
@@ -50,6 +59,13 @@ public interface RoleManager {
      * @return
      */
     boolean addRole(long userId, Role role);
+
+    /**
+     *
+     * @param roleName role name which must be found
+     * @return
+     */
+    Role getRole(String roleName);
 
     /**
      * Removes a role from a user

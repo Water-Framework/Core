@@ -16,9 +16,17 @@
 package it.water.core.security.service;
 
 import it.water.core.api.permission.ProtectedEntity;
+import it.water.core.permission.action.CrudActions;
+import it.water.core.permission.annotations.AccessControl;
+import it.water.core.permission.annotations.DefaultRoleAccess;
+import it.water.core.security.TestProtectedResource;
 
 import java.util.Date;
 
+@AccessControl(availableActions = {CrudActions.SAVE,"GET"},
+        rolesPermissions = {
+                @DefaultRoleAccess(roleName = TestProtectedResource.TEST_ROLE_NAME, actions = { CrudActions.SAVE , "GET"})
+        })
 public class TestProtectedEntity implements ProtectedEntity {
 
     @Override

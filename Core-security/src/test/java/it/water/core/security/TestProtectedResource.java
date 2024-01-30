@@ -18,10 +18,15 @@ package it.water.core.security;
 import it.water.core.api.model.ProtectedResource;
 import it.water.core.permission.action.CrudActions;
 import it.water.core.permission.annotations.AccessControl;
+import it.water.core.permission.annotations.DefaultRoleAccess;
 
 
-@AccessControl(availableActions = CrudActions.SAVE)
+@AccessControl(availableActions = {CrudActions.SAVE,"GET"},
+        rolesPermissions = {
+                @DefaultRoleAccess(roleName = TestProtectedResource.TEST_ROLE_NAME, actions = { CrudActions.SAVE , "GET"})
+        })
 public class TestProtectedResource implements ProtectedResource {
+    public static final String TEST_ROLE_NAME = "TestRole";
     @Override
     public String getResourceId() {
         return this.getResourceName();

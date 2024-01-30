@@ -18,6 +18,8 @@
 package it.water.core.security.annotations.implementation;
 
 import it.water.core.api.action.Action;
+import it.water.core.api.action.ActionList;
+import it.water.core.api.action.ActionsManager;
 import it.water.core.api.action.ResourceAction;
 import it.water.core.api.bundle.Runtime;
 import it.water.core.api.model.BaseEntity;
@@ -25,12 +27,10 @@ import it.water.core.api.model.Resource;
 import it.water.core.api.permission.PermissionUtil;
 import it.water.core.api.permission.SecurityContext;
 import it.water.core.api.registry.ComponentRegistry;
-import it.water.core.api.registry.filter.ComponentFilter;
 import it.water.core.api.service.BaseApi;
 import it.water.core.api.service.Service;
 import it.water.core.interceptors.annotations.Inject;
 import it.water.core.model.exceptions.WaterRuntimeException;
-import it.water.core.permission.action.ActionsConstants;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.Setter;
@@ -64,6 +64,10 @@ public abstract class AbstractPermissionInterceptor implements Service {
     @Getter(AccessLevel.PROTECTED)
     private ComponentRegistry componentRegistry;
 
+    @Inject
+    @Setter
+    private ActionsManager actionsManager;
+
     /**
      * Return current class name and action name registered as OSGi components
      *
@@ -74,31 +78,28 @@ public abstract class AbstractPermissionInterceptor implements Service {
     protected Action getAction(String className, String actionName) {
         log.debug(
                 "Service getAction for {} and action {}", className, actionName);
-        ComponentFilter componentFilter = componentRegistry.getComponentFilterBuilder()
-                .createFilter(ActionsConstants.ACTION_RESOURCE_NAME, className)
-                .and(ActionsConstants.ACTION_NAME, actionName);
-        log.debug(
-                "Searching for OSGi registered action with filter: {}", componentFilter.getFilter());
-        List<ResourceAction<?>> actions = getActions(componentFilter);
+
+        List<ResourceAction<?>> actions = getActions(className, actionName);
 
         if (actions.size() > 1) {
-            log.error("More OSGi action found for filter: {}", componentFilter.getFilter());
+            log.error("More actions found for className and action name: {}, {}", className, actionName);
             throw new WaterRuntimeException();
         } else if (actions.isEmpty()) {
             return null;
         }
         ResourceAction<?> act = actions.iterator().next();
-        log.debug("OSGi action found {}", act);
+        log.debug("Action found {}", act);
         return act.getAction();
     }
 
-    private List<ResourceAction<?>> getActions(ComponentFilter componentFilter) {
+    private List<ResourceAction<?>> getActions(String className, String actionName) {
         List<ResourceAction<?>> actions = new ArrayList<>();
         try {
             //Just to avoid sonar error, all objects are WaterResourceAction<?>
-            List<?> foundActions = componentRegistry.findComponents(ResourceAction.class, componentFilter);
-            for (Object action : foundActions) {
-                actions.add((ResourceAction<?>) action);
+            ActionList<?> foundActions = actionsManager.getActions().get(className);
+            for (ResourceAction<?> action : foundActions.getList()) {
+                if (action.getAction().getActionName().equalsIgnoreCase(actionName))
+                    actions.add(action);
             }
         } catch (Exception e) {
             log.error(e.getMessage(), e);

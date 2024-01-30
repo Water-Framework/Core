@@ -17,6 +17,7 @@ package it.water.core.testing.utils.bundle;
 
 import it.water.core.api.bundle.ApplicationProperties;
 import it.water.core.api.bundle.Runtime;
+import it.water.core.api.model.User;
 import it.water.core.api.permission.PermissionManager;
 import it.water.core.api.registry.ComponentConfiguration;
 import it.water.core.api.registry.ComponentRegistry;
@@ -82,8 +83,8 @@ public class TestRuntimeInitializer extends RuntimeInitializer<Object, TestCompo
         return testRuntime;
     }
 
-    public void impersonate(String username, boolean admin, long id) {
-        ((TestRuntime) this.getRuntime()).switchSecurityContext(TestSecurityContext.createContext(id, username, admin, componentRegistry.findComponent(PermissionManager.class, null)));
+    public void impersonate(User u) {
+        ((TestRuntime) this.getRuntime()).switchSecurityContext(TestSecurityContext.createContext(u.hashCode(), u.getUsername(), u.isAdmin()));
     }
 
     public PermissionManager getPermissionManager() {
