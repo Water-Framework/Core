@@ -27,9 +27,10 @@ public class TestRuntime implements Runtime {
     private ApplicationProperties applicationProperties;
 
     public TestRuntime(ApplicationProperties applicationProperties) {
-        this.context = TestSecurityContext.createContext(0, null, false, null);
+        this.context = TestSecurityContext.createContext(0, null, false);
         this.applicationProperties = applicationProperties;
     }
+
     @Override
     public SecurityContext getSecurityContext() {
         return context;
