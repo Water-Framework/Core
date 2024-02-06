@@ -21,7 +21,6 @@ dependencies {
 	implementation 'org.junit.jupiter:junit-jupiter-engine:' + project.junitJupiterVersion
 	//for test purpose we use javax persistence
 	implementation 'org.hibernate:hibernate-core:'+project.hibernateVersion
-	implementation 'javax.persistence:javax.persistence-api:'+project.javaxPersistenceVersion
 	//for starting jetty server for rest services evetually with cxf provider
 	implementation group: 'org.reflections', name: 'reflections', version: '0.10.2'
 	implementation group: 'org.apache.httpcomponents', name: 'httpclient', version: '4.5.13'
