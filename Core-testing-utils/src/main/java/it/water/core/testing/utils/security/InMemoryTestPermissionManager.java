@@ -28,6 +28,7 @@ import it.water.core.interceptors.annotations.FrameworkComponent;
 import it.water.core.interceptors.annotations.Inject;
 import it.water.core.permission.action.ActionFactory;
 import it.water.core.testing.utils.api.TestPermissionManager;
+import lombok.Getter;
 import lombok.Setter;
 
 import java.util.*;
@@ -38,13 +39,17 @@ import java.util.concurrent.atomic.AtomicReference;
  * Fake permission Manager which allows every action coming from username with "usernameOk" and deny others.
  * Use it just for test purpose
  */
-@FrameworkComponent(priority = 0, properties = "it.water.core.security.permission.implementation=default", services = {PermissionManager.class, TestPermissionManager.class})
+@FrameworkComponent(priority = 0, properties = "implementation=default", services = {PermissionManager.class, TestPermissionManager.class})
 public class InMemoryTestPermissionManager implements TestPermissionManager {
     Set<User> users = new HashSet<>();
     Map<Role, Set<ResourceAction<?>>> rolePermissions = new HashMap<>();
     @Inject
     @Setter
     private RoleManager roleManager;
+    //for spring tests
+    @Setter
+    @Getter
+    private String implementation="default";
 
     @Override
     public User addUser(String username, String name, String lastname, String email) {

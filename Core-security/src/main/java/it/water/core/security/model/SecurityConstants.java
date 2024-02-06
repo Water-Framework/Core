@@ -41,5 +41,5 @@ import lombok.NoArgsConstructor;
 public class SecurityConstants {
 
     public static final String PERMISSION_MANAGER_DEFAULT_IMPLEMENTATION = "default";
-    public static final String PERMISSION_IMPLEMENTATION_COMPONENT_PROPERTY = "it.water.core.security.permission.implementation";
+    public static final String PERMISSION_IMPLEMENTATION_COMPONENT_PROPERTY = "implementation";
 }
