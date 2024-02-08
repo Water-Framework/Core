@@ -24,6 +24,9 @@ import java.util.List;
 
 @AllArgsConstructor
 public class TestHUser implements User {
+
+    @Getter
+    private long id;
     @Getter
     private String name;
     @Getter

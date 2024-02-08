@@ -67,12 +67,12 @@ public class WaterPermissionUtilImpl implements PermissionUtil {
     public boolean checkPermission(Object o,
                                    Action action) {
         log.debug("Checking permission resource {} has {} action", o, action);
-        if ((pm == null && PermissionManager.isProtectedEntity(o))) {
-            return false;
-        } else if (pm == null) {
+        if (!PermissionManager.isProtectedEntity(o))
             return true;
+        //entity is protected but no permission manager has been found
+        if ((pm == null)) {
+            return false;
         }
-
         Resource entity = (Resource) o;
         return pm.checkPermission(waterRuntime.getSecurityContext().getLoggedUsername(), entity, action);
     }
@@ -86,10 +86,11 @@ public class WaterPermissionUtilImpl implements PermissionUtil {
     public boolean checkPermission(String resourceName,
                                    Action action) {
         log.debug("Checking permission resource {} has {} action", resourceName, action);
-        if ((pm == null && PermissionManager.isProtectedEntity(resourceName))) {
-            return false;
-        } else if (pm == null) {
+        if (!PermissionManager.isProtectedEntity(resourceName))
             return true;
+        //entity is protected but no permission manager has been found
+        if ((pm == null)) {
+            return false;
         }
         return pm.checkPermission(waterRuntime.getSecurityContext().getLoggedUsername(), resourceName, action);
     }
@@ -105,10 +106,11 @@ public class WaterPermissionUtilImpl implements PermissionUtil {
     public boolean checkPermissionAndOwnership(String resourceName,
                                                Action action, Resource... entities) {
         log.debug("Checking permission resource {} has {} action with owned entities {}", resourceName, action, entities);
-        if ((pm == null && PermissionManager.isProtectedEntity(resourceName))) {
-            return false;
-        } else if (pm == null) {
+        if (!PermissionManager.isProtectedEntity(resourceName))
             return true;
+        //entity is protected but no permission manager has been found
+        if ((pm == null)) {
+            return false;
         }
         return pm.checkPermissionAndOwnership(waterRuntime.getSecurityContext().getLoggedUsername(), resourceName, action, entities);
     }
@@ -123,10 +125,11 @@ public class WaterPermissionUtilImpl implements PermissionUtil {
      */
     public boolean checkPermissionAndOwnership(Object o, Action action, Resource... entities) {
         log.debug("Checking permission resource {} has {} action with owned entities {}", o, action, entities);
-        if ((pm == null && PermissionManager.isProtectedEntity(o))) {
-            return false;
-        } else if (pm == null) {
+        if (!PermissionManager.isProtectedEntity(o))
             return true;
+        //entity is protected but no permission manager has been found
+        if ((pm == null)) {
+            return false;
         }
         Resource entity = (Resource) o;
         return pm.checkPermissionAndOwnership(waterRuntime.getSecurityContext().getLoggedUsername(), entity, action, entities);

@@ -24,7 +24,7 @@ import it.water.core.api.permission.PermissionManager;
  * Simple Permission Manager which supports operation of user management for test purpose.
  */
 public interface TestPermissionManager extends PermissionManager {
-    User addUser(String username, String name, String lastname, String email);
+    User addUser(String username, String name, String lastname, String email,boolean isAdmin);
     void removeUser(String username);
     User findUser(String username);
 }

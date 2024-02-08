@@ -22,6 +22,11 @@ package it.water.core.api.model;
  * Interface for defining the concept of user.
  */
 public interface User {
+    /**
+     * Identifies an user uniquely
+     * @return
+     */
+    long getId();
 
     /**
      * Gets the HUser name

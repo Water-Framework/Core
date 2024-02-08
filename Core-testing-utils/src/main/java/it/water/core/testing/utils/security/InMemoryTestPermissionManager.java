@@ -41,6 +41,7 @@ import java.util.concurrent.atomic.AtomicReference;
  */
 @FrameworkComponent(priority = 0, properties = "implementation=default", services = {PermissionManager.class, TestPermissionManager.class})
 public class InMemoryTestPermissionManager implements TestPermissionManager {
+    private static int userCounter = 1;
     Set<User> users = new HashSet<>();
     Map<Role, Set<ResourceAction<?>>> rolePermissions = new HashMap<>();
     @Inject
@@ -49,11 +50,18 @@ public class InMemoryTestPermissionManager implements TestPermissionManager {
     //for spring tests
     @Setter
     @Getter
-    private String implementation="default";
+    private String implementation = "default";
 
     @Override
-    public User addUser(String username, String name, String lastname, String email) {
+    public User addUser(String username, String name, String lastname, String email, boolean isAdmin) {
         User u = new User() {
+            private long id = userCounter++;
+
+            @Override
+            public long getId() {
+                return id;
+            }
+
             @Override
             public String getName() {
                 return name;
@@ -81,7 +89,7 @@ public class InMemoryTestPermissionManager implements TestPermissionManager {
 
             @Override
             public boolean isAdmin() {
-                return false;
+                return isAdmin;
             }
 
             @Override
@@ -126,7 +134,7 @@ public class InMemoryTestPermissionManager implements TestPermissionManager {
     public boolean userHasRoles(String username, String[] rolesNames) {
         boolean hasAllRoles = false;
         for (int i = 0; i < rolesNames.length; i++) {
-            boolean hasRole = roleManager.hasRole(findUser(username).hashCode(), rolesNames[i]);
+            boolean hasRole = roleManager.hasRole(findUser(username).getId(), rolesNames[i]);
             if (i == 0)
                 hasAllRoles = hasRole;
             else
@@ -150,11 +158,11 @@ public class InMemoryTestPermissionManager implements TestPermissionManager {
         Optional<User> user = users.stream().filter(currUser -> currUser.getUsername().equals(username)).findFirst();
         if (!user.isPresent())
             return false;
-        Set<Role> userRoles = roleManager.getUserRoles(findUser(username).hashCode());
-        Set<Role> rolesWithPermission = new HashSet<>(rolePermissions.keySet());
-        rolesWithPermission.retainAll(userRoles);
-        if (!rolesWithPermission.isEmpty()) {
-            return rolesWithPermission.stream().anyMatch(role -> rolePermissions.containsKey(role));
+        if (user.get().isAdmin())
+            return true;
+        Set<Role> userRoles = roleManager.getUserRoles(findUser(username).getId());
+        if (!userRoles.isEmpty()) {
+            return userRoles.stream().anyMatch(role -> rolePermissions.containsKey(role) && rolePermissions.get(role).stream().anyMatch(resourceAction -> resourceAction.getResourceClass().getName().equalsIgnoreCase(resourceName) && resourceAction.getAction().equals(action)));
         }
         return false;
     }
@@ -175,6 +183,8 @@ public class InMemoryTestPermissionManager implements TestPermissionManager {
 
     @Override
     public boolean checkUserOwnsResource(User user, Object resource) {
+        if (user.isAdmin())
+            return true;
         if (resource instanceof OwnedResource || resource instanceof OwnedChildResource) {
             return ((OwnedResource) resource).getUserOwner().getUsername().equals(user.getUsername());
         }
