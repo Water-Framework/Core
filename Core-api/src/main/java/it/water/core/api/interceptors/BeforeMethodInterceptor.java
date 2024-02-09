@@ -37,4 +37,5 @@ public interface BeforeMethodInterceptor<A extends Annotation> extends MethodInt
      * @param <S>          Service Type
      */
     <S extends Service> void interceptMethod(S destination, Method m, Object[] args, A annotation);
+
 }

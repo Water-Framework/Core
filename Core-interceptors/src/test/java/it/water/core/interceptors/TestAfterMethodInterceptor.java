@@ -35,4 +35,9 @@ public class TestAfterMethodInterceptor implements AfterMethodInterceptor<TestMe
     public <S extends Service> void interceptMethod(S destination, Method m, Object[] args, Object returnResult, TestMethodAnnotation annotation) {
         log.info("#### METHOD INTERCEPTED! ####");
     }
+
+    @Override
+    public Class getAnnotation() {
+        return TestMethodAnnotation.class;
+    }
 }

@@ -67,4 +67,13 @@ public class AllowRolesInterceptor extends AbstractPermissionInterceptor impleme
         if (!waterPermissionUtil.userHasRoles(ctx.getLoggedUsername(), roles))
             throw new UnauthorizedException();
     }
+
+    /**
+     *
+     * @return
+     */
+    @Override
+    public Class getAnnotation() {
+        return AllowRoles.class;
+    }
 }

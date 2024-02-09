@@ -144,6 +144,11 @@ class InterceptorsTest {
             public <S extends Service> void interceptMethod(S destination, Method m, List<Field> annotatedFields, Object[] args, Annotation annotation) {
                 //do nothing
             }
+
+            @Override
+            public Class getAnnotation() {
+                return null;
+            }
         };
         Assertions.assertThrows(UnsupportedOperationException.class, () -> {
             afterMethodFieldInterceptor.interceptMethod(null, (Method) null, (Object[]) null, null, null);

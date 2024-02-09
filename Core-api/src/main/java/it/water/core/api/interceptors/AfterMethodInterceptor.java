@@ -38,4 +38,5 @@ public interface AfterMethodInterceptor<A extends Annotation> extends MethodInte
      * @param <S>           Service Type
      */
     <S extends Service> void interceptMethod(S destination, Method m, Object[] args, Object returnResult, A annotation);
+
 }

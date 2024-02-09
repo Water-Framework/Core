@@ -63,6 +63,14 @@ public class WaterComponentsInjector implements BeforeMethodFieldInterceptor<Inj
     }
 
     /**
+     * @return
+     */
+    @Override
+    public Class<Inject> getAnnotation() {
+        return Inject.class;
+    }
+
+    /**
      * @param componentRegistry
      * @param destination
      * @param fields

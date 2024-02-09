@@ -25,8 +25,9 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.lang.annotation.Annotation;
-import java.lang.reflect.Proxy;
-import java.lang.reflect.*;
+import java.lang.reflect.Field;
+import java.lang.reflect.Method;
+import java.lang.reflect.Type;
 import java.util.*;
 
 
@@ -145,8 +146,8 @@ public abstract class WaterAbstractInterceptor<S extends Service> implements it.
                 if (!intercepted)
                     interceptBasedOnRegisterdInterceptorExecutor(annotation, null, service, method, args, result, interceptorClass);
             }
-        } catch (NoSuchMethodException e){
-            log.debug(e.getMessage(),e);
+        } catch (NoSuchMethodException e) {
+            log.debug(e.getMessage(), e);
         }
     }
 
@@ -194,16 +195,8 @@ public abstract class WaterAbstractInterceptor<S extends Service> implements it.
             //find the executor implementation based on registerd components which expose for example BeforeMethodInterceptor or AfterMethodInterceptor
             try {
                 List<? extends MethodInterceptor> interceptors = this.getComponentsRegistry().findComponents(interceptorClass, null);
-                //Filter amongs all interceptors which use the current annotation as Genric Type
-                Optional<? extends MethodInterceptor> executor = interceptors.stream().filter(object -> {
-                    Type[] interfaces = null;
-                    List<Class<?>> declaredInterfaces = new ArrayList<>(Arrays.asList(object.getClass().getInterfaces()));
-                    //in case of receiving an water proxy
-                    if (declaredInterfaces.contains(it.water.core.api.interceptors.Proxy.class))
-                        interfaces = ((it.water.core.api.interceptors.Proxy) (Proxy.getInvocationHandler(object))).getOriginalGenericInterfaces();
-                    else interfaces = object.getClass().getGenericInterfaces();
-                    return Arrays.asList(interfaces).stream().anyMatch(currentInterface -> currentInterface instanceof ParameterizedType && ((ParameterizedType) currentInterface).getActualTypeArguments().length == 1 && ((ParameterizedType) currentInterface).getActualTypeArguments()[0].equals(annotation.annotationType()));
-                }).findFirst();
+                //Filter amongs all interceptors which use the same annotation
+                Optional<? extends MethodInterceptor> executor = interceptors.stream().filter(interceptor -> interceptor.getAnnotation().equals(annotation.annotationType())).findFirst();
                 //if an interceptor is matched then run the interception
                 if (executor.isPresent()) {
                     if (interceptorClass.isAssignableFrom(executor.get().getClass())) {

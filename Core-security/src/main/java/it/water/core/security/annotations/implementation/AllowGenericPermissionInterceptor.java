@@ -83,6 +83,11 @@ public class AllowGenericPermissionInterceptor extends AbstractPermissionInterce
         throw new UnauthorizedException();
     }
 
+    @Override
+    public Class<AllowGenericPermissions> getAnnotation() {
+        return AllowGenericPermissions.class;
+    }
+
     /**
      * @param s
      * @param args

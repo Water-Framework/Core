@@ -57,13 +57,7 @@ public class TestComponentRegistry implements ComponentRegistry {
             final Object toRegister;
             Type[] toClass = component.getClass().getGenericInterfaces();
             List<Class<?>> toClassList = new ArrayList<>();
-            for (int i = 0; i < toClass.length; i++) {
-                Type t = toClass[i];
-                if (t instanceof ParameterizedType) {
-                    toClassList.add((Class<?>) ((ParameterizedType) t).getRawType());
-                } else
-                    toClassList.add((Class<?>) t);
-            }
+            getGenericClasses(toClass,toClassList);
             if (componentClass.isInterface() && !toClassList.contains(componentClass))
                 toClassList.add(componentClass);
             //forcing to be a proxy
@@ -86,6 +80,20 @@ public class TestComponentRegistry implements ComponentRegistry {
             return registration;
         }
         throw new WaterRuntimeException("Registration component cannot be null");
+    }
+
+    void getGenericClasses(Type[] toClass,List<Class<?>> toClassList){
+        for (int i = 0; i < toClass.length; i++) {
+            Type t = toClass[i];
+            if (t instanceof ParameterizedType) {
+                Class<?> toExposeClass = (Class<?>) ((ParameterizedType) t).getRawType();
+                toClassList.add(toExposeClass);
+                Type[] ancestorInterfaces = toExposeClass.getGenericInterfaces();
+                if(ancestorInterfaces != null && ancestorInterfaces.length > 0)
+                    getGenericClasses(ancestorInterfaces,toClassList);
+            } else
+                toClassList.add((Class<?>) t);
+        }
     }
 
     private <T, K> ComponentRegistration<T, K> doRegistration(Class<?> componentClass, Object toRegister, ComponentConfiguration configuration) {

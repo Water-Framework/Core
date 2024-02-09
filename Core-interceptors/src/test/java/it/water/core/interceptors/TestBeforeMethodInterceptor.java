@@ -35,4 +35,9 @@ public class TestBeforeMethodInterceptor implements BeforeMethodInterceptor<Test
     public <S extends Service> void interceptMethod(S destination, Method m, Object[] args, TestMethodAnnotation annotation) {
         log.info("#### METHOD INTERCEPTED! ####");
     }
+
+    @Override
+    public Class getAnnotation() {
+        return TestMethodAnnotation.class;
+    }
 }

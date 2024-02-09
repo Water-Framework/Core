@@ -76,6 +76,11 @@ public class AllowPermissionInterceptor extends AbstractPermissionInterceptor im
         }
     }
 
+    @Override
+    public Class getAnnotation() {
+        return AllowPermissions.class;
+    }
+
     /**
      * Checks wether annotation is put on a method relate to an entity service or use a system entity api
      *

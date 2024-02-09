@@ -66,4 +66,9 @@ public class FakeInterceptor extends WaterAbstractInterceptor implements Service
             Assertions.assertTrue(false);
         }
     }
+
+    @Override
+    public Class getAnnotation() {
+        return null;
+    }
 }

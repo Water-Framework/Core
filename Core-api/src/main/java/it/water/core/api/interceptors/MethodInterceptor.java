@@ -17,11 +17,19 @@
 
 package it.water.core.api.interceptors;
 
+import java.lang.annotation.Annotation;
+
 /**
  * @Author Aristide Cittadino
  * A MethodInterceptor is a method which can be invoked before and/or after a  service method invocation.
  * It can be used to implement custom annotation for pre-processing or post-processing execution before methods are invoked inside *Api or *SystemApi classes.
  * NOTE: this capability works only on Services methods (no rest, you can use filters for that layer, no persistence)
  */
-public interface MethodInterceptor {
+public interface MethodInterceptor<A extends Annotation> {
+
+    /**
+     *
+     * @return the annotation associated with this interceptor
+     */
+    Class<A> getAnnotation();
 }
