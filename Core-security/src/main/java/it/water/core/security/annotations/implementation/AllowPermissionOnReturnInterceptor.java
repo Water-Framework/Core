@@ -74,6 +74,6 @@ public class AllowPermissionOnReturnInterceptor extends AbstractPermissionInterc
 
     @Override
     public Class getAnnotation() {
-        return AllowPermissionOnReturnInterceptor.class;
+        return AllowPermissionsOnReturn.class;
     }
 }

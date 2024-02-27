@@ -28,7 +28,6 @@ import it.water.core.registry.model.ComponentConfigurationFactory;
 import it.water.core.testing.utils.filter.TestComponentFilterBuilder;
 import it.water.core.testing.utils.registry.TestComponentRegistration;
 import it.water.core.testing.utils.registry.TestComponentRegistry;
-import it.water.core.testing.utils.runtime.TestRuntime;
 import it.water.core.testing.utils.security.TestSecurityContext;
 import org.reflections.Reflections;
 import org.reflections.util.ClasspathHelper;
@@ -36,7 +35,6 @@ import org.reflections.util.ConfigurationBuilder;
 
 public class TestRuntimeInitializer extends RuntimeInitializer<Object, TestComponentRegistration<Object>> {
     private ComponentRegistry componentRegistry;
-    private Runtime testRuntime;
     private ApplicationProperties waterApplicationProperties;
     private static TestRuntimeInitializer instance;
 
@@ -77,14 +75,9 @@ public class TestRuntimeInitializer extends RuntimeInitializer<Object, TestCompo
         return (TestApplicationProperties) waterApplicationProperties;
     }
 
-    @Override
-    public Runtime getRuntime() {
-        if (testRuntime == null) testRuntime = new TestRuntime(this.waterApplicationProperties);
-        return testRuntime;
-    }
-
     public void impersonate(User u) {
-        ((TestRuntime) this.getRuntime()).switchSecurityContext(TestSecurityContext.createContext(u.hashCode(), u.getUsername(), u.isAdmin()));
+        Runtime runtime = this.getComponentRegistry().findComponent(Runtime.class, null);
+        runtime.fillSecurityContext(TestSecurityContext.createContext(u.getId(), u.getUsername(), u.isAdmin()));
     }
 
     public PermissionManager getPermissionManager() {

@@ -15,8 +15,6 @@
  */
 package it.water.core.bundle;
 
-import it.water.core.api.bundle.Runtime;
-import it.water.core.api.registry.ComponentConfiguration;
 import it.water.core.api.registry.ComponentRegistry;
 import it.water.core.registry.model.ComponentConfigurationFactory;
 
@@ -32,7 +30,7 @@ public abstract class RuntimeInitializer<T, K> extends ApplicationInitializer<T,
 
     @Override
     protected void initializeFrameworkComponents() {
-        this.initializeFrameworkComponents(true, true);
+        this.initializeFrameworkComponents(true);
     }
 
     /**
@@ -40,23 +38,10 @@ public abstract class RuntimeInitializer<T, K> extends ApplicationInitializer<T,
      *
      * @param registerRegistry
      */
-    protected void initializeFrameworkComponents(boolean registerRegistry, boolean registerRuntime) {
+    protected void initializeFrameworkComponents(boolean registerRegistry) {
         if (registerRegistry)
             registerComponentRegistryAsComponent();
-        if (registerRuntime)
-            registerCurrentRuntime(getRuntime());
         super.initializeFrameworkComponents();
-    }
-
-    /**
-     * Registers current runtime
-     *
-     * @param runtime
-     */
-    private void registerCurrentRuntime(Runtime runtime) {
-        //empty configuration
-        ComponentConfiguration componentConfiguration = ComponentConfigurationFactory.createNewComponentPropertyFactory().build();
-        this.getComponentRegistry().registerComponent(Runtime.class, runtime, componentConfiguration);
     }
 
     /**

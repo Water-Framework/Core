@@ -29,6 +29,13 @@ public interface Runtime {
     SecurityContext getSecurityContext();
 
     /**
+     * Insert current security context
+     *
+     * @return
+     */
+    void fillSecurityContext(SecurityContext securityContext);
+
+    /**
      * @return Application defined properties
      */
     ApplicationProperties getApplicationProperties();

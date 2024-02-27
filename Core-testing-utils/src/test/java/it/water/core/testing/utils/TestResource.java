@@ -16,7 +16,14 @@
 package it.water.core.testing.utils;
 
 import it.water.core.api.model.ProtectedResource;
+import it.water.core.permission.action.CrudActions;
+import it.water.core.permission.annotations.AccessControl;
+import it.water.core.permission.annotations.DefaultRoleAccess;
 
+@AccessControl(availableActions = {CrudActions.SAVE},
+        rolesPermissions = {
+                @DefaultRoleAccess(roleName = "ROLE", actions = {CrudActions.SAVE})
+        })
 public class TestResource implements ProtectedResource {
     @Override
     public String getResourceId() {

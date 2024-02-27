@@ -19,15 +19,30 @@ package it.water.core.permission;
 import it.water.core.api.permission.Role;
 import it.water.core.api.permission.RoleManager;
 
+import java.util.Collections;
+import java.util.Set;
+
 public class FakeRoleManager implements RoleManager {
+    private static Role fakeRole = new Role() {
+        @Override
+        public String getName() {
+            return "FAKEROLE";
+        }
+    };
+
     @Override
     public Role createIfNotExists(String roleName) {
-        return new Role() {
-            @Override
-            public String getName() {
-                return "FAKEROLE";
-            }
-        };
+        return fakeRole;
+    }
+
+    @Override
+    public Set<Role> getUserRoles(long userId) {
+        return Collections.singleton(fakeRole);
+    }
+
+    @Override
+    public Role getRole(String roleName) {
+        return fakeRole;
     }
 
     @Override

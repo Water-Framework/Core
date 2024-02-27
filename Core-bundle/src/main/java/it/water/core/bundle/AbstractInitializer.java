@@ -17,7 +17,6 @@
 package it.water.core.bundle;
 
 import it.water.core.api.action.ActionsManager;
-import it.water.core.api.bundle.Runtime;
 import it.water.core.api.model.Resource;
 import it.water.core.api.registry.ComponentRegistration;
 import it.water.core.api.registry.ComponentRegistry;
@@ -59,13 +58,6 @@ public abstract class AbstractInitializer<T, K> {
      * @return
      */
     protected abstract ComponentRegistry getComponentRegistry();
-
-    /**
-     * Returns the specific runtime
-     *
-     * @return
-     */
-    protected abstract Runtime getRuntime();
 
     /**
      * Loads all framework components declared inside the application or runtime

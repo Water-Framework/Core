@@ -58,11 +58,6 @@ public class BundleTestInitializer extends RuntimeInitializer<Object, Object> {
         return registry;
     }
 
-    @Override
-    protected Runtime getRuntime() {
-        return runtime;
-    }
-
     public void start() {
         this.initializeFrameworkComponents();
         this.initializeRestApis();

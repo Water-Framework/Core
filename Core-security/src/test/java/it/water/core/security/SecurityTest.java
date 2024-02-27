@@ -18,9 +18,13 @@ package it.water.core.security;
 import it.water.core.api.action.Action;
 import it.water.core.api.action.ActionsManager;
 import it.water.core.api.bundle.ApplicationProperties;
+import it.water.core.api.bundle.Runtime;
 import it.water.core.api.interceptors.BeforeMethodInterceptor;
 import it.water.core.api.model.User;
-import it.water.core.api.permission.*;
+import it.water.core.api.permission.PermissionUtil;
+import it.water.core.api.permission.Role;
+import it.water.core.api.permission.RoleManager;
+import it.water.core.api.permission.SecurityContext;
 import it.water.core.api.registry.ComponentRegistry;
 import it.water.core.api.security.EncryptionUtil;
 import it.water.core.api.service.Service;
@@ -30,7 +34,10 @@ import it.water.core.permission.exceptions.UnauthorizedException;
 import it.water.core.security.model.context.BasicSecurityContext;
 import it.water.core.security.model.principal.RolePrincipal;
 import it.water.core.security.model.principal.UserPrincipal;
-import it.water.core.security.service.*;
+import it.water.core.security.service.TestEntityService;
+import it.water.core.security.service.TestEntityService1;
+import it.water.core.security.service.TestProtectedEntity;
+import it.water.core.security.service.TestResourceService;
 import it.water.core.testing.utils.api.TestPermissionManager;
 import it.water.core.testing.utils.bundle.TestRuntimeInitializer;
 import it.water.core.testing.utils.junit.WaterTestExtension;
@@ -50,7 +57,9 @@ import javax.security.auth.x500.X500PrivateCredential;
 import java.nio.charset.StandardCharsets;
 import java.security.*;
 import java.security.spec.InvalidKeySpecException;
-import java.util.*;
+import java.util.Base64;
+import java.util.HashSet;
+import java.util.Set;
 
 @ExtendWith(WaterTestExtension.class)
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
@@ -85,11 +94,11 @@ class SecurityTest implements Service {
 
     @BeforeAll
     void beforeAll() {
-        this.userOk = testPermissionManager.addUser("usernameOk", "username", "username", "email@mail.com");
-        this.userKo = testPermissionManager.addUser("usernameKo", "usernameKo", "usernameKo", "email1@mail.com");
+        this.userOk = testPermissionManager.addUser("usernameOk", "username", "username", "email@mail.com", true);
+        this.userKo = testPermissionManager.addUser("usernameKo", "usernameKo", "usernameKo", "email1@mail.com", false);
         this.testRole = roleManager.getRole(TestProtectedResource.TEST_ROLE_NAME);
         Action saveAction = this.actionsManager.getActions().get(TestProtectedResource.class.getName()).getAction(CrudActions.SAVE);
-        roleManager.addRole(this.userOk.hashCode(), testRole);
+        roleManager.addRole(this.userOk.getId(), testRole);
         testPermissionManager.addPermissionIfNotExists(testRole, TestProtectedResource.class, saveAction);
     }
 
@@ -195,7 +204,7 @@ class SecurityTest implements Service {
     @Test
     void testSecurityContext() {
         initializer.impersonate(this.userOk);
-        SecurityContext context = initializer.getRuntime().getSecurityContext();
+        SecurityContext context = componentRegistry.findComponent(Runtime.class, null).getSecurityContext();
         Assertions.assertNotNull(testPermissionManager);
         Assertions.assertEquals("usernameOk", context.getLoggedUsername());
 

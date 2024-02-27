@@ -36,7 +36,6 @@ class WaterServiceTest implements Service {
     @BeforeAll
     public void initializeTestFramework() {
         initializer = TestRuntimeInitializer.getInstance();
-        initializer.setFakePermissionManager();
     }
 
     /**
@@ -45,7 +44,6 @@ class WaterServiceTest implements Service {
     @Test
     void testRegisteredComponents() {
         Assertions.assertNotNull(initializer.getComponentRegistry());
-        Assertions.assertNotNull(initializer.getRuntime());
         Assertions.assertNotNull(initializer.getComponentRegistry().findComponents(ApplicationProperties.class, null));
         Assertions.assertNotNull(initializer.getComponentRegistry().findComponents(TestServiceApi.class, null));
     }

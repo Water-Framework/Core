@@ -16,20 +16,27 @@
 package it.water.core.testing.utils;
 
 import it.water.core.api.action.Action;
+import it.water.core.api.action.ActionsManager;
 import it.water.core.api.bundle.ApplicationProperties;
+import it.water.core.api.bundle.Runtime;
 import it.water.core.api.model.User;
 import it.water.core.api.permission.PermissionManager;
 import it.water.core.api.permission.Role;
+import it.water.core.api.permission.RoleManager;
 import it.water.core.api.permission.SecurityContext;
 import it.water.core.api.registry.ComponentRegistry;
 import it.water.core.api.registry.filter.ComponentFilter;
 import it.water.core.api.service.Service;
+import it.water.core.interceptors.annotations.Inject;
+import it.water.core.permission.action.CrudActions;
+import it.water.core.testing.utils.api.TestPermissionManager;
 import it.water.core.testing.utils.bundle.TestRuntimeInitializer;
 import it.water.core.testing.utils.filter.TestComponentFilterBuilder;
 import it.water.core.testing.utils.interceptors.TestServiceProxy;
 import it.water.core.testing.utils.junit.WaterTestExtension;
 import it.water.core.testing.utils.model.TestHUser;
 import it.water.core.testing.utils.model.TestRole;
+import lombok.Setter;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
@@ -46,10 +53,23 @@ import java.util.Properties;
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 class TestingUtilsTest implements Service {
     private TestRuntimeInitializer initializer;
+
+    @Inject
+    @Setter
+    //injecting test permission manager in order to perform some basic security tests
+    private TestPermissionManager testPermissionManager;
+    @Inject
+    @Setter
+    private RoleManager roleManager;
+    @Inject
+    @Setter
+    private Runtime runtime;
+    private User userOk;
+
     @BeforeAll
     public void initializeTestFramework() {
         initializer = TestRuntimeInitializer.getInstance();
-        initializer.setFakePermissionManager();
+        this.userOk = testPermissionManager.addUser("usernameOk", "username", "username", "email@mail.com", false);
     }
 
     @Test
@@ -63,7 +83,7 @@ class TestingUtilsTest implements Service {
         Assertions.assertEquals("customValue", applicationProperties.getProperty("custom.property"));
         Assertions.assertThrows(UnsupportedOperationException.class, () -> applicationProperties.unloadProperties(customPropFile));
         Assertions.assertNotNull(applicationProperties);
-        Assertions.assertDoesNotThrow(() -> initializer.impersonate("usernameOk", false, 1));
+        Assertions.assertDoesNotThrow(() -> initializer.impersonate(userOk));
         Assertions.assertNotNull(initializer.getPermissionManager());
     }
 
@@ -102,7 +122,7 @@ class TestingUtilsTest implements Service {
     @Test
     void testModels() {
         Role testRole = new TestRole("role");
-        User user = new TestHUser("name", "lastname", "email", "username", Arrays.asList(testRole), false);
+        User user = new TestHUser(1000, "name", "lastname", "email", "username", Arrays.asList(testRole), false);
         Assertions.assertTrue(user.hasRole("role"));
     }
 
@@ -115,20 +135,23 @@ class TestingUtilsTest implements Service {
 
     @Test
     void testRuntime() {
-        Assertions.assertNotNull(initializer.getRuntime().getApplicationProperties());
-        Assertions.assertNotNull(initializer.getRuntime().getSecurityContext());
-        Assertions.assertDoesNotThrow(() -> initializer.impersonate("prova", false, 1));
+        TestRuntimeInitializer.getInstance().impersonate(userOk);
+        Assertions.assertNotNull(runtime.getSecurityContext());
+        Assertions.assertDoesNotThrow(() -> initializer.impersonate(userOk));
     }
 
     @Test
     void testSecurity() {
         Role testRole = new TestRole("role");
-        User user = new TestHUser("name", "lastname", "email", "usernameOk", Arrays.asList(testRole), false);
+        User user = new TestHUser(1001, "name", "lastname", "email", "usernameOk", Arrays.asList(testRole), false);
         PermissionManager permissionManager = initializer.getComponentRegistry().findComponents(PermissionManager.class, null).get(0);
-        initializer.impersonate("usernameOk", false, 1);
-        SecurityContext securityContext = initializer.getRuntime().getSecurityContext();
+        ActionsManager actionManager = initializer.getComponentRegistry().findComponent(ActionsManager.class, null);
+        Role role = roleManager.createIfNotExists("ROLE");
+        roleManager.addRole(userOk.getId(), role);
+        initializer.impersonate(userOk);
+        SecurityContext securityContext = runtime.getSecurityContext();
         TestResource res = new TestResource();
-        Action action = new TestAction();
+        Action action = actionManager.getActions().get(TestResource.class.getName()).getAction(CrudActions.SAVE);
         Assertions.assertTrue(permissionManager.checkPermission("usernameOk", res.getResourceName(), action));
         Assertions.assertTrue(permissionManager.checkPermission("usernameOk", res, action));
         Assertions.assertTrue(permissionManager.checkPermissionAndOwnership("usernameOk", res.getResourceName(), action));

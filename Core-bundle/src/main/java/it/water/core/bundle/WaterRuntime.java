@@ -14,31 +14,40 @@
  * limitations under the License.
  */
 
-package it.water.core.testing.utils.runtime;
+package it.water.core.bundle;
 
+import it.water.core.api.bundle.ApplicationProperties;
 import it.water.core.api.bundle.Runtime;
 import it.water.core.api.permission.SecurityContext;
-import it.water.core.bundle.WaterRuntime;
 import it.water.core.interceptors.annotations.FrameworkComponent;
+import it.water.core.interceptors.annotations.Inject;
+import lombok.Setter;
 
 /**
- * @Author Aristide Cittadino
- * During the test phase thread local may fail to associate the right security context to requests.
- * With this componente used onlu for test purpose we should overcome this problem.
- * This component is useful specially when tests are executed outside the junit thread for example karate.
+ * @Author Aristide Cittadino.
+ * Component which exposes global information such as : Security Context and application properties
  */
-@FrameworkComponent(priority = 1, services = {Runtime.class})
-public class TestRuntime extends WaterRuntime implements Runtime {
-    private SecurityContext securityContext;
+@FrameworkComponent
+public class WaterRuntime implements Runtime {
+    private static ThreadLocal<SecurityContext> currentThreadSecurityContext = new ThreadLocal<>();
+
+    @Inject
+    @Setter
+    private ApplicationProperties applicationProperties;
 
     @Override
     public SecurityContext getSecurityContext() {
-        return securityContext;
+        return currentThreadSecurityContext.get();
     }
 
     @Override
     public void fillSecurityContext(SecurityContext securityContext) {
-        this.securityContext = securityContext;
+        currentThreadSecurityContext.remove();
+        currentThreadSecurityContext.set(securityContext);
     }
 
+    @Override
+    public ApplicationProperties getApplicationProperties() {
+        return applicationProperties;
+    }
 }
