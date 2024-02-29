@@ -137,6 +137,14 @@ public abstract class AbstractInitializer<T, K> {
      * @return Iterable of annotated classes
      */
     protected Iterable<Class<?>> getAnnotatedClasses(Class<? extends Annotation> annotation) {
-        return ClassIndex.getAnnotated(annotation, this.getClass().getClassLoader());
+        return ClassIndex.getAnnotated(annotation, this.getCurrentClassLoader());
+    }
+
+    /**
+     *
+     * @return current class loader base on each runtime, default class loader is taken by the current instance.
+     */
+    protected ClassLoader getCurrentClassLoader(){
+        return this.getClass().getClassLoader();
     }
 }
