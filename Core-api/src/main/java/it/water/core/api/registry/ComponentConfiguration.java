@@ -28,6 +28,8 @@ import java.util.Properties;
  */
 public interface ComponentConfiguration {
     int getPriority();
+
+    boolean isPrimary();
     Properties getConfiguration();
     Dictionary<String,Object> getConfigurationAsDictionary();
     void addProperty(String name,Object value);

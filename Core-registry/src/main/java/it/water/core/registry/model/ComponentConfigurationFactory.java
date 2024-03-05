@@ -30,6 +30,7 @@ import java.util.Map;
 public class ComponentConfigurationFactory<T> {
     private Map<T, Object> values;
     private int priority = 1;
+    private boolean primary = false;
 
     public ComponentConfigurationFactory() {
         values = new HashMap<>();
@@ -42,6 +43,11 @@ public class ComponentConfigurationFactory<T> {
 
     public ComponentConfigurationFactory<T> withPriority(int priority) {
         this.priority = priority;
+        return this;
+    }
+
+    public ComponentConfigurationFactory<T> setPrimary(boolean isPrimary) {
+        this.primary = isPrimary;
         return this;
     }
 
@@ -67,7 +73,7 @@ public class ComponentConfigurationFactory<T> {
     }
 
     public it.water.core.api.registry.ComponentConfiguration build() {
-        return new PropertiesComponentConfiguration(priority, values);
+        return new PropertiesComponentConfiguration(priority, primary, values);
     }
 
     public static <K> ComponentConfigurationFactory<K> createNewComponentPropertyFactory() {

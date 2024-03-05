@@ -35,6 +35,8 @@ public class PropertiesComponentConfiguration implements it.water.core.api.regis
     private Properties props;
     @Getter
     private int priority;
+    @Getter
+    private boolean primary;
 
     public PropertiesComponentConfiguration() {
         this.initProps();
@@ -49,9 +51,10 @@ public class PropertiesComponentConfiguration implements it.water.core.api.regis
         }
     }
 
-    public PropertiesComponentConfiguration(int priority, Map<?, Object> props) {
+    public PropertiesComponentConfiguration(int priority,boolean primary, Map<?, Object> props) {
         this.initProps();
         this.priority = priority;
+        this.primary = primary;
         this.props.putAll(props);
     }
 

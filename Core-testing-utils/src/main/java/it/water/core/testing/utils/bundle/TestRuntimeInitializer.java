@@ -75,8 +75,7 @@ public class TestRuntimeInitializer extends RuntimeInitializer<Object, TestCompo
         return (TestApplicationProperties) waterApplicationProperties;
     }
 
-    public void impersonate(User u) {
-        Runtime runtime = this.getComponentRegistry().findComponent(Runtime.class, null);
+    public void impersonate(User u,Runtime runtime) {
         runtime.fillSecurityContext(TestSecurityContext.createContext(u.getId(), u.getUsername(), u.isAdmin()));
     }
 

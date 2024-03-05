@@ -47,40 +47,57 @@ public abstract class ApplicationInitializer<T, K> extends AbstractInitializer<T
      */
     @Override
     protected void setupFrameworkComponents(Iterable<Class<?>> frameworkComponents) {
+        Map<Class<?>, Integer> componentsPriorities = loadComponentPriorities(frameworkComponents);
         frameworkComponents.iterator().forEachRemaining(component -> {
             log.debug("Found @FrameworkComponent {}", component.getName());
             FrameworkComponent frameworkComponentAnnotation = component.getAnnotation(FrameworkComponent.class);
+            //if current component priority is listed in the component priority list
+            //this means this component has the highest priority so it's primary
+            boolean isPrimary = checkComponentIsPrimary(componentsPriorities,frameworkComponentAnnotation);
             Optional<Constructor<?>> defaultConstructor = Arrays.stream(component.getConstructors()).filter(constructor -> constructor.getParameterCount() == 0).findAny();
             if (defaultConstructor.isEmpty()) {
                 throw new UnsupportedOperationException("@FrameworkComponent " + component.getName() + " must have default constructor!");
             }
             Dictionary<String, Object> dictionary = getComponentProperties(frameworkComponentAnnotation.properties());
-            List<Class<?>> services = getDeclaredServices(frameworkComponentAnnotation, component);
-            log.debug("Component: {} implementing services {} with properties :\n {}", component.getName(), services, Arrays.stream(frameworkComponentAnnotation.properties()).toArray());
             try {
                 Object service = defaultConstructor.get().newInstance();
                 injectFields(service);
                 ComponentRegistry registry = getComponentRegistry();
-                services.forEach(componentClass -> {
-                    try {
-                        //framework component is registered with the given priority
-                        ComponentConfiguration componentConfiguration = ComponentConfigurationFactory.createNewComponentPropertyFactory()
-                                .withPriority(frameworkComponentAnnotation.priority())
-                                .fromStringDictionary(dictionary)
-                                .build();
-                        ComponentRegistration<T, K> registration = (ComponentRegistration<T, K>) registry.registerComponent(componentClass, service, componentConfiguration);
-                        if (registration.getComponent() != null) {
-                            registeredServices.add(registration);
-                            log.debug("Component: {} succesfully registered!", component.getName());
-                        }
-                    } catch (Exception e) {
-                        log.error(e.getMessage(), e);
-                    }
-                });
-            } catch (InstantiationException | InvocationTargetException | IllegalAccessException e){
-                log.error("Cannot instantiate new class of {}: {}",services.getClass().getName(),e.getMessage());
+                List<Class<?>> services = null;
+                if (registerMultiInterfaceComponents()) {
+                    //register one component for each implemented interface
+                    services = getDeclaredServices(frameworkComponentAnnotation, component);
+                } else {
+                    //register just the component with its class because the registry will automatically
+                    //discover all implemented interfaces. It depends on technology: OSGi works different from spring and quarkus
+                    services = Collections.singletonList(service.getClass());
+                }
+                log.debug("Component: {} implementing services {} with properties :\n {}", component.getName(), services, Arrays.stream(frameworkComponentAnnotation.properties()).toArray());
+                registerComponent(services, service, frameworkComponentAnnotation, isPrimary, registry, dictionary);
+            } catch (InstantiationException | InvocationTargetException | IllegalAccessException e) {
+                log.error("Cannot instantiate new class of {}: {}", component.getName(), e.getMessage());
             }
         });
+    }
+
+    private Map<Class<?>, Integer> loadComponentPriorities(Iterable<Class<?>> frameworkComponents) {
+        Map<Class<?>, Integer> componentsPriorities = new HashMap<>();
+        frameworkComponents.forEach(component -> {
+            FrameworkComponent frameworkComponentAnnotation = component.getAnnotation(FrameworkComponent.class);
+            int componentPriority = frameworkComponentAnnotation.priority();
+            List<Class<?>> services = getDeclaredServices(frameworkComponentAnnotation, component);
+            services.forEach(service -> {
+                componentsPriorities.computeIfAbsent(service, keyComponent -> componentPriority);
+                if (componentsPriorities.containsKey(service) && componentsPriorities.get(service) < componentPriority)
+                    componentsPriorities.put(service, frameworkComponentAnnotation.priority());
+            });
+        });
+        return componentsPriorities;
+    }
+
+    private boolean checkComponentIsPrimary(Map<Class<?>, Integer> componentsPriorities, FrameworkComponent frameworkComponentAnnotation) {
+        int priority = frameworkComponentAnnotation.priority();
+        return Arrays.stream(frameworkComponentAnnotation.services()).filter(service -> componentsPriorities.get(service) == priority).findAny().isPresent();
     }
 
     /**
@@ -163,7 +180,33 @@ public abstract class ApplicationInitializer<T, K> extends AbstractInitializer<T
                 log.error(e.getMessage(), e);
             }
         });
-
     }
 
+    private void registerComponent(List<Class<?>> componentClasses, Object service, FrameworkComponent frameworkComponentAnnotation, boolean isPrimary, ComponentRegistry registry, Dictionary<String, Object> dictionary) {
+        componentClasses.forEach(componentClass -> {
+            try {
+                //framework component is registered with the given priority
+                ComponentConfiguration componentConfiguration = ComponentConfigurationFactory.createNewComponentPropertyFactory()
+                        .withPriority(frameworkComponentAnnotation.priority())
+                        //set primary the component with the highest priority
+                        .setPrimary(isPrimary)
+                        .fromStringDictionary(dictionary)
+                        .build();
+                ComponentRegistration<T, K> registration = (ComponentRegistration<T, K>) registry.registerComponent(componentClass, service, componentConfiguration);
+                if (registration.getComponent() != null) {
+                    registeredServices.add(registration);
+                    log.debug("Component: {} succesfully registered!", componentClass.getName());
+                }
+            } catch (Exception e) {
+                log.error(e.getMessage(), e);
+            }
+        });
+    }
+
+    /**
+     * @return default Registers one component for each implemented interfaces
+     */
+    protected boolean registerMultiInterfaceComponents() {
+        return true;
+    }
 }
