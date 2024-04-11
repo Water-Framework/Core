@@ -1,0 +1,14 @@
+Bundle-Name: Water Core Testing Utils
+Bundle-SymbolicName: Water-Core-testing-utils
+Bundle-Activator: it.water.implementation.osgi.bundle.OsgiDistributionInitializer
+Import-Package: \
+    org.osgi.framework.*,\
+    org.osgi.service.*,\
+    org.osgi.util.*,\
+    org.slf4j.*,\
+    it.water.core.*,\
+    it.water.implementation.osgi.*
+Export-Package: \
+    it.water.core.testing.utils.*
+DynamicImport-Package: *
+-fixupmessages "Classes found in the wrong directory"; restrict:=error; is:=warning
