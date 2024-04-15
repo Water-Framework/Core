@@ -53,7 +53,7 @@ public abstract class ApplicationInitializer<T, K> extends AbstractInitializer<T
             FrameworkComponent frameworkComponentAnnotation = component.getAnnotation(FrameworkComponent.class);
             //if current component priority is listed in the component priority list
             //this means this component has the highest priority so it's primary
-            boolean isPrimary = checkComponentIsPrimary(componentsPriorities,frameworkComponentAnnotation);
+            boolean isPrimary = checkComponentIsPrimary(componentsPriorities, frameworkComponentAnnotation);
             Optional<Constructor<?>> defaultConstructor = Arrays.stream(component.getConstructors()).filter(constructor -> constructor.getParameterCount() == 0).findAny();
             if (defaultConstructor.isEmpty()) {
                 throw new UnsupportedOperationException("@FrameworkComponent " + component.getName() + " must have default constructor!");
@@ -64,14 +64,9 @@ public abstract class ApplicationInitializer<T, K> extends AbstractInitializer<T
                 injectFields(service);
                 ComponentRegistry registry = getComponentRegistry();
                 List<Class<?>> services = null;
-                if (registerMultiInterfaceComponents()) {
-                    //register one component for each implemented interface
-                    services = getDeclaredServices(frameworkComponentAnnotation, component);
-                } else {
-                    //register just the component with its class because the registry will automatically
-                    //discover all implemented interfaces. It depends on technology: OSGi works different from spring and quarkus
-                    services = Collections.singletonList(service.getClass());
-                }
+                //register one component for each implemented interface
+                //this is the best way to manage correctly services without creating caos
+                services = getDeclaredServices(frameworkComponentAnnotation, component);
                 log.debug("Component: {} implementing services {} with properties :\n {}", component.getName(), services, Arrays.stream(frameworkComponentAnnotation.properties()).toArray());
                 registerComponent(services, service, frameworkComponentAnnotation, isPrimary, registry, dictionary);
             } catch (InstantiationException | InvocationTargetException | IllegalAccessException e) {
@@ -201,12 +196,5 @@ public abstract class ApplicationInitializer<T, K> extends AbstractInitializer<T
                 log.error(e.getMessage(), e);
             }
         });
-    }
-
-    /**
-     * @return default Registers one component for each implemented interfaces
-     */
-    protected boolean registerMultiInterfaceComponents() {
-        return true;
     }
 }
