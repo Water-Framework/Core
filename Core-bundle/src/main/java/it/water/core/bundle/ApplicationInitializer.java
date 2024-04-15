@@ -64,15 +64,24 @@ public abstract class ApplicationInitializer<T, K> extends AbstractInitializer<T
                 injectFields(service);
                 ComponentRegistry registry = getComponentRegistry();
                 List<Class<?>> services = null;
-                //register one component for each implemented interface
-                //this is the best way to manage correctly services without creating caos
-                services = getDeclaredServices(frameworkComponentAnnotation, component);
+                if (registerMultiInterfaceComponents()) {
+                    //register one component for each implemented interface
+                    services = getDeclaredServices(frameworkComponentAnnotation, component);
+                } else {
+                    //register just the component with its class because the registry will automatically
+                    //discover all implemented interfaces. It depends on technology: OSGi works different from spring and quarkus
+                    services = Collections.singletonList(service.getClass());
+                }
                 log.debug("Component: {} implementing services {} with properties :\n {}", component.getName(), services, Arrays.stream(frameworkComponentAnnotation.properties()).toArray());
                 registerComponent(services, service, frameworkComponentAnnotation, isPrimary, registry, dictionary);
             } catch (InstantiationException | InvocationTargetException | IllegalAccessException e) {
                 log.error("Cannot instantiate new class of {}: {}", component.getName(), e.getMessage());
             }
         });
+    }
+
+    protected boolean registerMultiInterfaceComponents() {
+        return true;
     }
 
     private Map<Class<?>, Integer> loadComponentPriorities(Iterable<Class<?>> frameworkComponents) {
