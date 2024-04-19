@@ -18,6 +18,7 @@ package it.water.core.bundle;
 import it.water.core.api.registry.ComponentConfiguration;
 import it.water.core.api.registry.ComponentRegistration;
 import it.water.core.api.registry.ComponentRegistry;
+import it.water.core.api.service.Service;
 import it.water.core.interceptors.annotations.FrameworkComponent;
 import it.water.core.interceptors.annotations.Inject;
 import it.water.core.interceptors.annotations.implementation.WaterComponentsInjector;
@@ -66,7 +67,7 @@ public abstract class ApplicationInitializer<T, K> extends AbstractInitializer<T
                 List<Class<?>> services = null;
                 if (registerMultiInterfaceComponents()) {
                     //register one component for each implemented interface
-                    services = getDeclaredServices(frameworkComponentAnnotation, component);
+                    services = getDeclaredServices(frameworkComponentAnnotation, component, service);
                 } else {
                     //register just the component with its class because the registry will automatically
                     //discover all implemented interfaces. It depends on technology: OSGi works different from spring and quarkus
@@ -89,7 +90,7 @@ public abstract class ApplicationInitializer<T, K> extends AbstractInitializer<T
         frameworkComponents.forEach(component -> {
             FrameworkComponent frameworkComponentAnnotation = component.getAnnotation(FrameworkComponent.class);
             int componentPriority = frameworkComponentAnnotation.priority();
-            List<Class<?>> services = getDeclaredServices(frameworkComponentAnnotation, component);
+            List<Class<?>> services = getDeclaredServices(frameworkComponentAnnotation, component,null);
             services.forEach(service -> {
                 componentsPriorities.computeIfAbsent(service, keyComponent -> componentPriority);
                 if (componentsPriorities.containsKey(service) && componentsPriorities.get(service) < componentPriority)
@@ -112,8 +113,9 @@ public abstract class ApplicationInitializer<T, K> extends AbstractInitializer<T
      * @param component
      * @return
      */
-    protected List<Class<?>> getDeclaredServices(FrameworkComponent frameworkComponentAnnotation, Class<?> component) {
+    protected List<Class<?>> getDeclaredServices(FrameworkComponent frameworkComponentAnnotation, Class<?> component, Object instance) {
         List<Class<?>> services = new ArrayList<>(Arrays.asList(frameworkComponentAnnotation.services()));
+        boolean isWaterService = instance != null && Service.class.isAssignableFrom(instance.getClass());
         //no services specified inside annotation let's take declared interfaces
         if (services.isEmpty()) {
             Class<?>[] declaredInterfaces = component.getInterfaces();
@@ -122,6 +124,11 @@ public abstract class ApplicationInitializer<T, K> extends AbstractInitializer<T
             }
         } else {
             checkComponentImplementsExposedServices(component, services);
+        }
+        //if the current component is a water service, but water service is not listed inside interfaces list
+        //the only way is that the concrete class has a superclass which is a water Service so we add explicitily
+        if (isWaterService && !services.stream().anyMatch(currClass -> Service.class.isAssignableFrom(currClass) || currClass.getName().equalsIgnoreCase(Service.class.getName())).) {
+            services.add(Service.class);
         }
         return services;
     }

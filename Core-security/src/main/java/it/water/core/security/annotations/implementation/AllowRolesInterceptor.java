@@ -39,7 +39,7 @@ import java.lang.reflect.Method;
  * This class is the implementation of @AllowRoles annotation.
  * It simply verifies that the user has the a specific role before execute the invoked method.
  */
-@FrameworkComponent(services = BeforeMethodInterceptor.class)
+@FrameworkComponent(services = {BeforeMethodInterceptor.class})
 public class AllowRolesInterceptor extends AbstractPermissionInterceptor implements BeforeMethodInterceptor<AllowRoles> {
     private static Logger log = LoggerFactory.getLogger(AllowRolesInterceptor.class.getName());
     @Inject
@@ -69,7 +69,6 @@ public class AllowRolesInterceptor extends AbstractPermissionInterceptor impleme
     }
 
     /**
-     *
      * @return
      */
     @Override

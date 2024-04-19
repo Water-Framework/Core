@@ -38,7 +38,7 @@ import java.lang.reflect.Method;
  * It simply verifies that the user has the permission to do some action on the specified entity returned by a method.
  * @see AllowPermissionInterceptor
  */
-@FrameworkComponent(services = AfterMethodInterceptor.class)
+@FrameworkComponent(services = {AfterMethodInterceptor.class})
 public class AllowPermissionOnReturnInterceptor extends AbstractPermissionInterceptor implements AfterMethodInterceptor<AllowPermissionsOnReturn> {
     private static Logger log = LoggerFactory.getLogger(AllowPermissionOnReturnInterceptor.class.getName());
 

@@ -43,7 +43,7 @@ import java.lang.reflect.Method;
  * <p>
  * The method tries to automatically infers the entity type (in case of EntityApi).
  */
-@FrameworkComponent(services = BeforeMethodInterceptor.class)
+@FrameworkComponent(services = {BeforeMethodInterceptor.class})
 public class AllowPermissionInterceptor extends AbstractPermissionInterceptor implements BeforeMethodInterceptor<AllowPermissions> {
     private static Logger log = LoggerFactory.getLogger(AllowPermissionInterceptor.class.getName());
 

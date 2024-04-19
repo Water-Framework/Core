@@ -96,10 +96,12 @@ public abstract class AbstractPermissionInterceptor implements Service {
         List<ResourceAction<?>> actions = new ArrayList<>();
         try {
             //Just to avoid sonar error, all objects are WaterResourceAction<?>
-            ActionList<?> foundActions = actionsManager.getActions().get(className);
-            for (ResourceAction<?> action : foundActions.getList()) {
-                if (action.getAction().getActionName().equalsIgnoreCase(actionName))
-                    actions.add(action);
+            if (actionsManager.getActions().containsKey(className)) {
+                ActionList<?> foundActions = actionsManager.getActions().get(className);
+                for (ResourceAction<?> action : foundActions.getList()) {
+                    if (action.getAction().getActionName().equalsIgnoreCase(actionName))
+                        actions.add(action);
+                }
             }
         } catch (Exception e) {
             log.error(e.getMessage(), e);
