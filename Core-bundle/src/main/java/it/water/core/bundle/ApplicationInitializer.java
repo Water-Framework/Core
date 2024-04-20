@@ -127,7 +127,7 @@ public abstract class ApplicationInitializer<T, K> extends AbstractInitializer<T
         }
         //if the current component is a water service, but water service is not listed inside interfaces list
         //the only way is that the concrete class has a superclass which is a water Service so we add explicitily
-        if (isWaterService && !services.stream().anyMatch(currClass -> Service.class.isAssignableFrom(currClass) || currClass.getName().equalsIgnoreCase(Service.class.getName())).) {
+        if (isWaterService && !services.stream().anyMatch(currClass -> Service.class.isAssignableFrom(currClass) || currClass.getName().equalsIgnoreCase(Service.class.getName()))) {
             services.add(Service.class);
         }
         return services;
