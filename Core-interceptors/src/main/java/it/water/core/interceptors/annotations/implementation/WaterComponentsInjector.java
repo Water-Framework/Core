@@ -86,7 +86,7 @@ public class WaterComponentsInjector implements BeforeMethodFieldInterceptor<Inj
                 log.debug("Setting field {} on {}", annotatedField.getName(), destination.getClass().getName());
                 setterMethod.invoke(destination, service);
             } catch (NoComponentRegistryFoundException e) {
-                log.error(e.getMessage(), e);
+                log.debug("No component found for {} not injecting",annotatedField.getType());
             } catch (IllegalAccessException | NoSuchMethodException |
                      InvocationTargetException e) {
                 log.error("Cannot inject {} field, error while invoking setter method {},", annotatedField, e.getMessage(), e);
