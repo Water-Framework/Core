@@ -22,7 +22,8 @@ import it.water.core.api.registry.ComponentRegistration;
 import it.water.core.api.registry.ComponentRegistry;
 import it.water.core.api.service.rest.FrameworkRestApi;
 import it.water.core.api.service.rest.FrameworkRestController;
-import it.water.core.api.service.rest.RestApiManager;
+import it.water.core.api.service.rest.RestApi;
+import it.water.core.api.service.rest.RestApiRegistry;
 import it.water.core.interceptors.annotations.FrameworkComponent;
 import it.water.core.permission.annotations.AccessControl;
 import it.water.core.registry.model.exception.NoComponentRegistryFoundException;
@@ -36,6 +37,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
+import java.util.concurrent.atomic.AtomicReference;
 
 /**
  * @Author Aristide Cittadino
@@ -98,12 +100,11 @@ public abstract class AbstractInitializer<T, K> {
      * This method calls registerRestApis which will be implementend for each available runtime.
      */
     protected void initializeRestApis() {
+        //registering rest apis if any
         try {
-            RestApiManager restApiManager = getComponentRegistry().findComponent(RestApiManager.class, null);
-            //load all rest api definition and configure the rest api manager
-            restApiManager.setAnnotatedRestApis(getAnnotatedClasses(FrameworkRestApi.class));
+            RestApiRegistry restApiRegistry = getComponentRegistry().findComponent(RestApiRegistry.class, null);
             //discover all concrete implementation for every defined rest api
-            this.setupRestApis(getAnnotatedClasses(FrameworkRestController.class), restApiManager);
+            this.setupRestApis(getAnnotatedClasses(FrameworkRestController.class), restApiRegistry);
         } catch (NoComponentRegistryFoundException e) {
             log.warn("No Rest API Manager found, skipping rest api automatic registration...");
         }
@@ -111,21 +112,37 @@ public abstract class AbstractInitializer<T, K> {
 
     /**
      * @param frameworkRestApis list of @FrameworkRestApi
+     * There are 3 main objects for rest api definitions.
+     * Generic Rest Api - defines only swagger documentation and methods that a rest API should expose
+     * Concrete Rest Api - it's the interface in a specific technology which extends the previous one ex. Jax RS interface with related annotations
+     * Concrete Implementations - Class which implements the generic interface but must be exposed following the concrete. This binding is done dinamically
      */
-    protected void setupRestApis(Iterable<Class<?>> frameworkRestApis, RestApiManager restApiManager) {
+    protected void setupRestApis(Iterable<Class<?>> frameworkRestApis, RestApiRegistry restApiRegistry) {
         //register to rest api manager every service
         frameworkRestApis.forEach(restApiService -> {
             Optional<Annotation> frameworkRestControllerAnnotationOpt = Arrays.stream(restApiService.getAnnotations()).filter(annotation -> annotation.annotationType().getName().equalsIgnoreCase(FrameworkRestController.class.getName())).findAny();
             if (frameworkRestControllerAnnotationOpt.isPresent()) {
                 FrameworkRestController frameworkRestControllerAnnotation = (FrameworkRestController) frameworkRestControllerAnnotationOpt.get();
                 //register APIs only if it finds a rest Api Manager
-                if (restApiManager != null) {
-                    restApiManager.setComponentRegistry(getComponentRegistry());
+                if (restApiRegistry != null) {
                     //add a rest api service passing all registered Rest Apis in order to find the right one
-                    restApiManager.addRestApiService(frameworkRestControllerAnnotation.referredRestApi(), restApiService);
+                    Class<? extends RestApi> genericRestApi = frameworkRestControllerAnnotation.referredRestApi();
+                    Class<? extends RestApi> concreteRestApi = (Class<? extends RestApi>) findConcreteRestApi(getAnnotatedClasses(FrameworkRestApi.class), genericRestApi);
+                    restApiRegistry.addRestApiService(concreteRestApi, (Class<? extends RestApi>) restApiService);
                 }
             }
         });
+    }
+
+    private Class<?> findConcreteRestApi(Iterable<Class<?>> iterableFrameworkRestApis, Class<? extends RestApi> crossFrameworkRestApi) {
+        AtomicReference<Class<?>> foundConcreteRestApiClass = new AtomicReference<>();
+        iterableFrameworkRestApis.forEach(restApi -> {
+            if (restApi.isInterface() && crossFrameworkRestApi.isAssignableFrom(restApi)) {
+                foundConcreteRestApiClass.set(restApi);
+                return;
+            }
+        });
+        return foundConcreteRestApiClass.get();
     }
 
 
@@ -141,10 +158,9 @@ public abstract class AbstractInitializer<T, K> {
     }
 
     /**
-     *
      * @return current class loader base on each runtime, default class loader is taken by the current instance.
      */
-    protected ClassLoader getCurrentClassLoader(){
+    protected ClassLoader getCurrentClassLoader() {
         return this.getClass().getClassLoader();
     }
 }

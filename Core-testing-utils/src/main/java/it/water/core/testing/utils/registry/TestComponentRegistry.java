@@ -15,6 +15,8 @@
  */
 package it.water.core.testing.utils.registry;
 
+import it.water.core.api.interceptors.OnActivate;
+import it.water.core.api.interceptors.OnDeactivate;
 import it.water.core.api.registry.ComponentConfiguration;
 import it.water.core.api.registry.ComponentRegistration;
 import it.water.core.api.registry.ComponentRegistry;
@@ -73,6 +75,7 @@ public class TestComponentRegistry implements ComponentRegistry {
             } else
                 toRegister = component;
             ComponentRegistration<T, K> registration = doRegistration(componentClass, toRegister, configuration);
+            this.invokeLifecycleMethod(OnActivate.class,component.getClass(),registration.getComponent());
             //if it is water service we set the registration inside the proxy itself
             if (proxy != null) {
                 proxy.setRegistration((TestComponentRegistration) registration);
@@ -106,11 +109,13 @@ public class TestComponentRegistry implements ComponentRegistry {
 
     @Override
     public <T> boolean unregisterComponent(ComponentRegistration<T, ?> registration) {
+        this.invokeLifecycleMethod(OnDeactivate.class,registration.getComponent().getClass(),registration.getComponent());
         return removeComponentFromRegistry(registration.getRegistrationClass(), registration.getComponent());
     }
 
     @Override
     public <T> boolean unregisterComponent(Class<T> componentClass, T component) {
+        this.invokeLifecycleMethod(OnDeactivate.class,componentClass,component);
         return removeComponentFromRegistry(componentClass, component);
     }
 

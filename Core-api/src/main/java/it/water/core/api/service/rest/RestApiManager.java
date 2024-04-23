@@ -15,11 +15,7 @@
  */
 package it.water.core.api.service.rest;
 
-import it.water.core.api.registry.ComponentRegistry;
 import it.water.core.api.service.Service;
-
-import java.util.Set;
-import java.util.concurrent.atomic.AtomicReference;
 
 /**
  * @Author Aristide Cittadino
@@ -29,52 +25,6 @@ import java.util.concurrent.atomic.AtomicReference;
  * Rest services must be registered through generic interfaces which define specific implementations (Jax RS, Spring).
  */
 public interface RestApiManager extends Service {
-    /**
-     * Adds a rest api implementation starting from a generic interface.
-     *
-     * @param restApi
-     * @param service
-     */
-    void addRestApiService(Class<? extends RestApi> restApi, Class<?> service);
-
-    /**
-     * Defines all annotated @FrameworkRestApi in order to discover the concrete implementations
-     *
-     * @param registeredConcreteApis
-     */
-    void setAnnotatedRestApis(Iterable<Class<?>> registeredConcreteApis);
-
-    /**
-     * Removes a rest api implementation starting from a generic interface.
-     *
-     * @param restApi
-     */
-    void removeRestApiService(Class<? extends RestApi> restApi);
-
-    /**
-     * Retrieving the previous registered implementation for the specified rest api
-     *
-     * @param restApi
-     * @return
-     */
-    Class<?> getRestImplementation(Class<? extends RestApi> restApi);
-
-    /**
-     * Returns the list of all registered rest APIs
-     *
-     * @return
-     */
-    Set<Class<? extends RestApi>> getRegisteredApis();
-
-    /**
-     * Method invoked at startup cannot be injected by interceptors
-     * So the Abstract initializer explicitly call this method to set the component registry
-     * inside the Api Manager.
-     *
-     * @param componentRegistry
-     */
-    void setComponentRegistry(ComponentRegistry componentRegistry);
-
 
     /**
      * Start the server implementation for rest APIs
@@ -86,14 +36,4 @@ public interface RestApiManager extends Service {
      */
     void stopRestApiServer();
 
-    default Class<?> findConcreteRestApi(Iterable<Class<?>> iterableFrameworkRestApis, Class<? extends RestApi> crossFrameworkRestApi) {
-        AtomicReference<Class<?>> foundConcreteRestApiClass = new AtomicReference<>();
-        iterableFrameworkRestApis.forEach(restApi -> {
-            if (restApi.isInterface() && crossFrameworkRestApi.isAssignableFrom(restApi)) {
-                foundConcreteRestApiClass.set(restApi);
-                return;
-            }
-        });
-        return foundConcreteRestApiClass.get();
-    }
 }
