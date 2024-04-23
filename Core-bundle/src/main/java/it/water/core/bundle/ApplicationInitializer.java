@@ -90,7 +90,7 @@ public abstract class ApplicationInitializer<T, K> extends AbstractInitializer<T
         frameworkComponents.forEach(component -> {
             FrameworkComponent frameworkComponentAnnotation = component.getAnnotation(FrameworkComponent.class);
             int componentPriority = frameworkComponentAnnotation.priority();
-            List<Class<?>> services = getDeclaredServices(frameworkComponentAnnotation, component,null);
+            List<Class<?>> services = getDeclaredServices(frameworkComponentAnnotation, component, null);
             services.forEach(service -> {
                 componentsPriorities.computeIfAbsent(service, keyComponent -> componentPriority);
                 if (componentsPriorities.containsKey(service) && componentsPriorities.get(service) < componentPriority)
@@ -127,7 +127,7 @@ public abstract class ApplicationInitializer<T, K> extends AbstractInitializer<T
         }
         //if the current component is a water service, but water service is not listed inside interfaces list
         //the only way is that the concrete class has a superclass which is a water Service so we add explicitily
-        if (isWaterService && !services.stream().anyMatch(currClass -> Service.class.isAssignableFrom(currClass) || currClass.getName().equalsIgnoreCase(Service.class.getName()))) {
+        if (isWaterService && services.stream().noneMatch(currClass -> Service.class.isAssignableFrom(currClass) || currClass.getName().equalsIgnoreCase(Service.class.getName()))) {
             services.add(Service.class);
         }
         return services;
@@ -207,6 +207,7 @@ public abstract class ApplicationInitializer<T, K> extends AbstractInitializer<T
                 if (registration.getComponent() != null) {
                     registeredServices.add(registration);
                     log.debug("Component: {} succesfully registered!", componentClass.getName());
+                    log.debug("Searching for init method...");
                 }
             } catch (Exception e) {
                 log.error(e.getMessage(), e);

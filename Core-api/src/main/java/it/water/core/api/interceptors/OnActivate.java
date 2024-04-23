@@ -1,4 +1,3 @@
-
 /*
  * Copyright 2024 Aristide Cittadino
  *
@@ -15,20 +14,18 @@
  * limitations under the License.
  */
 
-package it.water.core.interceptors.annotations;
+package it.water.core.api.interceptors;
 
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
-
 /**
  * @Author Aristide Cittadino
- * This annotation marks the method that must be invoked after component registration
+ * Marker annotation to identify which method to start when component is created.
  */
 @Target({ElementType.METHOD})
 @Retention(value = RetentionPolicy.RUNTIME)
-public @interface Activation {
-
+public @interface OnActivate {
 }
