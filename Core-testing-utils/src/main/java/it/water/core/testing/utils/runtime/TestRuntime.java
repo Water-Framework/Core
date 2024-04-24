@@ -31,6 +31,33 @@ import it.water.core.interceptors.annotations.FrameworkComponent;
 public class TestRuntime extends WaterRuntime implements Runtime {
     private SecurityContext securityContext;
 
+    /**
+     * Test runtime starts with admin security context set, in order to simplify rest tests.
+     */
+    public TestRuntime() {
+        fillSecurityContext(new SecurityContext() {
+            @Override
+            public String getLoggedUsername() {
+                return "test-admin";
+            }
+
+            @Override
+            public boolean isLoggedIn() {
+                return true;
+            }
+
+            @Override
+            public boolean isAdmin() {
+                return true;
+            }
+
+            @Override
+            public long getLoggedEntityId() {
+                return Integer.MAX_VALUE;
+            }
+        });
+    }
+
     @Override
     public SecurityContext getSecurityContext() {
         return securityContext;
