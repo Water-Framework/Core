@@ -52,6 +52,46 @@ public class InMemoryTestPermissionManager implements TestPermissionManager {
     @Getter
     private String implementation = "default";
 
+    public InMemoryTestPermissionManager() {
+        //Adding admin role
+        users.add(new User() {
+            @Override
+            public long getId() {
+                return 10000;
+            }
+
+            @Override
+            public String getName() {
+                return "admin";
+            }
+
+            @Override
+            public String getLastname() {
+                return "admin";
+            }
+
+            @Override
+            public String getEmail() {
+                return "admin@water.com";
+            }
+
+            @Override
+            public String getUsername() {
+                return "admin";
+            }
+
+            @Override
+            public boolean hasRole(String roleName) {
+                return true;
+            }
+
+            @Override
+            public boolean isAdmin() {
+                return true;
+            }
+        });
+    }
+
     @Override
     public User addUser(String username, String name, String lastname, String email, boolean isAdmin) {
         User u = new User() {
