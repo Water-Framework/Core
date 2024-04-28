@@ -24,6 +24,7 @@ import org.slf4j.LoggerFactory;
 
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Method;
+import java.lang.reflect.Proxy;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
@@ -93,13 +94,32 @@ public interface ComponentRegistry {
      * @param <T>
      */
     default <T> void invokeLifecycleMethod(Class<? extends Annotation> annotation, Class<?> componentServiceClass, T component) {
-        Collection<Method> methods = Arrays.stream(componentServiceClass.getDeclaredMethods()).filter(method -> Arrays.stream(method.getDeclaredAnnotations()).anyMatch(methodAnnotation -> methodAnnotation.annotationType().equals(annotation))).collect(Collectors.toSet());
+        Collection<Method> methods = Arrays.stream(componentServiceClass.getMethods()).filter(method -> Arrays.stream(method.getDeclaredAnnotations()).anyMatch(methodAnnotation -> methodAnnotation.annotationType().equals(annotation))).collect(Collectors.toSet());
         methods.forEach(method -> {
             try {
-                //proxies do not expose annotations so, basically we search for the same method inside the proxied instance
-                Optional<Method> proxiedMethodOpt = Arrays.stream(component.getClass().getDeclaredMethods()).filter(curMethod -> curMethod.getName().equals(method.getName()) && curMethod.getReturnType().equals(method.getReturnType()) && curMethod.getParameterCount() == 0).findFirst();
-                if (proxiedMethodOpt.isPresent())
-                    proxiedMethodOpt.get().invoke(component, null);
+                //injecting parameters from component registry
+                Class<?>[] parameters = method.getParameterTypes();
+                Object[] parameterValues = new Object[parameters.length];
+                for (int i = 0; i < parameters.length; i++) {
+                    Object parameter = null;
+                    try {
+                        parameter = this.findComponent(parameters[i], null);
+                    } catch (Exception e) {
+                        log.warn(e.getMessage(), e);
+                    }
+                    parameterValues[i] = parameter;
+                }
+
+                if (Proxy.isProxyClass(component.getClass())) {
+                    //proxies do not expose annotations so, basically we search for the same method inside the proxied instance
+                    //todo now activate method on water services must be exposed in the service interface. it should be possible to invoke activation method even if it's not exposed on the interface allowing always fields injection
+                    //todo check not only parameters count but parameters types and order
+                    Optional<Method> proxiedMethodOpt = Arrays.stream(component.getClass().getDeclaredMethods()).filter(curMethod -> curMethod.getName().equals(method.getName()) && curMethod.getReturnType().equals(method.getReturnType()) && curMethod.getParameterCount() == method.getParameterCount()).findFirst();
+                    if (proxiedMethodOpt.isPresent())
+                        proxiedMethodOpt.get().invoke(component, parameterValues);
+                } else {
+                    method.invoke(component, parameterValues);
+                }
             } catch (Exception e) {
                 log.error("Error while executing {} lifecycle method {}", annotation.getClass().getName(), method.getName());
                 log.error(e.getMessage(), e);

@@ -142,6 +142,10 @@ public abstract class AbstractInitializer<T, K> {
                 return;
             }
         });
+        if(foundConcreteRestApiClass.get() == null){
+            //if there's no specialization , let's return the cross framework api with is supposed to expose jaxrs annotations
+            return crossFrameworkRestApi;
+        }
         return foundConcreteRestApiClass.get();
     }
 
