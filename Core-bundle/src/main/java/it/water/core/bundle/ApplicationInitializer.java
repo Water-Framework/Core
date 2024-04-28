@@ -15,6 +15,7 @@
  */
 package it.water.core.bundle;
 
+import it.water.core.api.interceptors.OnActivate;
 import it.water.core.api.registry.ComponentConfiguration;
 import it.water.core.api.registry.ComponentRegistration;
 import it.water.core.api.registry.ComponentRegistry;
@@ -40,6 +41,8 @@ import java.util.*;
  */
 public abstract class ApplicationInitializer<T, K> extends AbstractInitializer<T, K> {
     private static Logger log = LoggerFactory.getLogger(ApplicationInitializer.class);
+    //list of components to be initialized
+    private Map<Class<?>, List<Object>> toInitialize = new HashMap<>();
 
     /**
      * Method called at application startup in order to setup framework components
@@ -71,10 +74,33 @@ public abstract class ApplicationInitializer<T, K> extends AbstractInitializer<T
                 }
                 log.debug("Component: {} implementing services {} with properties :\n {}", componentClass.getName(), services, Arrays.stream(frameworkComponentAnnotation.properties()).toArray());
                 registerComponent(services, service, frameworkComponentAnnotation, isPrimary, registry, dictionary);
+                toInitialize.computeIfAbsent(componentClass, key -> new ArrayList<>());
+                toInitialize.get(componentClass).add(service);
             } catch (InstantiationException | InvocationTargetException | IllegalAccessException e) {
                 log.error("Cannot instantiate new class of {}: {}", componentClass.getName(), e.getMessage());
             }
         });
+    }
+
+    /**
+     * Running OnActivate method on registered compoennts.
+     * Based on the technology this method could be invoked at different times.
+     */
+    protected void activateComponents() {
+        log.debug("Activating components...");
+        Iterator<Class<?>> it = toInitialize.keySet().iterator();
+        while (it.hasNext()) {
+            Class<?> componentClass = it.next();
+            List<Object> services = toInitialize.get(componentClass);
+            services.forEach(service -> {
+                try {
+                    getComponentRegistry().invokeLifecycleMethod(OnActivate.class, componentClass, service);
+                } catch (Exception e) {
+                    log.error(e.getMessage(), e);
+                }
+            });
+        }
+        toInitialize.clear();
     }
 
     protected boolean registerMultiInterfaceComponents() {
@@ -131,6 +157,7 @@ public abstract class ApplicationInitializer<T, K> extends AbstractInitializer<T
 
     /**
      * Creates the instance for specific service
+     *
      * @param componentClass
      * @return
      */

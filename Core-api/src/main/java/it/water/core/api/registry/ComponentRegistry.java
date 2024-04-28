@@ -94,6 +94,7 @@ public interface ComponentRegistry {
      * @param <T>
      */
     default <T> void invokeLifecycleMethod(Class<? extends Annotation> annotation, Class<?> componentServiceClass, T component) {
+        log.debug("Running activation method on component: {}", componentServiceClass.getName());
         Collection<Method> methods = Arrays.stream(componentServiceClass.getMethods()).filter(method -> Arrays.stream(method.getDeclaredAnnotations()).anyMatch(methodAnnotation -> methodAnnotation.annotationType().equals(annotation))).collect(Collectors.toSet());
         methods.forEach(method -> {
             try {
