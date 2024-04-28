@@ -49,34 +49,30 @@ public abstract class ApplicationInitializer<T, K> extends AbstractInitializer<T
     @Override
     protected void setupFrameworkComponents(Iterable<Class<?>> frameworkComponents) {
         Map<Class<?>, Integer> componentsPriorities = loadComponentPriorities(frameworkComponents);
-        frameworkComponents.iterator().forEachRemaining(component -> {
-            log.debug("Found @FrameworkComponent {}", component.getName());
-            FrameworkComponent frameworkComponentAnnotation = component.getAnnotation(FrameworkComponent.class);
+        frameworkComponents.iterator().forEachRemaining(componentClass -> {
+            log.debug("Found @FrameworkComponent {}", componentClass.getName());
+            FrameworkComponent frameworkComponentAnnotation = componentClass.getAnnotation(FrameworkComponent.class);
             //if current component priority is listed in the component priority list
             //this means this component has the highest priority so it's primary
             boolean isPrimary = checkComponentIsPrimary(componentsPriorities, frameworkComponentAnnotation);
-            Optional<Constructor<?>> defaultConstructor = Arrays.stream(component.getConstructors()).filter(constructor -> constructor.getParameterCount() == 0).findAny();
-            if (defaultConstructor.isEmpty()) {
-                throw new UnsupportedOperationException("@FrameworkComponent " + component.getName() + " must have default constructor!");
-            }
             Dictionary<String, Object> dictionary = getComponentProperties(frameworkComponentAnnotation.properties());
             try {
-                Object service = defaultConstructor.get().newInstance();
+                Object service = getServiceInstance(componentClass);
                 injectFields(service);
                 ComponentRegistry registry = getComponentRegistry();
                 List<Class<?>> services = null;
                 if (registerMultiInterfaceComponents()) {
                     //register one component for each implemented interface
-                    services = getDeclaredServices(frameworkComponentAnnotation, component, service);
+                    services = getDeclaredServices(frameworkComponentAnnotation, componentClass, service);
                 } else {
                     //register just the component with its class because the registry will automatically
                     //discover all implemented interfaces. It depends on technology: OSGi works different from spring and quarkus
                     services = Collections.singletonList(service.getClass());
                 }
-                log.debug("Component: {} implementing services {} with properties :\n {}", component.getName(), services, Arrays.stream(frameworkComponentAnnotation.properties()).toArray());
+                log.debug("Component: {} implementing services {} with properties :\n {}", componentClass.getName(), services, Arrays.stream(frameworkComponentAnnotation.properties()).toArray());
                 registerComponent(services, service, frameworkComponentAnnotation, isPrimary, registry, dictionary);
             } catch (InstantiationException | InvocationTargetException | IllegalAccessException e) {
-                log.error("Cannot instantiate new class of {}: {}", component.getName(), e.getMessage());
+                log.error("Cannot instantiate new class of {}: {}", componentClass.getName(), e.getMessage());
             }
         });
     }
@@ -131,6 +127,19 @@ public abstract class ApplicationInitializer<T, K> extends AbstractInitializer<T
             services.add(Service.class);
         }
         return services;
+    }
+
+    /**
+     * Creates the instance for specific service
+     * @param componentClass
+     * @return
+     */
+    private Object getServiceInstance(Class<?> componentClass) throws InvocationTargetException, InstantiationException, IllegalAccessException {
+        Optional<Constructor<?>> defaultConstructor = Arrays.stream(componentClass.getConstructors()).filter(constructor -> constructor.getParameterCount() == 0).findAny();
+        if (defaultConstructor.isEmpty()) {
+            throw new UnsupportedOperationException("@FrameworkComponent " + componentClass.getName() + " must have default constructor!");
+        }
+        return defaultConstructor.get().newInstance();
     }
 
     /**
