@@ -39,8 +39,4 @@ public class TestHUser implements User {
     @Getter
     private boolean isAdmin;
 
-    @Override
-    public boolean hasRole(String roleName) {
-        return roles.stream().anyMatch(role -> role.getName().equals(roleName));
-    }
 }

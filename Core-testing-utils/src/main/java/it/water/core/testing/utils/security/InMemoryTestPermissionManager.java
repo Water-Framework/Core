@@ -81,11 +81,6 @@ public class InMemoryTestPermissionManager implements TestPermissionManager {
             }
 
             @Override
-            public boolean hasRole(String roleName) {
-                return true;
-            }
-
-            @Override
             public boolean isAdmin() {
                 return true;
             }
@@ -120,11 +115,6 @@ public class InMemoryTestPermissionManager implements TestPermissionManager {
             @Override
             public String getUsername() {
                 return username;
-            }
-
-            @Override
-            public boolean hasRole(String roleName) {
-                return userHasRoles(username, new String[]{roleName});
             }
 
             @Override

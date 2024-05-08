@@ -43,7 +43,7 @@ public interface WaterJsonView {
     }
 
     /**
-     * Internal View: Internal fields for interal system use
+     * Internal View: Internal fields for internal system use
      */
     interface Internal {
     }

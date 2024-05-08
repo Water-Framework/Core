@@ -58,15 +58,6 @@ public interface User {
 
 
     /**
-     * Find if a role has been found by role name
-     *
-     * @param roleName parameter that indicates the Role name
-     * @return true if a role has been found
-     */
-    boolean hasRole(String roleName);
-
-
-    /**
      * Gets if HUser is administrator
      *
      * @return true if HUser is administrator
