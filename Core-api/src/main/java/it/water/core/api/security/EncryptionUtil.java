@@ -285,4 +285,12 @@ public interface EncryptionUtil extends Service {
      * @throws NoSuchAlgorithmException No Such Algotithm
      */
     byte[] decryptWithAES(byte[] aesPassword, byte[] initVector, String content, Cipher aesCipher) throws InvalidKeyException, BadPaddingException, IllegalBlockSizeException, InvalidAlgorithmParameterException;
+
+    /**
+     *
+     * @param password generates password hash.
+     * Default algorithm is PBKDF2.
+     * @return
+     */
+    byte[] hashPassword(String password) throws NoSuchAlgorithmException, InvalidKeySpecException;
 }

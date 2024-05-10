@@ -60,6 +60,8 @@ public class TestRuntimeInitializer extends RuntimeInitializer<Object, TestCompo
         ComponentConfiguration config = ComponentConfigurationFactory.createNewComponentPropertyFactory().withPriority(1).build();
         this.getComponentRegistry().registerComponent(ComponentFilterBuilder.class, new TestComponentFilterBuilder(), config);
         this.initializeFrameworkComponents();
+        //running onActivate Methods
+        this.activateComponents();
         this.initializeResourcePermissionsAndActions();
         this.initializeRestApis();
     }

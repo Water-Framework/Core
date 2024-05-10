@@ -666,6 +666,21 @@ public class WaterEncryprionUtilImpl implements EncryptionUtil {
         aesCipher.init(Cipher.DECRYPT_MODE, skeySpec, iv);
         return aesCipher.doFinal(Base64.getDecoder().decode(content));
     }
+
+    /**
+     * @param password generates password hash.
+     *                 Default algorithm is PBKDF2.
+     * @return
+     */
+    @Override
+    public byte[] hashPassword(String password) throws NoSuchAlgorithmException, InvalidKeySpecException {
+        SecureRandom random = new SecureRandom();
+        byte[] salt = new byte[16];
+        random.nextBytes(salt);
+        KeySpec spec = new PBEKeySpec(password.toCharArray(), salt, 65536, 128);
+        SecretKeyFactory factory = SecretKeyFactory.getInstance("PBKDF2WithHmacSHA1");
+        return factory.generateSecret(spec).getEncoded();
+    }
 }
 
 
