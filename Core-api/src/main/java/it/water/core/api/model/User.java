@@ -29,38 +29,38 @@ public interface User {
     long getId();
 
     /**
-     * Gets the HUser name
+     * Gets the User name
      *
-     * @return a string that represents HUser name
+     * @return a string that represents User name
      */
     String getName();
 
     /**
      * Gets the HUser lastname
      *
-     * @return a string that represents HUser lastname
+     * @return a string that represents User lastname
      */
     String getLastname();
 
     /**
      * Gets the HUser email
      *
-     * @return a string that represents HUser email
+     * @return a string that represents User email
      */
     String getEmail();
 
     /**
      * Gets the HUser username
      *
-     * @return a string that represents HUser username
+     * @return a string that represents User username
      */
     String getUsername();
 
 
     /**
-     * Gets if HUser is administrator
+     * Gets if User is administrator
      *
-     * @return true if HUser is administrator
+     * @return true if User is administrator
      */
     boolean isAdmin();
 }
