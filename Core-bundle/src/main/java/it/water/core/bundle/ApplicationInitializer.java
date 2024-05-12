@@ -94,6 +94,12 @@ public abstract class ApplicationInitializer<T, K> extends AbstractInitializer<T
             List<Object> services = toInitialize.get(componentClass);
             services.forEach(service -> {
                 try {
+                    //Activation method won't benefit from automatic injection
+                    //this because the instance where it's invoked the activation method are not proxied
+                    //if developer wants to have some service available he can insert the component as arg
+                    //the system automatically will inject the service for him
+                    //Activation methods are outside the scope of "managed" proxy and are invoked on real entities
+                    //this is because the activation method may not be exposed in the service interface
                     getComponentRegistry().invokeLifecycleMethod(OnActivate.class, componentClass, service);
                 } catch (Exception e) {
                     log.error(e.getMessage(), e);
