@@ -75,7 +75,6 @@ public class TestComponentRegistry implements ComponentRegistry {
             } else
                 toRegister = component;
             ComponentRegistration<T, K> registration = doRegistration(componentClass, toRegister, configuration);
-            this.invokeLifecycleMethod(OnActivate.class,component.getClass(),registration.getComponent());
             //if it is water service we set the registration inside the proxy itself
             if (proxy != null) {
                 proxy.setRegistration((TestComponentRegistration) registration);

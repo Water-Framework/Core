@@ -61,7 +61,7 @@ public abstract class ApplicationInitializer<T, K> extends AbstractInitializer<T
             Dictionary<String, Object> dictionary = getComponentProperties(frameworkComponentAnnotation.properties());
             try {
                 Object service = getServiceInstance(componentClass);
-                injectFields(service);
+                injectFields(service,true);
                 ComponentRegistry registry = getComponentRegistry();
                 List<Class<?>> services = null;
                 if (registerMultiInterfaceComponents()) {
@@ -206,12 +206,12 @@ public abstract class ApplicationInitializer<T, K> extends AbstractInitializer<T
      * @param component
      * @param <S>
      */
-    private <S> void injectFields(S component) {
+    private <S> void injectFields(S component,boolean injectAtStartup) {
         log.debug("Injecting  Components into fields");
         final ComponentRegistry componentRegistry = getComponentRegistry();
         Arrays.stream(component.getClass().getDeclaredFields()).filter(field -> Arrays.stream(field.getDeclaredAnnotations())
                 //filtering all Inject annotation that should be injected at startup, this is the moment
-                .anyMatch(annotation -> annotation.annotationType().equals(Inject.class) && ((Inject) annotation).injectOnceAtStartup())).forEach(annotatedField -> {
+                .anyMatch(annotation -> annotation.annotationType().equals(Inject.class) && (!injectAtStartup || ((Inject) annotation).injectOnceAtStartup()))).forEach(annotatedField -> {
             Object service = null;
             //avoiding to find component registry just injecting if some components require it
             if (annotatedField.getType().equals(ComponentRegistry.class))
