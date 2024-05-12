@@ -23,6 +23,7 @@ import it.water.core.api.model.PaginableResult;
 import it.water.core.api.repository.query.Query;
 import it.water.core.api.repository.query.QueryBuilder;
 import it.water.core.api.repository.query.QueryOrder;
+import it.water.core.api.service.Service;
 
 /**
  * @param <T> parameter that indicates a generic class which must extend Water Entity
@@ -30,7 +31,7 @@ import it.water.core.api.repository.query.QueryOrder;
  *            This interface defines the methods for basic CRUD operations.
  * @Author Aristide Cittadino.
  */
-public interface BaseRepository<T extends BaseEntity> {
+public interface BaseRepository<T extends BaseEntity> extends Service {
 
     /**
      * Save an entity in database
