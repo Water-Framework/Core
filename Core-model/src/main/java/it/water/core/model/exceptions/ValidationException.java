@@ -20,6 +20,7 @@ package it.water.core.model.exceptions;
 import it.water.core.model.validation.ValidationError;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
+import lombok.ToString;
 
 import java.util.List;
 
@@ -31,6 +32,7 @@ import java.util.List;
  * exceptions.
  */
 @AllArgsConstructor
+@ToString
 public class ValidationException extends RuntimeException {
 
     /**
@@ -43,4 +45,13 @@ public class ValidationException extends RuntimeException {
      */
     @Getter
     private final transient List<ValidationError> violations;
+
+    @Override
+    public String getMessage() {
+        StringBuilder sb = new StringBuilder();
+        sb.append(super.getMessage());
+        sb.append("\n Invalid values:\n");
+        violations.forEach(violation -> sb.append(violation.getField()).append("=").append(violation.getInvalidValue()).append("\n"));
+        return sb.toString();
+    }
 }

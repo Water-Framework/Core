@@ -28,4 +28,5 @@ import lombok.NoArgsConstructor;
 public class ValidationMessages {
     public static final String NO_MALITIUS_CODE_VALIDATION = "No malitius code is allowed";
     public static final String POW_OF_2_VALIDATION = "Value must be pow of 2";
+    public static final String INVALID_PASSWORD = "Invalid password at lest 8 characters length with at least 1 upper case, 1 lower case,1 digit and 1 special character ";
 }
