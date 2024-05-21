@@ -574,18 +574,6 @@ public class WaterEncryprionUtilImpl implements EncryptionUtil {
     }
 
     /**
-     * @param saltBytesSize
-     * @return
-     * @throws NoSuchAlgorithmException
-     */
-    public byte[] generateRandomAESSalt(int saltBytesSize) {
-        Random r = new SecureRandom();
-        byte[] salt = new byte[saltBytesSize];
-        r.nextBytes(salt);
-        return salt;
-    }
-
-    /**
      * Generates AES key from a basic password
      *
      * @param password
@@ -673,13 +661,30 @@ public class WaterEncryprionUtilImpl implements EncryptionUtil {
      * @return
      */
     @Override
-    public byte[] hashPassword(String password) throws NoSuchAlgorithmException, InvalidKeySpecException {
-        SecureRandom random = new SecureRandom();
-        byte[] salt = new byte[16];
-        random.nextBytes(salt);
+    public byte[] hashPassword(byte[] salt, String password) throws NoSuchAlgorithmException, InvalidKeySpecException {
         KeySpec spec = new PBEKeySpec(password.toCharArray(), salt, 65536, 128);
         SecretKeyFactory factory = SecretKeyFactory.getInstance("PBKDF2WithHmacSHA1");
         return factory.generateSecret(spec).getEncoded();
+    }
+
+    /**
+     * Generates random Salt
+     * @param dim dimension of salt
+     * @return
+     */
+    public byte[] generateSalt(int dim) {
+        SecureRandom random = new SecureRandom();
+        byte[] salt = new byte[dim];
+        random.nextBytes(salt);
+        return salt;
+    }
+
+    /**
+     * Generates 16 bytes random Salt
+     * @return
+     */
+    public byte[] generate16BytesSalt() {
+        return generateSalt(16);
     }
 }
 

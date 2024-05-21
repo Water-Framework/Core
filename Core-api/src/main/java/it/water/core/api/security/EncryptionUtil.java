@@ -113,33 +113,28 @@ public interface EncryptionUtil extends Service {
     /**
      * @param padding
      * @return
-     *
      */
-    Cipher getCipherRSA(String padding) ;
+    Cipher getCipherRSA(String padding);
 
     /**
      * @param padding
      * @return
-     *
      */
-    Cipher getCipherRSAECB(String padding) throws NoSuchPaddingException, NoSuchAlgorithmException, NoSuchProviderException ;
+    Cipher getCipherRSAECB(String padding) throws NoSuchPaddingException, NoSuchAlgorithmException, NoSuchProviderException;
 
     /**
      * @param ecb
      * @return
-     *
      */
     Cipher getCipherRSAPKCS1Padding(boolean ecb);
 
     /**
      * @return
-     *
      */
-    Cipher getCipherRSAOAEPPAdding() ;
+    Cipher getCipherRSAOAEPPAdding();
 
     /**
      * @return Default cipher CBC/PKCS5PADDING
-     *
      */
     Cipher getCipherAES();
 
@@ -240,13 +235,6 @@ public interface EncryptionUtil extends Service {
     byte[] generateRandomAESInitVector() throws NoSuchAlgorithmException;
 
     /**
-     * @param saltBytesSize
-     * @return
-     * @throws NoSuchAlgorithmException
-     */
-    byte[] generateRandomAESSalt(int saltBytesSize);
-
-    /**
      * Generates AES key from a basic password
      *
      * @param password
@@ -287,10 +275,16 @@ public interface EncryptionUtil extends Service {
     byte[] decryptWithAES(byte[] aesPassword, byte[] initVector, String content, Cipher aesCipher) throws InvalidKeyException, BadPaddingException, IllegalBlockSizeException, InvalidAlgorithmParameterException;
 
     /**
-     *
      * @param password generates password hash.
+     * @param salt necessary to compare passwords
      * Default algorithm is PBKDF2.
      * @return
      */
-    byte[] hashPassword(String password) throws NoSuchAlgorithmException, InvalidKeySpecException;
+    byte[] hashPassword(byte[] salt, String password) throws NoSuchAlgorithmException, InvalidKeySpecException;
+
+    /**
+     * Generates 16 bytes random salt
+     * @return
+     */
+    byte[] generate16BytesSalt();
 }
