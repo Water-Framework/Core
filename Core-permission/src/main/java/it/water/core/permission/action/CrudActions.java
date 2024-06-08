@@ -31,5 +31,6 @@ public abstract class CrudActions {
     public static final String SAVE = "save";
     public static final String UPDATE = "update";
     public static final String FIND = "find";
+    public static final String FIND_ALL = "find-all";
     public static final String REMOVE = "remove";
 }

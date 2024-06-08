@@ -41,7 +41,7 @@ public class TestApplicationProperties implements ApplicationProperties {
 
     @Override
     public Object getProperty(String key) {
-        return properties.getProperty(key);
+        return properties.get(key);
     }
 
     @Override
