@@ -16,11 +16,13 @@
 
 package it.water.core.api.notification.email;
 
+import java.io.File;
+import java.util.HashMap;
 import java.util.List;
 
 /**
  * @Author Aristide Cittadino.
- * This interfaces is associated with a specific service with the responsability of sending internal email.
+ * This interface is associated with a specific service with the responsability of sending internal email.
  * Mail notifications are important for registration, pwd recovery so the framework give the possibility to define
  * an internal service with this purpose.
  * A standard module providing this service is it.water.notification.email, please check on github.
@@ -43,11 +45,13 @@ public interface EmailNotificationService {
      * @param attachments
      */
     void sendMail(String from, List<String> recipients, List<String> ccRecipients,
-                  List<String> bccRecipients, String subject, String body, List<byte[]> attachments);
+                  List<String> bccRecipients, String subject, String body, List<File> attachments);
 
     /**
      * Sends a mail giving the basic template name that will be processed to the endsystem
+     *
      * @param templateName
+     * @param params
      * @param from
      * @param recipients
      * @param ccRecipients
@@ -55,6 +59,6 @@ public interface EmailNotificationService {
      * @param subject
      * @param attachments
      */
-    void sendMail(String templateName, String from, List<String> recipients, List<String> ccRecipients,
-                  List<String> bccRecipients, String subject, List<byte[]> attachments);
+    void sendMail(String templateName, HashMap<String, Object> params, String from, List<String> recipients, List<String> ccRecipients,
+                  List<String> bccRecipients, String subject, List<File> attachments);
 }

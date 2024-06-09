@@ -26,4 +26,6 @@ import java.util.HashMap;
  */
 public interface EmailContentBuilder {
     String createBodyFromTemplate(String templateContent, HashMap<String, Object> params);
+
+    void saveOrUpdateTemplate(String templateName, String templateContent);
 }
