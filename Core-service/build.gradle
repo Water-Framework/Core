@@ -23,7 +23,7 @@ dependencies {
 	testImplementation 'org.junit.jupiter:junit-jupiter-api:' + project.junitJupiterVersion
 	testImplementation 'org.junit.jupiter:junit-jupiter-engine:' + project.junitJupiterVersion
 	testImplementation 'org.atteo.classindex:classindex:' + project.atteoClassIndexVersion
-	testImplementation 'javax.persistence:javax.persistence-api:'+project.javaxPersistenceVersion
+	testImplementation 'jakarta.persistence:jakarta.persistence-api:'+project.jakartaPersistenceVersion
 	testImplementation 'org.hsqldb:hsqldb:2.4.1'
 }
 
