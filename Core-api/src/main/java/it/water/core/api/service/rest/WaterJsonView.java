@@ -32,14 +32,14 @@ public interface WaterJsonView {
      * Compact View: reduces the amount of fields shown, just necessary one.
      * This view includes fields inside Public view.
      */
-    interface Compact extends Public {
+    interface Compact {
     }
 
     /**
      * Extended View: increase the amount of fields show with deeper details.
      * This view includes fields inside Public view.
      */
-    interface Extended {
+    interface Extended extends Compact {
     }
 
     /**
