@@ -20,10 +20,13 @@ package it.water.core.api.permission;
 import it.water.core.api.action.Action;
 import it.water.core.api.model.ProtectedResource;
 import it.water.core.api.model.Resource;
-import it.water.core.api.service.Service;
 import it.water.core.api.model.User;
+import it.water.core.api.service.Service;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import java.util.List;
+import java.util.Map;
 
 
 /**
@@ -44,11 +47,10 @@ public interface PermissionManager extends Service {
     boolean userHasRoles(String username, String[] rolesNames);
 
     /**
-     *
      * @param r
      * @param action
      */
-    void addPermissionIfNotExists(Role r,Class<? extends Resource> resourceClass,Action action);
+    void addPermissionIfNotExists(Role r, Class<? extends Resource> resourceClass, Action action);
 
     /**
      * Checks if an existing user has permissions for action of Action.
@@ -138,4 +140,29 @@ public interface PermissionManager extends Service {
         // return the most restrictive condition
         return true;
     }
+
+    /**
+     * Returns a permission map of actions available for a specific user on specific resources
+     * ex.
+     * {
+     * "resourceA":{
+     * "38":{
+     * "save":true,
+     * "update":true,
+     * "find":true
+     * },
+     * "54":{
+     * "save":false,
+     * "update":true,
+     * "find":true
+     * }
+     * }
+     * }
+     * Each entry is the action name value.
+     *
+     * @param username
+     * @param entityPks map with key the entity class and a list of ids
+     * @return
+     */
+    Map<String, Map<String, Map<String, Boolean>>> entityPermissionMap(String username, Map<String, List<Long>> entityPks);
 }
