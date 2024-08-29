@@ -16,6 +16,7 @@
 
 package it.water.core.service.integration.discovery;
 
+import it.water.core.api.service.integration.discovery.ServiceDiscoveryServerProperties;
 import it.water.core.api.service.integration.discovery.ServiceInfo;
 import it.water.core.interceptors.annotations.FrameworkComponent;
 
@@ -26,13 +27,13 @@ import java.util.Map;
  * @Author Aristide Cittadino
  * Default Service Discovery with lowest priority in order to support simple in memory server discovery.
  */
-@FrameworkComponent(priority = 0,properties = {"it.water.core.service.integration.discovery.registry.server=inMemory"})
+@FrameworkComponent(priority = 0, properties = {ServiceDiscoveryServerProperties.SERVICE_DISCOVERY_SERVER_IMPLEMENTATION_PROP + "=" + ServiceDiscoveryServerProperties.SERVICE_DISCOVERY_IN_MEMORY_SERVER_IMPLEMENTATION})
 public class ServiceDiscoveryRegistryInMemoryServer implements it.water.core.api.service.integration.discovery.ServiceDiscoveryRegistryServer {
-    Map<String,ServiceInfo> serviceInfoMap = new HashMap<>();
+    Map<String, ServiceInfo> serviceInfoMap = new HashMap<>();
 
     @Override
     public void registerService(ServiceInfo registration) {
-        serviceInfoMap.put(registration.getId(),registration);
+        serviceInfoMap.put(registration.getId(), registration);
     }
 
     @Override

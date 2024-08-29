@@ -22,6 +22,9 @@ import it.water.core.api.model.User;
 import it.water.core.api.permission.PermissionManager;
 import it.water.core.api.permission.Role;
 
+import java.util.List;
+import java.util.Map;
+
 public class FakePermissionManager implements PermissionManager {
     @Override
     public boolean userHasRoles(String username, String[] rolesNames) {
@@ -61,5 +64,10 @@ public class FakePermissionManager implements PermissionManager {
     @Override
     public boolean checkUserOwnsResource(User user, Object resource) {
         return false;
+    }
+
+    @Override
+    public Map<String, Map<String, Map<String, Boolean>>> entityPermissionMap(String username, Map<String, List<Long>> entityPks) {
+        throw new UnsupportedOperationException();
     }
 }
