@@ -53,8 +53,4 @@ public interface BaseEntity extends Resource {
      */
     void setEntityVersion(Integer entityVersion);
 
-    /**
-     * @return the full package and class name of the system class who manages this entity
-     */
-    String getSystemApiClassName();
 }
