@@ -221,4 +221,10 @@ public class InMemoryTestPermissionManager implements TestPermissionManager {
         return true;
     }
 
+    @Override
+    public Map<String, Map<String, Map<String, Boolean>>> entityPermissionMap(String username, Map<String, List<Long>> entityPks) {
+        //todo implement
+        throw new UnsupportedOperationException();
+    }
+
 }

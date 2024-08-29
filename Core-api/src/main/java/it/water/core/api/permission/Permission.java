@@ -1,4 +1,3 @@
-
 /*
  * Copyright 2024 Aristide Cittadino
  *
@@ -18,24 +17,14 @@
 package it.water.core.api.permission;
 
 /**
- * @Author Aristide Cittadino.
- * Generic interface component for Role.
+ * @Author Aristide Cittadino
  */
-public interface Role {
-
-    /**
-     * Unique id of the role entity
-     * @return
-     */
-    default long getId(){
-        return 0;
-    }
-
-    /**
-     * Gets a name of protected Role
-     *
-     * @return name of protected Role
-     */
+public interface Permission {
+    long getId();
     String getName();
-
+    String getResourceName();
+    Long getResourceId();
+    long getActionIds();
+    long getUserId();
+    long getRoleId();
 }
