@@ -19,6 +19,7 @@ package it.water.core.api.registry;
 
 import it.water.core.api.registry.filter.ComponentFilter;
 import it.water.core.api.registry.filter.ComponentFilterBuilder;
+import it.water.core.api.service.BaseEntitySystemApi;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -85,6 +86,15 @@ public interface ComponentRegistry {
      * @return the object deputed to build filter for retrieving components
      */
     ComponentFilterBuilder getComponentFilterBuilder();
+
+    /**
+     * Returns the system api associated with a specific entity class.
+     * Useful in context where you want to manage an entity starting from the class name in a generic way.
+     * @param entityClassName
+     * @return
+     * @param <T>
+     */
+    <T extends BaseEntitySystemApi> T findEntitySystemApi(String entityClassName);
 
     /**
      * Method used to invoke lifecycle methods like @OnActivate or @OnDeactivate

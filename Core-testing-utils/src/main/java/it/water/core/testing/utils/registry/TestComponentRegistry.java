@@ -15,15 +15,16 @@
  */
 package it.water.core.testing.utils.registry;
 
-import it.water.core.api.interceptors.OnActivate;
 import it.water.core.api.interceptors.OnDeactivate;
 import it.water.core.api.registry.ComponentConfiguration;
 import it.water.core.api.registry.ComponentRegistration;
 import it.water.core.api.registry.ComponentRegistry;
 import it.water.core.api.registry.filter.ComponentFilter;
 import it.water.core.api.registry.filter.ComponentFilterBuilder;
+import it.water.core.api.service.BaseEntitySystemApi;
 import it.water.core.api.service.Service;
 import it.water.core.model.exceptions.WaterRuntimeException;
+import it.water.core.registry.AbstractComponentRegistry;
 import it.water.core.registry.model.exception.NoComponentRegistryFoundException;
 import it.water.core.testing.utils.filter.TestComponentFilterBuilder;
 import it.water.core.testing.utils.interceptors.TestServiceProxy;
@@ -33,11 +34,14 @@ import java.lang.reflect.Proxy;
 import java.lang.reflect.Type;
 import java.util.*;
 
-public class TestComponentRegistry implements ComponentRegistry {
+public class TestComponentRegistry extends AbstractComponentRegistry implements ComponentRegistry {
     private Map<Class<?>, List<ComponentRegistration<?, TestComponentRegistration<?>>>> registrations;
+
+    private Map<String, BaseEntitySystemApi> baseEntitySystemApis;
 
     public TestComponentRegistry() {
         this.registrations = new HashMap<>();
+        this.baseEntitySystemApis = new HashMap<>();
     }
 
     @Override
@@ -59,7 +63,7 @@ public class TestComponentRegistry implements ComponentRegistry {
             final Object toRegister;
             Type[] toClass = component.getClass().getGenericInterfaces();
             List<Class<?>> toClassList = new ArrayList<>();
-            getGenericClasses(toClass,toClassList);
+            getGenericClasses(toClass, toClassList);
             if (componentClass.isInterface() && !toClassList.contains(componentClass))
                 toClassList.add(componentClass);
             //forcing to be a proxy
@@ -84,15 +88,15 @@ public class TestComponentRegistry implements ComponentRegistry {
         throw new WaterRuntimeException("Registration component cannot be null");
     }
 
-    void getGenericClasses(Type[] toClass,List<Class<?>> toClassList){
+    void getGenericClasses(Type[] toClass, List<Class<?>> toClassList) {
         for (int i = 0; i < toClass.length; i++) {
             Type t = toClass[i];
             if (t instanceof ParameterizedType) {
                 Class<?> toExposeClass = (Class<?>) ((ParameterizedType) t).getRawType();
                 toClassList.add(toExposeClass);
                 Type[] ancestorInterfaces = toExposeClass.getGenericInterfaces();
-                if(ancestorInterfaces != null && ancestorInterfaces.length > 0)
-                    getGenericClasses(ancestorInterfaces,toClassList);
+                if (ancestorInterfaces != null && ancestorInterfaces.length > 0)
+                    getGenericClasses(ancestorInterfaces, toClassList);
             } else
                 toClassList.add((Class<?>) t);
         }
@@ -108,13 +112,13 @@ public class TestComponentRegistry implements ComponentRegistry {
 
     @Override
     public <T> boolean unregisterComponent(ComponentRegistration<T, ?> registration) {
-        this.invokeLifecycleMethod(OnDeactivate.class,registration.getComponent().getClass(),registration.getComponent());
+        this.invokeLifecycleMethod(OnDeactivate.class, registration.getComponent().getClass(), registration.getComponent());
         return removeComponentFromRegistry(registration.getRegistrationClass(), registration.getComponent());
     }
 
     @Override
     public <T> boolean unregisterComponent(Class<T> componentClass, T component) {
-        this.invokeLifecycleMethod(OnDeactivate.class,componentClass,component);
+        this.invokeLifecycleMethod(OnDeactivate.class, componentClass, component);
         return removeComponentFromRegistry(componentClass, component);
     }
 
@@ -154,6 +158,12 @@ public class TestComponentRegistry implements ComponentRegistry {
     @Override
     public ComponentFilterBuilder getComponentFilterBuilder() {
         return new TestComponentFilterBuilder();
+    }
+
+    @Override
+    public <T extends BaseEntitySystemApi> T findEntitySystemApi(String entityClassName) {
+        //TODO must implement it
+        throw new UnsupportedOperationException();
     }
 
     private <T> List<T> filterComponents(Class<T> componentClass, ComponentFilter filter) {
