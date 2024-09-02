@@ -18,6 +18,7 @@ package it.water.core.testing.utils.security;
 
 import it.water.core.api.permission.Role;
 import it.water.core.api.permission.RoleManager;
+import it.water.core.api.service.integration.RoleIntegrationClient;
 import it.water.core.interceptors.annotations.FrameworkComponent;
 
 import java.util.*;
@@ -26,8 +27,8 @@ import java.util.*;
  * @Author Aristide Cittadino
  * Simple In memory Role Manager.
  */
-@FrameworkComponent(priority = 0)
-public class InMemoryTestRoleManager implements RoleManager {
+@FrameworkComponent(priority = 0,services = {RoleManager.class,RoleIntegrationClient.class})
+public class InMemoryTestRoleManager implements RoleManager, RoleIntegrationClient {
     Map<Long, Set<Role>> userRoles = new HashMap<>();
     Set<Role> roles = new HashSet<>();
 
@@ -75,7 +76,7 @@ public class InMemoryTestRoleManager implements RoleManager {
 
     @Override
     public Set<Role> getUserRoles(long userId) {
-        if(!this.userRoles.containsKey(userId))
+        if (!this.userRoles.containsKey(userId))
             return Collections.emptySet();
         return Collections.unmodifiableSet(this.userRoles.get(userId));
     }
@@ -90,5 +91,10 @@ public class InMemoryTestRoleManager implements RoleManager {
     public boolean removeRole(long userId, Role role) {
         userRoles.computeIfAbsent(userId, key -> new HashSet<>());
         return userRoles.get(userId).remove(role);
+    }
+
+    @Override
+    public Collection<Role> fetchUserRoles(long userId) {
+        return getUserRoles(userId);
     }
 }

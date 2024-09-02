@@ -14,17 +14,18 @@
  * limitations under the License.
  */
 
-package it.water.core.testing.utils.api;
+package it.water.core.testing.utils.service;
 
-import it.water.core.api.model.User;
-import it.water.core.api.permission.PermissionManager;
+import it.water.core.api.service.integration.SharedEntityIntegrationClient;
+import it.water.core.interceptors.annotations.FrameworkComponent;
 
-/**
- * @Author Aristide Cittadino
- * Simple Permission Manager which supports operation of user management for test purpose.
- * As a way to simplify tests TestPermissionManager injectx also UserManager is just a shortcut.
- * The developer can use TestpermissionManager or TestUserManager to add/remove, they both use the same core bean which is InMemoryTestPermissionManager
- */
-public interface TestPermissionManager extends PermissionManager,TestUserManager {
+import java.util.Collection;
+import java.util.Collections;
 
+@FrameworkComponent(priority = 0)
+public class SharedEntityMockIntegrationClient implements SharedEntityIntegrationClient {
+    @Override
+    public Collection<Long> fetchSharingUsersIds(String entityResourceName, long entityId) {
+        return Collections.emptySet();
+    }
 }
