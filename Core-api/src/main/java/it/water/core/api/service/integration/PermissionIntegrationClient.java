@@ -23,7 +23,7 @@ import it.water.core.api.permission.Permission;
 import java.util.Collection;
 import java.util.List;
 
-public interface PermissionIntegrationClient {
+public interface PermissionIntegrationClient extends EntityIntegrationClient{
     Permission findByUserAndResource(long userId, Resource resource);
 
     /**

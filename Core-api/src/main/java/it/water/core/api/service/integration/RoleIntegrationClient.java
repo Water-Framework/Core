@@ -20,6 +20,6 @@ import it.water.core.api.permission.Role;
 
 import java.util.Collection;
 
-public interface RoleIntegrationClient {
+public interface RoleIntegrationClient extends EntityIntegrationClient{
     Collection<Role> fetchUserRoles(long userId);
 }

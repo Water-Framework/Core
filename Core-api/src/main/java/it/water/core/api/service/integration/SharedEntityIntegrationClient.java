@@ -20,6 +20,6 @@ import it.water.core.api.model.User;
 
 import java.util.Collection;
 
-public interface SharedEntityIntegrationClient {
+public interface SharedEntityIntegrationClient extends EntityIntegrationClient{
     Collection<Long> fetchSharingUsersIds(String entityResourceName, long entityId);
 }

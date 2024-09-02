@@ -16,11 +16,15 @@
 
 package it.water.core.api.service.integration.discovery;
 
+import it.water.core.api.service.Service;
+
 /**
  * @Author Aristide Cittadino
  */
-public interface ServiceDiscoveryRegistry {
+public interface ServiceDiscoveryRegistry extends Service {
     void registerService(ServiceInfo registration);
+
     void unregisterService(String id);
+
     ServiceInfo getServiceInfo(String id);
 }

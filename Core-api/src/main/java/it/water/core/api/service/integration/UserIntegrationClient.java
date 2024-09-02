@@ -18,6 +18,6 @@ package it.water.core.api.service.integration;
 
 import it.water.core.api.model.User;
 
-public interface UserIntegrationClient {
+public interface UserIntegrationClient extends EntityIntegrationClient {
     User fetchUserByUsername(String username);
 }

@@ -16,11 +16,11 @@
 
 package it.water.core.api.service.integration;
 
-import it.water.core.api.model.BaseEntity;
+import it.water.core.api.service.Service;
 
 /**
  * @Author Aristide Cittadino
  */
-public interface EntityIntegrationClient {
+public interface EntityIntegrationClient extends Service {
 
 }
