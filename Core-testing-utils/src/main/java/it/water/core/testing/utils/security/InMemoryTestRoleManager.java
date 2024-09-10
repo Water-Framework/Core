@@ -29,12 +29,19 @@ import java.util.*;
  */
 @FrameworkComponent(priority = 0,services = {RoleManager.class,RoleIntegrationClient.class})
 public class InMemoryTestRoleManager implements RoleManager, RoleIntegrationClient {
+    private static long roleCount = 1;
     Map<Long, Set<Role>> userRoles = new HashMap<>();
     Set<Role> roles = new HashSet<>();
 
     @Override
     public Role createIfNotExists(String roleName) {
         Role r = new Role() {
+            private long id = roleCount++;
+            @Override
+            public long getId() {
+                return id;
+            }
+
             @Override
             public String getName() {
                 return roleName;
