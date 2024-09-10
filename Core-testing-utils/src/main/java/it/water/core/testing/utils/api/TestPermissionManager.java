@@ -16,8 +16,8 @@
 
 package it.water.core.testing.utils.api;
 
-import it.water.core.api.model.User;
 import it.water.core.api.permission.PermissionManager;
+import it.water.core.api.service.Service;
 
 /**
  * @Author Aristide Cittadino
@@ -25,6 +25,6 @@ import it.water.core.api.permission.PermissionManager;
  * As a way to simplify tests TestPermissionManager injectx also UserManager is just a shortcut.
  * The developer can use TestpermissionManager or TestUserManager to add/remove, they both use the same core bean which is InMemoryTestPermissionManager
  */
-public interface TestPermissionManager extends PermissionManager,TestUserManager {
+public interface TestPermissionManager extends PermissionManager, TestUserManager, Service {
 
 }

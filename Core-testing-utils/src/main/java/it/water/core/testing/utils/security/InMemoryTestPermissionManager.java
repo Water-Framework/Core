@@ -29,6 +29,7 @@ import it.water.core.interceptors.annotations.FrameworkComponent;
 import it.water.core.interceptors.annotations.Inject;
 import it.water.core.permission.action.ActionFactory;
 import it.water.core.testing.utils.api.TestPermissionManager;
+import it.water.core.testing.utils.api.TestUserManager;
 import lombok.Getter;
 import lombok.Setter;
 
@@ -40,7 +41,7 @@ import java.util.concurrent.atomic.AtomicReference;
  * Fake permission Manager which allows every action coming from username with "usernameOk" and deny others.
  * Use it just for test purpose
  */
-@FrameworkComponent(priority = 0, properties = {PermissionManagerComponentProperties.PERMISSION_MANAGER_IMPLEMENTATION_PROP+"="+PermissionManagerComponentProperties.PERMISSION_MANAGER_DEFAILT_IMPLEMENTATION}, services = {PermissionManager.class, TestPermissionManager.class})
+@FrameworkComponent(priority = 0, properties = {PermissionManagerComponentProperties.PERMISSION_MANAGER_IMPLEMENTATION_PROP + "=" + PermissionManagerComponentProperties.PERMISSION_MANAGER_DEFAILT_IMPLEMENTATION}, services = {PermissionManager.class, TestPermissionManager.class})
 public class InMemoryTestPermissionManager implements TestPermissionManager {
     Map<Role, Set<ResourceAction<?>>> rolePermissions = new HashMap<>();
     @Inject
@@ -51,9 +52,9 @@ public class InMemoryTestPermissionManager implements TestPermissionManager {
     @Getter
     private String implementation = "default";
 
+    @Inject
     @Setter
-    @Getter
-    private InMemoryUserManager inMemoryUserManager;
+    private TestUserManager inMemoryUserManager;
 
     @Override
     public void addPermissionIfNotExists(Role r, Class<? extends Resource> resourceClass, Action action) {
@@ -131,7 +132,7 @@ public class InMemoryTestPermissionManager implements TestPermissionManager {
 
     @Override
     public User addUser(String username, String name, String lastname, String email, boolean isAdmin) {
-        return inMemoryUserManager.addUser(username,name,lastname,email,isAdmin);
+        return inMemoryUserManager.addUser(username, name, lastname, email, isAdmin);
     }
 
     @Override

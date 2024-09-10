@@ -17,10 +17,11 @@
 package it.water.core.testing.utils.api;
 
 import it.water.core.api.model.User;
+import it.water.core.api.service.Service;
 
 import java.util.Collection;
 
-public interface TestUserManager {
+public interface TestUserManager extends Service {
     User addUser(String username, String name, String lastname, String email, boolean isAdmin);
     void removeUser(String username);
     User findUser(String username);
