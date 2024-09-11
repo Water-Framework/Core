@@ -38,6 +38,7 @@ public class TestComponentRegistry extends AbstractComponentRegistry implements 
     private Map<Class<?>, List<ComponentRegistration<?, TestComponentRegistration<?>>>> registrations;
 
     private Map<String, BaseEntitySystemApi> baseEntitySystemApis;
+    private Map<String, Integer> baseEntitySystemApiPriority;
 
     public TestComponentRegistry() {
         this.registrations = new HashMap<>();
@@ -75,10 +76,25 @@ public class TestComponentRegistry extends AbstractComponentRegistry implements 
                 proxy = new TestServiceProxy<>((Service) component, this);
                 Object o = Proxy.newProxyInstance(this.getClass().getClassLoader(), toClassList.toArray(interfacesWithGenerics), proxy);
                 toRegister = o;
-
-            } else
+            } else {
                 toRegister = component;
+            }
+            //registration
             ComponentRegistration<T, K> registration = doRegistration(componentClass, toRegister, configuration);
+
+            if(BaseEntitySystemApi.class.isAssignableFrom(component.getClass())){
+                BaseEntitySystemApi entitySystemApi = (BaseEntitySystemApi) component;
+                String entityType = entitySystemApi.getEntityType().getName();
+                baseEntitySystemApis.computeIfAbsent(entityType,key -> entitySystemApi);
+                baseEntitySystemApiPriority.computeIfAbsent(entityType,key -> configuration.getPriority());
+                long currentPriority = baseEntitySystemApiPriority.get(entityType);
+                //updating system apis with the one with highest priority
+                if(configuration.getPriority() > currentPriority){
+                    baseEntitySystemApis.put(entityType,entitySystemApi);
+                    baseEntitySystemApiPriority.put(entityType,configuration.getPriority());
+                }
+
+            }
             //if it is water service we set the registration inside the proxy itself
             if (proxy != null) {
                 proxy.setRegistration((TestComponentRegistration) registration);
@@ -162,8 +178,7 @@ public class TestComponentRegistry extends AbstractComponentRegistry implements 
 
     @Override
     public <T extends BaseEntitySystemApi> T findEntitySystemApi(String entityClassName) {
-        //TODO must implement it
-        throw new UnsupportedOperationException();
+        return (T)baseEntitySystemApis.get(entityClassName);
     }
 
     private <T> List<T> filterComponents(Class<T> componentClass, ComponentFilter filter) {
