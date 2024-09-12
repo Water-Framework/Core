@@ -15,42 +15,9 @@
  */
 package it.water.core.bundle;
 
-import it.water.core.api.registry.ComponentRegistry;
-import it.water.core.api.service.rest.RestApi;
 import it.water.core.api.service.rest.RestApiManager;
 
-import java.util.Set;
-
 public class FakeRestApiManager implements RestApiManager {
-    @Override
-    public void addRestApiService(Class<? extends RestApi> restApi, Class<?> service) {
-        //do nothing
-    }
-
-    @Override
-    public void setAnnotatedRestApis(Iterable<Class<?>> registeredConcreteApis) {
-        //do nothing
-    }
-
-    @Override
-    public void removeRestApiService(Class<? extends RestApi> restApi) {
-        //do nothing
-    }
-
-    @Override
-    public Class<?> getRestImplementation(Class<? extends RestApi> restApi) {
-        return null;
-    }
-
-    @Override
-    public Set<Class<? extends RestApi>> getRegisteredApis() {
-        return null;
-    }
-
-    @Override
-    public void setComponentRegistry(ComponentRegistry componentRegistry) {
-        //do nothing
-    }
 
     @Override
     public void startRestApiServer() {

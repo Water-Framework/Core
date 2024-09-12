@@ -24,7 +24,7 @@ import org.slf4j.LoggerFactory;
 
 /**
  * @Author Aristide Cittadino.
- * Basic implementation of an water service.
+ * Basic implementation of a water service.
  */
 public abstract class AbstractService implements Service {
     private final Logger log = LoggerFactory.getLogger(this.getClass().getName());
