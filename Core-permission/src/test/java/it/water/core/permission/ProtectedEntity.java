@@ -54,8 +54,4 @@ public class ProtectedEntity implements it.water.core.api.permission.ProtectedEn
     public void setEntityVersion(Integer entityVersion) {
         //do nothing
     }
-    @Override
-    public String getSystemApiClassName() {
-        return null;
-    }
 }
