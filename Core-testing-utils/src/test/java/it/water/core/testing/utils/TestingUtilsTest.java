@@ -27,6 +27,7 @@ import it.water.core.api.permission.SecurityContext;
 import it.water.core.api.registry.ComponentRegistry;
 import it.water.core.api.registry.filter.ComponentFilter;
 import it.water.core.api.service.Service;
+import it.water.core.api.user.UserManager;
 import it.water.core.interceptors.annotations.Inject;
 import it.water.core.permission.action.CrudActions;
 import it.water.core.testing.utils.api.TestPermissionManager;
@@ -58,6 +59,10 @@ class TestingUtilsTest implements Service {
     @Setter
     //injecting test permission manager in order to perform some basic security tests
     private TestPermissionManager testPermissionManager;
+
+    @Inject
+    @Setter
+    private UserManager userManager;
     @Inject
     @Setter
     private RoleManager roleManager;
@@ -69,7 +74,7 @@ class TestingUtilsTest implements Service {
     @BeforeAll
     public void initializeTestFramework() {
         initializer = TestRuntimeInitializer.getInstance();
-        this.userOk = testPermissionManager.addUser("usernameOk", "username", "username", "email@mail.com", false);
+        this.userOk = userManager.addUser("usernameOk", "username", "username", "email@mail.com", "pwd","salt",false);
     }
 
     @Test
@@ -83,7 +88,7 @@ class TestingUtilsTest implements Service {
         Assertions.assertEquals("customValue", applicationProperties.getProperty("custom.property"));
         Assertions.assertThrows(UnsupportedOperationException.class, () -> applicationProperties.unloadProperties(customPropFile));
         Assertions.assertNotNull(applicationProperties);
-        Assertions.assertDoesNotThrow(() -> initializer.impersonate(userOk));
+        Assertions.assertDoesNotThrow(() -> initializer.impersonate(userOk,runtime));
         Assertions.assertNotNull(initializer.getPermissionManager());
     }
 
@@ -123,7 +128,7 @@ class TestingUtilsTest implements Service {
     void testModels() {
         Role testRole = new TestRole("role");
         User user = new TestHUser(1000, "name", "lastname", "email", "username", Arrays.asList(testRole), false);
-        Assertions.assertTrue(user.hasRole("role"));
+        Assertions.assertTrue(roleManager.hasRole(user.getId(),"role"));
     }
 
     @Test
@@ -135,9 +140,9 @@ class TestingUtilsTest implements Service {
 
     @Test
     void testRuntime() {
-        TestRuntimeInitializer.getInstance().impersonate(userOk);
+        TestRuntimeInitializer.getInstance().impersonate(userOk,runtime);
         Assertions.assertNotNull(runtime.getSecurityContext());
-        Assertions.assertDoesNotThrow(() -> initializer.impersonate(userOk));
+        Assertions.assertDoesNotThrow(() -> initializer.impersonate(userOk,runtime));
     }
 
     @Test
@@ -148,7 +153,7 @@ class TestingUtilsTest implements Service {
         ActionsManager actionManager = initializer.getComponentRegistry().findComponent(ActionsManager.class, null);
         Role role = roleManager.createIfNotExists("ROLE");
         roleManager.addRole(userOk.getId(), role);
-        initializer.impersonate(userOk);
+        initializer.impersonate(userOk,runtime);
         SecurityContext securityContext = runtime.getSecurityContext();
         TestResource res = new TestResource();
         Action action = actionManager.getActions().get(TestResource.class.getName()).getAction(CrudActions.SAVE);

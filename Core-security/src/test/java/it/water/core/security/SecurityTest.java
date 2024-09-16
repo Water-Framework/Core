@@ -28,6 +28,7 @@ import it.water.core.api.permission.SecurityContext;
 import it.water.core.api.registry.ComponentRegistry;
 import it.water.core.api.security.EncryptionUtil;
 import it.water.core.api.service.Service;
+import it.water.core.api.user.UserManager;
 import it.water.core.interceptors.annotations.Inject;
 import it.water.core.permission.action.CrudActions;
 import it.water.core.permission.exceptions.UnauthorizedException;
@@ -82,6 +83,10 @@ class SecurityTest implements Service {
     @Setter
     //injecting test permission manager in order to perform some basic security tests
     private TestPermissionManager testPermissionManager;
+
+    @Inject
+    @Setter
+    private UserManager userManager;
     @Inject
     @Setter
     private RoleManager roleManager;
@@ -99,8 +104,8 @@ class SecurityTest implements Service {
 
     @BeforeAll
     void beforeAll() {
-        this.userOk = testPermissionManager.addUser("usernameOk", "username", "username", "email@mail.com", true);
-        this.userKo = testPermissionManager.addUser("usernameKo", "usernameKo", "usernameKo", "email1@mail.com", false);
+        this.userOk = userManager.addUser("usernameOk", "username", "username", "email@mail.com", "pwd","salt",true);
+        this.userKo = userManager.addUser("usernameKo", "usernameKo", "usernameKo", "email1@mail.com", "pwd","salt",false);
         this.testRole = roleManager.getRole(TestProtectedResource.TEST_ROLE_NAME);
         Action saveAction = this.actionsManager.getActions().get(TestProtectedResource.class.getName()).getAction(CrudActions.SAVE);
         roleManager.addRole(this.userOk.getId(), testRole);
@@ -411,7 +416,7 @@ class SecurityTest implements Service {
         System.arraycopy(decrypted, initVector.length, finalString, 0, finalString.length);
         Assertions.assertEquals(cipherText, new String(finalString));
 
-        byte[] salt = waterEncryptionUtil.generateRandomAESSalt(16);
+        byte[] salt = waterEncryptionUtil.generate16BytesSalt();
         byte[] encryptedAndSal = waterEncryptionUtil.encryptWithAES(password, salt, cipherText, waterEncryptionUtil.getCipherAES());
         byte[] encrpted = new byte[encryptedAndSal.length - salt.length];
         System.arraycopy(encryptedAndSal, salt.length, encrpted, 0, encrpted.length);
