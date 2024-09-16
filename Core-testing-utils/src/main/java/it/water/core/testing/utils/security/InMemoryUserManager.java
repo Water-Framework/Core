@@ -18,15 +18,21 @@ package it.water.core.testing.utils.security;
 
 import it.water.core.api.model.User;
 import it.water.core.api.service.integration.UserIntegrationClient;
+import it.water.core.api.user.UserManager;
 import it.water.core.interceptors.annotations.FrameworkComponent;
+import it.water.core.interceptors.annotations.Inject;
 import it.water.core.testing.utils.api.TestUserManager;
+import lombok.Setter;
 
 import java.util.*;
 
-@FrameworkComponent(priority = 0,services = {TestUserManager.class,UserIntegrationClient.class})
-public class InMemoryUserManager implements TestUserManager, UserIntegrationClient {
+@FrameworkComponent(priority = 0, services = {UserManager.class, TestUserManager.class, UserIntegrationClient.class})
+public class InMemoryUserManager implements UserManager, TestUserManager, UserIntegrationClient {
     private static int userCounter = 1;
     Set<User> users = new HashSet<>();
+    @Inject
+    @Setter
+    private UserIntegrationClient userIntegrationClient;
 
     public InMemoryUserManager() {
         users.add(new User() {
@@ -63,7 +69,7 @@ public class InMemoryUserManager implements TestUserManager, UserIntegrationClie
     }
 
     @Override
-    public User addUser(String username, String name, String lastname, String email, boolean isAdmin) {
+    public User addUser(String username, String name, String lastname, String email, String password, String salt, boolean isAdmin) {
         User u = new User() {
             private long id = userCounter++;
 
@@ -135,6 +141,6 @@ public class InMemoryUserManager implements TestUserManager, UserIntegrationClie
 
     @Override
     public User fetchUserByUsername(String username) {
-        return findUser(username);
+        return userIntegrationClient.fetchUserByUsername(username);
     }
 }

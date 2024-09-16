@@ -16,7 +16,7 @@
 package it.water.core.testing.utils.model;
 
 import it.water.core.api.model.User;
-import it.water.core.api.permission.Role;
+import it.water.core.api.model.Role;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 

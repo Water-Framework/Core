@@ -21,6 +21,7 @@ import it.water.core.api.action.Action;
 import it.water.core.api.model.ProtectedResource;
 import it.water.core.api.model.Resource;
 import it.water.core.api.model.User;
+import it.water.core.api.model.Role;
 import it.water.core.api.service.Service;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

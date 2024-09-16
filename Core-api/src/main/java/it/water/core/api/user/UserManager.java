@@ -1,4 +1,3 @@
-
 /*
  * Copyright 2024 Aristide Cittadino
  *
@@ -15,27 +14,24 @@
  * limitations under the License.
  */
 
-package it.water.core.api.permission;
+package it.water.core.api.user;
+
+import it.water.core.api.model.User;
+import it.water.core.api.service.Service;
+
+import java.util.Collection;
 
 /**
- * @Author Aristide Cittadino.
- * Generic interface component for Role.
+ * @Author Aristide Cittadino
+ * Generic service for user management.
  */
-public interface Role {
+public interface UserManager extends Service {
 
-    /**
-     * Unique id of the role entity
-     * @return
-     */
-    default long getId(){
-        return 0;
-    }
+    User addUser(String username, String name, String lastname, String email,String password,String salt, boolean isAdmin);
 
-    /**
-     * Gets a name of protected Role
-     *
-     * @return name of protected Role
-     */
-    String getName();
+    void removeUser(String username);
 
+    User findUser(String username);
+
+    Collection<User> all();
 }

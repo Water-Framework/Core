@@ -16,7 +16,7 @@
 
 package it.water.core.api.service.integration;
 
-import it.water.core.api.permission.Role;
+import it.water.core.api.model.Role;
 
 import java.util.Collection;
 

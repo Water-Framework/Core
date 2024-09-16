@@ -20,16 +20,17 @@ import it.water.core.api.action.ResourceAction;
 import it.water.core.api.entity.owned.OwnedChildResource;
 import it.water.core.api.entity.owned.OwnedResource;
 import it.water.core.api.model.Resource;
+import it.water.core.api.model.Role;
 import it.water.core.api.model.User;
 import it.water.core.api.permission.PermissionManager;
 import it.water.core.api.permission.PermissionManagerComponentProperties;
-import it.water.core.api.permission.Role;
-import it.water.core.api.permission.RoleManager;
+import it.water.core.api.role.RoleManager;
+import it.water.core.api.user.UserManager;
 import it.water.core.interceptors.annotations.FrameworkComponent;
 import it.water.core.interceptors.annotations.Inject;
 import it.water.core.permission.action.ActionFactory;
 import it.water.core.testing.utils.api.TestPermissionManager;
-import it.water.core.testing.utils.api.TestUserManager;
+import jakarta.persistence.NoResultException;
 import lombok.Getter;
 import lombok.Setter;
 
@@ -54,7 +55,7 @@ public class InMemoryTestPermissionManager implements TestPermissionManager {
 
     @Inject
     @Setter
-    private TestUserManager inMemoryUserManager;
+    private UserManager userManager;
 
     @Override
     public void addPermissionIfNotExists(Role r, Class<? extends Resource> resourceClass, Action action) {
@@ -67,7 +68,7 @@ public class InMemoryTestPermissionManager implements TestPermissionManager {
     public boolean userHasRoles(String username, String[] rolesNames) {
         boolean hasAllRoles = false;
         for (int i = 0; i < rolesNames.length; i++) {
-            boolean hasRole = roleManager.hasRole(inMemoryUserManager.findUser(username).getId(), rolesNames[i]);
+            boolean hasRole = roleManager.hasRole(userManager.findUser(username).getId(), rolesNames[i]);
             if (i == 0)
                 hasAllRoles = hasRole;
             else
@@ -88,12 +89,17 @@ public class InMemoryTestPermissionManager implements TestPermissionManager {
 
     @Override
     public boolean checkPermission(String username, String resourceName, Action action) {
-        Optional<User> user = inMemoryUserManager.all().stream().filter(currUser -> currUser.getUsername().equals(username)).findFirst();
-        if (!user.isPresent())
+        User user = null;
+        try {
+            user = userManager.findUser(username);
+        } catch (NoResultException e) {
+            log.debug("No user found with username: {}", username);
+        }
+        if (user == null)
             return false;
-        if (user.get().isAdmin())
+        if (user.isAdmin())
             return true;
-        Set<Role> userRoles = roleManager.getUserRoles(inMemoryUserManager.findUser(username).getId());
+        Set<Role> userRoles = roleManager.getUserRoles(userManager.findUser(username).getId());
         if (!userRoles.isEmpty()) {
             return userRoles.stream().anyMatch(role -> rolePermissions.containsKey(role) && rolePermissions.get(role).stream().anyMatch(resourceAction -> resourceAction.getResourceClass().getName().equalsIgnoreCase(resourceName) && resourceAction.getAction().equals(action)));
         }
@@ -104,8 +110,8 @@ public class InMemoryTestPermissionManager implements TestPermissionManager {
     public boolean checkPermissionAndOwnership(String username, String resourceName, Action action, Resource... entities) {
         boolean permission = checkPermission(username, resourceName, action);
         final AtomicReference<Boolean> owned = new AtomicReference<>();
-        owned.set(checkUserOwnsResource(inMemoryUserManager.findUser(username), resourceName));
-        Arrays.stream(entities).forEach(entity -> owned.set(owned.get() && checkUserOwnsResource(inMemoryUserManager.findUser(username), entity)));
+        owned.set(checkUserOwnsResource(userManager.findUser(username), resourceName));
+        Arrays.stream(entities).forEach(entity -> owned.set(owned.get() && checkUserOwnsResource(userManager.findUser(username), entity)));
         return permission && owned.get();
     }
 
@@ -128,25 +134,5 @@ public class InMemoryTestPermissionManager implements TestPermissionManager {
     public Map<String, Map<String, Map<String, Boolean>>> entityPermissionMap(String username, Map<String, List<Long>> entityPks) {
         //todo implement
         throw new UnsupportedOperationException();
-    }
-
-    @Override
-    public User addUser(String username, String name, String lastname, String email, boolean isAdmin) {
-        return inMemoryUserManager.addUser(username, name, lastname, email, isAdmin);
-    }
-
-    @Override
-    public void removeUser(String username) {
-        inMemoryUserManager.removeUser(username);
-    }
-
-    @Override
-    public User findUser(String username) {
-        return inMemoryUserManager.findUser(username);
-    }
-
-    @Override
-    public Collection<User> all() {
-        return inMemoryUserManager.all();
     }
 }

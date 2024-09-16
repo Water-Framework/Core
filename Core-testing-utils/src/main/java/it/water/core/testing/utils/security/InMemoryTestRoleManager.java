@@ -16,8 +16,8 @@
 
 package it.water.core.testing.utils.security;
 
-import it.water.core.api.permission.Role;
-import it.water.core.api.permission.RoleManager;
+import it.water.core.api.model.Role;
+import it.water.core.api.role.RoleManager;
 import it.water.core.api.service.integration.RoleIntegrationClient;
 import it.water.core.interceptors.annotations.FrameworkComponent;
 

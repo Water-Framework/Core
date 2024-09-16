@@ -16,8 +16,8 @@
 
 package it.water.core.permission;
 
-import it.water.core.api.permission.Role;
-import it.water.core.api.permission.RoleManager;
+import it.water.core.api.model.Role;
+import it.water.core.api.role.RoleManager;
 
 import java.util.Collections;
 import java.util.Set;

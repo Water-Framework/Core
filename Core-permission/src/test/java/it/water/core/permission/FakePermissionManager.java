@@ -20,7 +20,7 @@ import it.water.core.api.action.Action;
 import it.water.core.api.model.Resource;
 import it.water.core.api.model.User;
 import it.water.core.api.permission.PermissionManager;
-import it.water.core.api.permission.Role;
+import it.water.core.api.model.Role;
 
 import java.util.List;
 import java.util.Map;

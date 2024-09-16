@@ -1,3 +1,4 @@
+
 /*
  * Copyright 2024 Aristide Cittadino
  *
@@ -14,17 +15,27 @@
  * limitations under the License.
  */
 
-package it.water.core.testing.utils.api;
-
-import it.water.core.api.permission.PermissionManager;
-import it.water.core.api.service.Service;
+package it.water.core.api.model;
 
 /**
- * @Author Aristide Cittadino
- * Simple Permission Manager which supports operation of user management for test purpose.
- * As a way to simplify tests TestPermissionManager injectx also UserManager is just a shortcut.
- * The developer can use TestpermissionManager or TestUserManager to add/remove, they both use the same core bean which is InMemoryTestPermissionManager
+ * @Author Aristide Cittadino.
+ * Generic interface component for Role.
  */
-public interface TestPermissionManager extends PermissionManager, Service {
+public interface Role {
+
+    /**
+     * Unique id of the role entity
+     * @return
+     */
+    default long getId(){
+        return 0;
+    }
+
+    /**
+     * Gets a name of protected Role
+     *
+     * @return name of protected Role
+     */
+    String getName();
 
 }

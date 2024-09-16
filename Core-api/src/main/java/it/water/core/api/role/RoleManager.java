@@ -14,7 +14,9 @@
  * limitations under the License.
  */
 
-package it.water.core.api.permission;
+package it.water.core.api.role;
+
+import it.water.core.api.model.Role;
 
 import java.util.Set;
 
