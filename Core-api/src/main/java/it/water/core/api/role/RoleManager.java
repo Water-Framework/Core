@@ -17,6 +17,7 @@
 package it.water.core.api.role;
 
 import it.water.core.api.model.Role;
+import it.water.core.api.service.Service;
 
 import java.util.Set;
 
@@ -24,7 +25,7 @@ import java.util.Set;
  * @Author Aristide Cittadino
  * Class which has the ownership of managing roles inside the platform.
  */
-public interface RoleManager {
+public interface RoleManager extends Service  {
     /**
      * Creates a role if not exists
      *

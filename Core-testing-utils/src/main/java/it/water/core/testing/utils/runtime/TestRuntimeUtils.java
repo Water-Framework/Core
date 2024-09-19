@@ -19,8 +19,6 @@ package it.water.core.testing.utils.runtime;
 import it.water.core.api.bundle.Runtime;
 import it.water.core.api.model.User;
 import it.water.core.api.permission.SecurityContext;
-import it.water.core.bundle.WaterRuntime;
-import it.water.core.interceptors.annotations.FrameworkComponent;
 import it.water.core.model.exceptions.ValidationException;
 import it.water.core.model.validation.ValidationError;
 import it.water.core.testing.utils.bundle.TestRuntimeInitializer;
@@ -36,13 +34,11 @@ import java.util.function.Supplier;
  * With this componente used onlu for test purpose we should overcome this problem.
  * This component is useful specially when tests are executed outside the junit thread for example karate.
  */
-@FrameworkComponent(priority = 1, services = {Runtime.class})
-public class TestRuntime extends WaterRuntime implements Runtime {
-    private SecurityContext securityContext;
+public class TestRuntimeUtils {
 
-    public TestRuntime() {
-        //Filling security context with admin default, so rest test can easily integrate
-        this.fillSecurityContext(new SecurityContext() {
+    public static void impersonateAdmin(){
+        Runtime runtime = TestRuntimeInitializer.getInstance().getComponentRegistry().findComponent(Runtime.class, null);
+        runtime.fillSecurityContext(new SecurityContext() {
             @Override
             public String getLoggedUsername() {
                 return "admin";
@@ -63,16 +59,6 @@ public class TestRuntime extends WaterRuntime implements Runtime {
                 return 0;
             }
         });
-    }
-
-    @Override
-    public SecurityContext getSecurityContext() {
-        return securityContext;
-    }
-
-    @Override
-    public void fillSecurityContext(SecurityContext securityContext) {
-        this.securityContext = securityContext;
     }
 
     /**

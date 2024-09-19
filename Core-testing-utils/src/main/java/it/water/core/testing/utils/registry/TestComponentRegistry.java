@@ -182,11 +182,12 @@ public class TestComponentRegistry extends AbstractComponentRegistry implements 
     }
 
     private <T> List<T> filterComponents(Class<T> componentClass, ComponentFilter filter) {
-        List<T> foundComponents = new ArrayList<>();
+        //Ordering found components by priority, the first one is the one with the highest priority
+        TreeMap<Integer,T> foundComponents = new TreeMap<>();
         this.registrations.get(componentClass).forEach(registration -> {
             if (filter == null || filter.matches(registration.getConfiguration().getConfiguration()))
-                foundComponents.add((T) registration.getComponent());
+                foundComponents.put(registration.getConfiguration().getPriority(),(T) registration.getComponent());
         });
-        return foundComponents;
+        return new ArrayList<>(foundComponents.descendingMap().values());
     }
 }
