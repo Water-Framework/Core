@@ -25,7 +25,7 @@ import java.util.Properties;
 
 /**
  * @Author Aristide Cittadino
- * OSGi Application Properties, registered manually as component at startup
+ * Test Application Properties, registered manually as component at startup
  */
 public class TestApplicationProperties implements ApplicationProperties {
     private static Logger logger = LoggerFactory.getLogger(TestApplicationProperties.class);

@@ -19,6 +19,7 @@ import it.water.core.api.bundle.Runtime;
 import it.water.core.api.registry.ComponentRegistry;
 import it.water.core.api.registry.filter.ComponentFilter;
 import it.water.core.api.service.rest.RestApiManager;
+import it.water.core.api.service.rest.RestApiRegistry;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -61,6 +62,8 @@ class BundleTest {
             public Object answer(InvocationOnMock invocation) throws Throwable {
                 if(RestApiManager.class.isAssignableFrom((Class)(invocation.getArguments()[0])))
                     return new FakeRestApiManager();
+                if(RestApiRegistry.class.isAssignableFrom((Class)(invocation.getArguments()[0])))
+                    return new FakeRestApiRegistry();
                 return components.get(invocation.getArguments()[0]).get(0);
             }
         });

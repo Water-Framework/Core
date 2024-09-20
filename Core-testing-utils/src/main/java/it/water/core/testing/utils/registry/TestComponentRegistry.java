@@ -120,8 +120,7 @@ public class TestComponentRegistry extends AbstractComponentRegistry implements 
 
     private <T, K> ComponentRegistration<T, K> doRegistration(Class<?> componentClass, Object toRegister, ComponentConfiguration configuration) {
         this.registrations.computeIfAbsent(componentClass, k -> new ArrayList<>());
-        Properties props = (configuration != null && configuration.getConfiguration() != null) ? configuration.getConfiguration() : new Properties();
-        ComponentRegistration<?, K> registration = (ComponentRegistration<T, K>) new TestComponentRegistration<>(componentClass, toRegister, props);
+        ComponentRegistration<?, K> registration = (ComponentRegistration<T, K>) new TestComponentRegistration<>(componentClass, toRegister, configuration);
         this.registrations.get(componentClass).add((ComponentRegistration<?, TestComponentRegistration<?>>) registration);
         return (ComponentRegistration<T, K>) registration;
     }
@@ -183,11 +182,14 @@ public class TestComponentRegistry extends AbstractComponentRegistry implements 
 
     private <T> List<T> filterComponents(Class<T> componentClass, ComponentFilter filter) {
         //Ordering found components by priority, the first one is the one with the highest priority
-        TreeMap<Integer,T> foundComponents = new TreeMap<>();
+        TreeMap<Integer,List<T>> foundComponents = new TreeMap<>();
         this.registrations.get(componentClass).forEach(registration -> {
+            foundComponents.computeIfAbsent(registration.getConfiguration().getPriority(),key -> new ArrayList<>());
             if (filter == null || filter.matches(registration.getConfiguration().getConfiguration()))
-                foundComponents.put(registration.getConfiguration().getPriority(),(T) registration.getComponent());
+                foundComponents.get(registration.getConfiguration().getPriority()).add((T) registration.getComponent());
         });
-        return new ArrayList<>(foundComponents.descendingMap().values());
+        List<T> foundComponentsOrdered = new ArrayList<>();
+        foundComponents.descendingMap().values().stream().flatMap(serviceList -> serviceList.stream()).forEach(service -> foundComponentsOrdered.add(service));
+        return foundComponentsOrdered;
     }
 }

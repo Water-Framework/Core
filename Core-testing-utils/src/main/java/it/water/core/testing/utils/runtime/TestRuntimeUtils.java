@@ -19,6 +19,7 @@ package it.water.core.testing.utils.runtime;
 import it.water.core.api.bundle.Runtime;
 import it.water.core.api.model.User;
 import it.water.core.api.permission.SecurityContext;
+import it.water.core.api.registry.ComponentRegistry;
 import it.water.core.model.exceptions.ValidationException;
 import it.water.core.model.validation.ValidationError;
 import it.water.core.testing.utils.bundle.TestRuntimeInitializer;
@@ -36,8 +37,8 @@ import java.util.function.Supplier;
  */
 public class TestRuntimeUtils {
 
-    public static void impersonateAdmin(){
-        Runtime runtime = TestRuntimeInitializer.getInstance().getComponentRegistry().findComponent(Runtime.class, null);
+    public static void impersonateAdmin(ComponentRegistry componentRegistry){
+        Runtime runtime = componentRegistry.findComponent(Runtime.class, null);
         runtime.fillSecurityContext(new SecurityContext() {
             @Override
             public String getLoggedUsername() {

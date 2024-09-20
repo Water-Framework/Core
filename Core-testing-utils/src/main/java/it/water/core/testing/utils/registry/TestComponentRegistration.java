@@ -17,10 +17,7 @@ package it.water.core.testing.utils.registry;
 
 import it.water.core.api.registry.ComponentConfiguration;
 import it.water.core.api.registry.ComponentRegistration;
-import it.water.core.registry.model.ComponentConfigurationFactory;
 import lombok.Getter;
-
-import java.util.Properties;
 
 public class TestComponentRegistration<T> implements ComponentRegistration<Object, Class<?>> {
 
@@ -28,9 +25,9 @@ public class TestComponentRegistration<T> implements ComponentRegistration<Objec
     @Getter
     private Class<?> registrationClass;
     @Getter
-    private Properties configuration;
+    private ComponentConfiguration configuration;
 
-    public TestComponentRegistration(Class<?> registrationClass, T component, Properties configuration) {
+    public TestComponentRegistration(Class<?> registrationClass, T component, ComponentConfiguration configuration) {
         this.component = component;
         this.registrationClass = registrationClass;
         this.configuration = configuration;
@@ -43,7 +40,7 @@ public class TestComponentRegistration<T> implements ComponentRegistration<Objec
 
     @Override
     public ComponentConfiguration getConfiguration() {
-        return ComponentConfigurationFactory.createNewComponentPropertyFactory().fromGenericDictionary(this.configuration).build();
+        return configuration;
     }
 
     @Override

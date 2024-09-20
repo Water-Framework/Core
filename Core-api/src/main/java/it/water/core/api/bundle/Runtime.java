@@ -17,12 +17,13 @@
 package it.water.core.api.bundle;
 
 import it.water.core.api.permission.SecurityContext;
+import it.water.core.api.service.Service;
 
 /**
  * @Author Aristide Cittadino.
  * Wraps the concept of concrete runtime
  */
-public interface Runtime {
+public interface Runtime extends Service {
     /**
      * @return Current Security Context
      */

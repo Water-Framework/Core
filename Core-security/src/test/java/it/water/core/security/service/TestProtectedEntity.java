@@ -31,7 +31,7 @@ public class TestProtectedEntity implements ProtectedEntity {
 
     @Override
     public long getId() {
-        return 1;
+        return -1;
     }
 
     @Override
@@ -52,11 +52,6 @@ public class TestProtectedEntity implements ProtectedEntity {
     @Override
     public Integer getEntityVersion() {
         return 0;
-    }
-
-    @Override
-    public String getSystemApiClassName() {
-        return "it.water.core.security.TestProtectedResourceSystemApi";
     }
 
 }

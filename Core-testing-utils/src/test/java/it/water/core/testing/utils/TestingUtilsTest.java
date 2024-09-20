@@ -128,6 +128,7 @@ class TestingUtilsTest implements Service {
     void testModels() {
         Role testRole = new TestRole("role");
         User user = new TestHUser(1000, "name", "lastname", "email", "username", Arrays.asList(testRole), false);
+        roleManager.addRole(user.getId(),testRole);
         Assertions.assertTrue(roleManager.hasRole(user.getId(),"role"));
     }
 
