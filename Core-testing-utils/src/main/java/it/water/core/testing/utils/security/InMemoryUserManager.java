@@ -143,4 +143,14 @@ public class InMemoryUserManager implements UserManager, TestUserManager, UserIn
     public User fetchUserByUsername(String username) {
         return userIntegrationClient.fetchUserByUsername(username);
     }
+
+    @Override
+    public User fetchUserByEmailAddress(String emailAddress) {
+        return userIntegrationClient.fetchUserByEmailAddress(emailAddress);
+    }
+
+    @Override
+    public User fetchUserByUserId(long userId) {
+        return userIntegrationClient.fetchUserByUserId(userId);
+    }
 }

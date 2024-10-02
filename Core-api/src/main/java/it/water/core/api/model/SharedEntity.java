@@ -14,21 +14,16 @@
  * limitations under the License.
  */
 
-package it.water.core.api.service.integration;
+package it.water.core.api.model;
 
-import it.water.core.api.model.User;
+import it.water.core.api.entity.owned.OwnedResource;
 
 /**
  * @Author Aristide Cittadino
- * This class implements the logic of user information retrieval.
+ * Interface which represents the concpet of a shared entity.
+ * Users can share entities in order to let other user perform action (according to the permission system) on it.
  *
- * It supports different implementation:
- *  - local - using queries
- *  - remote - using remote apis
- *
+ * Every Shared Resource must be an owned resource, so that a user can share a resource only if he owns it.
  */
-public interface UserIntegrationClient extends EntityIntegrationClient {
-    User fetchUserByUsername(String username);
-    User fetchUserByEmailAddress(String emailAddress);
-    User fetchUserByUserId(long userId);
+public interface SharedEntity extends OwnedResource {
 }
