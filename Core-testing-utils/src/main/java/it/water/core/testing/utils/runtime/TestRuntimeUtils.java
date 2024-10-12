@@ -20,6 +20,7 @@ import it.water.core.api.bundle.Runtime;
 import it.water.core.api.model.User;
 import it.water.core.api.permission.SecurityContext;
 import it.water.core.api.registry.ComponentRegistry;
+import it.water.core.api.user.UserManager;
 import it.water.core.model.exceptions.ValidationException;
 import it.water.core.model.validation.ValidationError;
 import it.water.core.testing.utils.bundle.TestRuntimeInitializer;
@@ -36,13 +37,17 @@ import java.util.function.Supplier;
  * This component is useful specially when tests are executed outside the junit thread for example karate.
  */
 public class TestRuntimeUtils {
+    private TestRuntimeUtils(){
 
-    public static void impersonateAdmin(ComponentRegistry componentRegistry){
+    }
+    public static void impersonateAdmin(ComponentRegistry componentRegistry) {
         Runtime runtime = componentRegistry.findComponent(Runtime.class, null);
+        UserManager userManager = componentRegistry.findComponent(UserManager.class, null);
+        User adminUser = userManager.findUser("admin");
         runtime.fillSecurityContext(new SecurityContext() {
             @Override
             public String getLoggedUsername() {
-                return "admin";
+                return adminUser.getUsername();
             }
 
             @Override
@@ -52,12 +57,12 @@ public class TestRuntimeUtils {
 
             @Override
             public boolean isAdmin() {
-                return true;
+                return adminUser.isAdmin();
             }
 
             @Override
             public long getLoggedEntityId() {
-                return 0;
+                return adminUser.getId();
             }
         });
     }

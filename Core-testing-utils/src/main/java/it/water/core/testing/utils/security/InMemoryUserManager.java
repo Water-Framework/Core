@@ -36,9 +36,10 @@ public class InMemoryUserManager implements UserManager, TestUserManager, UserIn
 
     public InMemoryUserManager() {
         users.add(new User() {
+            private long id = userCounter++;
             @Override
             public long getId() {
-                return userCounter++;
+                return id;
             }
 
             @Override
@@ -141,16 +142,25 @@ public class InMemoryUserManager implements UserManager, TestUserManager, UserIn
 
     @Override
     public User fetchUserByUsername(String username) {
+        //if user integration client is this component avoid stackoverflow
+        if (userIntegrationClient.equals(this))
+            return findUser(username);
         return userIntegrationClient.fetchUserByUsername(username);
     }
 
     @Override
     public User fetchUserByEmailAddress(String emailAddress) {
+        //if user integration client is this component avoid stackoverflow
+        if (userIntegrationClient.equals(this))
+            return users.stream().filter(user -> user.getEmail().equalsIgnoreCase(emailAddress)).findAny().orElse(null);
         return userIntegrationClient.fetchUserByEmailAddress(emailAddress);
     }
 
     @Override
     public User fetchUserByUserId(long userId) {
+        //if user integration client is this component avoid stackoverflow
+        if (userIntegrationClient.equals(this))
+            return users.stream().filter(user -> user.getId() == userId).findAny().orElse(null);
         return userIntegrationClient.fetchUserByUserId(userId);
     }
 }
