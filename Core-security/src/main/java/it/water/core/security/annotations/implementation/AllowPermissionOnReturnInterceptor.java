@@ -53,13 +53,15 @@ public class AllowPermissionOnReturnInterceptor extends AbstractPermissionInterc
     public void interceptMethod(Service s, Method m, Object[] args, Object returnResult, AllowPermissionsOnReturn annotation) {
         log.debug("Invoking interceptor @AllowPermission on method: {}", m.getName());
         this.checkAnnotationIsOnWaterApiClass(s, annotation);
+        //if result is null we simply go on
+        if(returnResult == null)
+            return;
         String[] actions = annotation.actions();
         if (s instanceof BaseEntityApi) {
             //we must check entity permissions
             SecurityContext ctx = getWaterRuntime().getSecurityContext();
             //TODO: we assume that an entity api with this annotation returns a result of entity, no collections. We should provide it
-            if (returnResult instanceof BaseEntity) {
-                BaseEntity entity = (BaseEntity) returnResult;
+            if (returnResult instanceof BaseEntity entity) {
                 boolean found = this.checkEntityPermission(ctx, entity, actions);
                 if (!found)
                     throw new UnauthorizedException();
