@@ -42,6 +42,30 @@ allprojects {
             }
         }
     }
+
+    test {
+        finalizedBy jacocoTestReport
+    }
+}
+
+task jacocoRootReport(type: JacocoReport) {
+    dependsOn subprojects.test  // Assicura che tutti i test siano eseguiti prima del report
+
+    // Specifica quali sottoprogetti includere
+    additionalSourceDirs.setFrom(files(subprojects.sourceSets.main.allSource.srcDirs))
+    sourceDirectories.setFrom(files(subprojects.sourceSets.main.allSource.srcDirs))
+    classDirectories.setFrom(files(subprojects.sourceSets.main.output))
+
+    // Aggiungi i file di esecuzione generati da ciascun progetto figlio
+    executionData.setFrom(fileTree(project.rootDir.absolutePath).include("**/build/jacoco/test.exec"))
+
+    reports {
+        xml.required = true
+        html.required = true
+        csv.required = false
+        xml.destination file("${buildDir}/reports/jacoco/jacocoRootReport.xml")
+        html.destination file("${buildDir}/reports/jacoco/jacocoRootReport.html")
+    }
 }
 
 
