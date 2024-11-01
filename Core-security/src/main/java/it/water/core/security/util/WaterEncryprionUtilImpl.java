@@ -60,7 +60,6 @@ import java.security.spec.PKCS8EncodedKeySpec;
 import java.security.spec.X509EncodedKeySpec;
 import java.util.Base64;
 import java.util.Date;
-import java.util.Random;
 
 
 /**
@@ -193,7 +192,7 @@ public class WaterEncryprionUtilImpl implements EncryptionUtil {
             keystore.load(fis, getServerKeystorePassword().toCharArray());
             String alias = getServerKeystoreAlias();
             Key key = keystore.getKey(alias, getServerKeyPassword().toCharArray());
-            if (key instanceof PrivateKey) {
+            if (key instanceof PrivateKey privateKey) {
                 // Get certificate of public key
                 Certificate cert = keystore.getCertificate(alias);
 
@@ -201,7 +200,7 @@ public class WaterEncryprionUtilImpl implements EncryptionUtil {
                 PublicKey publicKey = cert.getPublicKey();
 
                 // Return a key pair
-                return new KeyPair(publicKey, (PrivateKey) key);
+                return new KeyPair(publicKey, privateKey);
             }
         } catch (Exception e) {
             log.error(e.getMessage(), e);
@@ -562,15 +561,12 @@ public class WaterEncryprionUtilImpl implements EncryptionUtil {
     /**
      * @return Random byte init vector
      */
-    public byte[] generateRandomAESInitVector() throws NoSuchAlgorithmException {
+    public IvParameterSpec generateRandomAESInitVector() {
         Cipher c = getCipherAES();
-        if (c != null) {
-            SecureRandom randomSecureRandom = new SecureRandom();
-            byte[] iv = new byte[c.getBlockSize()];
-            randomSecureRandom.nextBytes(iv);
-            return iv;
-        }
-        return new byte[16];
+        SecureRandom randomSecureRandom = new SecureRandom();
+        byte[] iv = new byte[c.getBlockSize()];
+        randomSecureRandom.nextBytes(iv);
+        return new IvParameterSpec(iv);
     }
 
     /**
@@ -600,14 +596,13 @@ public class WaterEncryprionUtilImpl implements EncryptionUtil {
      */
     public byte[] encryptWithAES(byte[] aesPassword, String content, Cipher aesCipher) {
         try {
-            byte[] ivBytes = generateRandomAESInitVector();
-            IvParameterSpec iv = new IvParameterSpec(ivBytes);
+            IvParameterSpec ivBytes = generateRandomAESInitVector();
             SecretKeySpec skeySpec = new SecretKeySpec(aesPassword, "AES");
-            aesCipher.init(Cipher.ENCRYPT_MODE, skeySpec, iv);
+            aesCipher.init(Cipher.ENCRYPT_MODE, skeySpec, ivBytes);
             byte[] encrypted = aesCipher.doFinal(content.getBytes(StandardCharsets.UTF_8));
-            byte[] toEncode = new byte[ivBytes.length + encrypted.length];
-            System.arraycopy(ivBytes, 0, toEncode, 0, ivBytes.length);
-            System.arraycopy(encrypted, 0, toEncode, ivBytes.length, encrypted.length);
+            byte[] toEncode = new byte[ivBytes.getIV().length + encrypted.length];
+            System.arraycopy(ivBytes.getIV(), 0, toEncode, 0, ivBytes.getIV().length);
+            System.arraycopy(encrypted, 0, toEncode, ivBytes.getIV().length, encrypted.length);
             return Base64.getEncoder().encode(toEncode);
         } catch (Exception ex) {
             log.error(ex.getMessage(), ex);
@@ -624,15 +619,14 @@ public class WaterEncryprionUtilImpl implements EncryptionUtil {
      */
     public byte[] encryptWithAES(byte[] aesPassword, byte[] salt, String content, Cipher aesCipher) {
         try {
-            byte[] ivBytes = generateRandomAESInitVector();
-            IvParameterSpec iv = new IvParameterSpec(ivBytes);
+            IvParameterSpec iv = generateRandomAESInitVector();
             SecretKeySpec skeySpec = new SecretKeySpec(aesPassword, "AES");
             aesCipher.init(Cipher.ENCRYPT_MODE, skeySpec, iv);
             byte[] encrypted = aesCipher.doFinal(content.getBytes(StandardCharsets.UTF_8));
-            byte[] toEncode = new byte[ivBytes.length + salt.length + encrypted.length];
+            byte[] toEncode = new byte[iv.getIV().length + salt.length + encrypted.length];
             System.arraycopy(salt, 0, toEncode, 0, salt.length);
-            System.arraycopy(ivBytes, 0, toEncode, salt.length, ivBytes.length);
-            System.arraycopy(encrypted, 0, toEncode, (ivBytes.length + salt.length), encrypted.length);
+            System.arraycopy(iv.getIV(), 0, toEncode, salt.length, iv.getIV().length);
+            System.arraycopy(encrypted, 0, toEncode, (iv.getIV().length + salt.length), encrypted.length);
             return Base64.getEncoder().encode(toEncode);
         } catch (Exception ex) {
             log.error(ex.getMessage(), ex);
@@ -669,6 +663,7 @@ public class WaterEncryprionUtilImpl implements EncryptionUtil {
 
     /**
      * Generates random Salt
+     *
      * @param dim dimension of salt
      * @return
      */
@@ -681,6 +676,7 @@ public class WaterEncryprionUtilImpl implements EncryptionUtil {
 
     /**
      * Generates 16 bytes random Salt
+     *
      * @return
      */
     public byte[] generate16BytesSalt() {

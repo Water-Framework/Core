@@ -7,6 +7,15 @@ dependencies {
 	//lombok
 	implementation group: 'org.projectlombok', name: 'lombok', version: project.lombokVersion
 	annotationProcessor 'org.projectlombok:lombok:'+project.lombokVersion
+
+	testAnnotationProcessor('org.atteo.classindex:classindex:' + project.atteoClassIndexVersion)
+	testImplementation 'org.atteo.classindex:classindex:' + project.atteoClassIndexVersion
+	testAnnotationProcessor 'org.projectlombok:lombok:' + project.lombokVersion
+	testImplementation 'org.mockito:mockito-core:4.6.1'
+	testImplementation 'org.mockito:mockito-junit-jupiter:4.6.1'
+	testImplementation 'org.junit.jupiter:junit-jupiter-api:' + project.junitJupiterVersion
+	testImplementation 'org.junit.jupiter:junit-jupiter-engine:' + project.junitJupiterVersion
+	testImplementation 'org.atteo.classindex:classindex:' + project.atteoClassIndexVersion
 }
 
 
@@ -16,4 +25,8 @@ publishing {
 			from components.java
 		}
 	}
+}
+
+test {
+	useJUnitPlatform()
 }

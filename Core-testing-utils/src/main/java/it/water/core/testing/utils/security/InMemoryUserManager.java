@@ -29,14 +29,17 @@ import java.util.*;
 @FrameworkComponent(priority = 0, services = {UserManager.class, TestUserManager.class, UserIntegrationClient.class})
 public class InMemoryUserManager implements UserManager, TestUserManager, UserIntegrationClient {
     private static int userCounter = 1;
+    private static final String ADMIN = "admin";
     Set<User> users = new HashSet<>();
     @Inject
     @Setter
     private UserIntegrationClient userIntegrationClient;
 
     public InMemoryUserManager() {
+        long userId = getUserCounterAndIncrement();
         users.add(new User() {
-            private long id = userCounter++;
+            private final long id = userId;
+
             @Override
             public long getId() {
                 return id;
@@ -44,22 +47,22 @@ public class InMemoryUserManager implements UserManager, TestUserManager, UserIn
 
             @Override
             public String getName() {
-                return "admin";
+                return ADMIN;
             }
 
             @Override
             public String getLastname() {
-                return "admin";
+                return ADMIN;
             }
 
             @Override
             public String getEmail() {
-                return "admin@water.com";
+                return ADMIN;
             }
 
             @Override
             public String getUsername() {
-                return "admin";
+                return ADMIN;
             }
 
             @Override
@@ -71,8 +74,9 @@ public class InMemoryUserManager implements UserManager, TestUserManager, UserIn
 
     @Override
     public User addUser(String username, String name, String lastname, String email, String password, String salt, boolean isAdmin) {
+        long userId = getUserCounterAndIncrement();
         User u = new User() {
-            private long id = userCounter++;
+            private final long id = userId;
 
             @Override
             public long getId() {
@@ -163,4 +167,9 @@ public class InMemoryUserManager implements UserManager, TestUserManager, UserIn
             return users.stream().filter(user -> user.getId() == userId).findAny().orElse(null);
         return userIntegrationClient.fetchUserByUserId(userId);
     }
+
+    private static long getUserCounterAndIncrement(){
+        return userCounter++;
+    }
+
 }

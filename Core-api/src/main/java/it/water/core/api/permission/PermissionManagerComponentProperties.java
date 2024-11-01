@@ -19,4 +19,6 @@ package it.water.core.api.permission;
 public final class PermissionManagerComponentProperties {
     public static final String PERMISSION_MANAGER_IMPLEMENTATION_PROP = "implementation";
     public static final String PERMISSION_MANAGER_DEFAILT_IMPLEMENTATION = "default";
+
+    private PermissionManagerComponentProperties (){}
 }

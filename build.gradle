@@ -1,3 +1,7 @@
+plugins {
+    id("org.sonarqube") version "5.1.0.4882"
+}
+
 allprojects {
     project.ext.publishRepoName = "public-water-repository"
     project.ext.publishRepoUrl = "https://nexus.acsoftware.it/nexus/repository/maven-water/"
@@ -27,6 +31,7 @@ allprojects {
     apply plugin: 'java'
     apply plugin: 'maven-publish'
     apply plugin: 'jacoco'
+    apply plugin: 'org.sonarqube'
 
     publishing {
         repositories {
@@ -48,17 +53,36 @@ allprojects {
     }
 }
 
+sonarqube {
+    properties {
+        // Configurazione globale del progetto Sonar
+        property "sonar.projectKey", "water.Core"
+        property "sonar.projectName", "Core"
+        property "sonar.projectVersion", project.waterVersion
+
+        // Includes all folder and sources for submodules
+        property "sonar.sources", fileTree(dir: '.', include: '**/src/main/java').asPath
+        property "sonar.exclusions", fileTree(dir: '.', include: '**/src/test/java').asPath
+        property "sonar.tests", fileTree(dir: '.', include: '**/src/test/java').asPath
+        property "sonar.java.binaries", fileTree(dir: '.', include: '**/build/classes').asPath
+
+        // Global path for jacoco report
+        property "sonar.coverage.jacoco.xmlReportPaths", file("${buildDir}/reports/jacoco/jacocoRootReport.xml")
+
+        property "sonar.host.url", System.getProperty("sonar.host.url", "default")
+        property "sonar.login", System.getProperty("sonar.login", "default")
+    }
+}
+
 task jacocoRootReport(type: JacocoReport) {
-    dependsOn subprojects.test  // Assicura che tutti i test siano eseguiti prima del report
-
-    // Specifica quali sottoprogetti includere
+    dependsOn subprojects.test
     additionalSourceDirs.setFrom(files(subprojects.sourceSets.main.allSource.srcDirs))
-    sourceDirectories.setFrom(files(subprojects.sourceSets.main.allSource.srcDirs))
-    classDirectories.setFrom(files(subprojects.sourceSets.main.output))
-
-    // Aggiungi i file di esecuzione generati da ciascun progetto figlio
+    classDirectories.setFrom(
+            files(subprojects.collect { project ->
+                fileTree(dir: "${project.buildDir}/classes/java/main").exclude("**/src/test/java/**")
+            })
+    )
     executionData.setFrom(fileTree(project.rootDir.absolutePath).include("**/build/jacoco/test.exec"))
-
     reports {
         xml.required = true
         html.required = true

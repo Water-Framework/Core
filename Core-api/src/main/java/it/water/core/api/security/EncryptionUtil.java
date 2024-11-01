@@ -24,6 +24,7 @@ import javax.crypto.BadPaddingException;
 import javax.crypto.Cipher;
 import javax.crypto.IllegalBlockSizeException;
 import javax.crypto.NoSuchPaddingException;
+import javax.crypto.spec.IvParameterSpec;
 import javax.security.auth.x500.X500PrivateCredential;
 import java.security.*;
 import java.security.spec.InvalidKeySpecException;
@@ -232,7 +233,7 @@ public interface EncryptionUtil extends Service {
     /**
      * @return Random byte init vector
      */
-    byte[] generateRandomAESInitVector() throws NoSuchAlgorithmException;
+    IvParameterSpec generateRandomAESInitVector() throws NoSuchAlgorithmException;
 
     /**
      * Generates AES key from a basic password

@@ -130,7 +130,7 @@ public abstract class ApplicationInitializer<T, K> extends AbstractInitializer<T
 
     private boolean checkComponentIsPrimary(Map<Class<?>, Integer> componentsPriorities, FrameworkComponent frameworkComponentAnnotation) {
         int priority = frameworkComponentAnnotation.priority();
-        return Arrays.stream(frameworkComponentAnnotation.services()).filter(service -> componentsPriorities.get(service) == priority).findAny().isPresent();
+        return Arrays.stream(frameworkComponentAnnotation.services()).anyMatch(service -> componentsPriorities.get(service) == priority);
     }
 
     /**

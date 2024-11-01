@@ -19,12 +19,12 @@ package it.water.core.api.registry.filter;
 
 public interface FilterImplementation {
     default String transform(ComponentFilter filter) {
-        if (filter instanceof ComponentFilterAndCondition)
-            return transform((ComponentFilterAndCondition) filter);
-        else if (filter instanceof ComponentFilterOrCondition)
-            return transform((ComponentFilterOrCondition) filter);
-        else if (filter instanceof ComponentPropertyFilter)
-            return transform((ComponentPropertyFilter) filter);
+        if (filter instanceof ComponentFilterAndCondition filterAndCondition)
+            return transform(filterAndCondition);
+        else if (filter instanceof ComponentFilterOrCondition filterOrCondition)
+            return transform(filterOrCondition);
+        else if (filter instanceof ComponentPropertyFilter componentPropertyFilter)
+            return transform(componentPropertyFilter);
         else
             throw new IllegalArgumentException("Invalid filter");
     }

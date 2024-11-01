@@ -36,7 +36,7 @@ public class InMemoryTestRoleManager implements RoleManager, RoleIntegrationClie
     @Override
     public Role createIfNotExists(String roleName) {
         Role r = new Role() {
-            private long id = roleCount++;
+            private final long id = getAndIncrementRoleCount();
             @Override
             public long getId() {
                 return id;
@@ -103,5 +103,9 @@ public class InMemoryTestRoleManager implements RoleManager, RoleIntegrationClie
     @Override
     public Collection<Role> fetchUserRoles(long userId) {
         return getUserRoles(userId);
+    }
+
+    private static long getAndIncrementRoleCount(){
+        return roleCount++;
     }
 }

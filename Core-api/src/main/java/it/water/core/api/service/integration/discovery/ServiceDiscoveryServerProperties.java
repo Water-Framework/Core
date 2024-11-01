@@ -19,4 +19,7 @@ package it.water.core.api.service.integration.discovery;
 public final class ServiceDiscoveryServerProperties {
     public static final String SERVICE_DISCOVERY_SERVER_IMPLEMENTATION_PROP = "implementation";
     public static final String SERVICE_DISCOVERY_IN_MEMORY_SERVER_IMPLEMENTATION = "inMemory";
+
+    private ServiceDiscoveryServerProperties() {
+    }
 }

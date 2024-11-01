@@ -37,7 +37,7 @@ import java.util.*;
 public class TestComponentRegistry extends AbstractComponentRegistry implements ComponentRegistry {
     private Map<Class<?>, List<ComponentRegistration<?, TestComponentRegistration<?>>>> registrations;
 
-    private Map<String, BaseEntitySystemApi> baseEntitySystemApis;
+    private Map<String, BaseEntitySystemApi<?>> baseEntitySystemApis;
     private Map<String, Integer> baseEntitySystemApiPriority;
 
     public TestComponentRegistry() {
@@ -83,7 +83,7 @@ public class TestComponentRegistry extends AbstractComponentRegistry implements 
             ComponentRegistration<T, K> registration = doRegistration(componentClass, toRegister, configuration);
 
             if(BaseEntitySystemApi.class.isAssignableFrom(component.getClass())){
-                BaseEntitySystemApi entitySystemApi = (BaseEntitySystemApi) component;
+                BaseEntitySystemApi<?> entitySystemApi = (BaseEntitySystemApi) component;
                 String entityType = entitySystemApi.getEntityType().getName();
                 baseEntitySystemApis.computeIfAbsent(entityType,key -> entitySystemApi);
                 baseEntitySystemApiPriority.computeIfAbsent(entityType,key -> configuration.getPriority());
@@ -189,7 +189,7 @@ public class TestComponentRegistry extends AbstractComponentRegistry implements 
                 foundComponents.get(registration.getConfiguration().getPriority()).add((T) registration.getComponent());
         });
         List<T> foundComponentsOrdered = new ArrayList<>();
-        foundComponents.descendingMap().values().stream().flatMap(serviceList -> serviceList.stream()).forEach(service -> foundComponentsOrdered.add(service));
+        foundComponents.descendingMap().values().stream().flatMap(Collection::stream).forEach(foundComponentsOrdered::add);
         return foundComponentsOrdered;
     }
 }

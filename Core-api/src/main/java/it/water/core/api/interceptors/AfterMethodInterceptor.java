@@ -28,7 +28,7 @@ import java.lang.reflect.Method;
  *            Used for defining annotation for post-processing execution after a method invocation
  * @Author Aristide Cittadino
  */
-public interface AfterMethodInterceptor<A extends Annotation> extends MethodInterceptor {
+public interface AfterMethodInterceptor<A extends Annotation> extends MethodInterceptor<A> {
     /**
      * @param destination   Service which is going to be invoked
      * @param m            Method

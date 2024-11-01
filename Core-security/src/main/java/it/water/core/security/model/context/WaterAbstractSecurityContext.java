@@ -84,14 +84,14 @@ public abstract class WaterAbstractSecurityContext implements SecurityContext {
             roles = new ArrayList<>();
             while (it.hasNext()) {
                 java.security.Principal p = it.next();
-                if (p instanceof UserPrincipal) {
+                if (p instanceof UserPrincipal userPrincipal) {
                     this.loggedUser = p;
-                    this.loggedEntityId = ((UserPrincipal) p).getLoggedEntityId();
-                    this.issuerClassName = ((UserPrincipal) p).getIssuer();
+                    this.loggedEntityId = userPrincipal.getLoggedEntityId();
+                    this.issuerClassName = userPrincipal.getIssuer();
                 }
 
-                if (p instanceof RolePrincipal) {
-                    roles.add((RolePrincipal) p);
+                if (p instanceof RolePrincipal rolePrincipal) {
+                    roles.add(rolePrincipal);
                 }
             }
         } else {

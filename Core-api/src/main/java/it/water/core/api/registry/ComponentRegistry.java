@@ -112,13 +112,7 @@ public interface ComponentRegistry {
                 Class<?>[] parameters = method.getParameterTypes();
                 Object[] parameterValues = new Object[parameters.length];
                 for (int i = 0; i < parameters.length; i++) {
-                    Object parameter = null;
-                    try {
-                        parameter = this.findComponent(parameters[i], null);
-                    } catch (Exception e) {
-                        log.warn(e.getMessage(), e);
-                    }
-                    parameterValues[i] = parameter;
+                    parameterValues[i] = getClassParameter(parameters[i]);
                 }
 
                 if (Proxy.isProxyClass(component.getClass())) {
@@ -136,5 +130,20 @@ public interface ComponentRegistry {
                 log.error(e.getMessage(), e);
             }
         });
+    }
+
+    /**
+     *
+     * @param classParameter
+     * @return
+     */
+    private Object getClassParameter(Class<?> classParameter){
+        Object parameter = null;
+        try {
+            parameter = this.findComponent(classParameter, null);
+        } catch (Exception e) {
+            log.warn(e.getMessage(), e);
+        }
+        return parameter;
     }
 }

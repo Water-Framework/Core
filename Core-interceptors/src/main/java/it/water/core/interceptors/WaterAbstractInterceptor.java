@@ -166,9 +166,9 @@ public abstract class WaterAbstractInterceptor<S extends Service> implements it.
     private boolean interceptBasedOnAnnotationInterceptorExecutor(Annotation annotation, List<Field> annotatedFields, S service, Method method, Object[] args, Object result, Class<? extends MethodInterceptor> interceptorClass) {
         if (annotation.annotationType().isAnnotationPresent(InterceptorExecutor.class)) {
             InterceptorExecutor interceptorAnnotation = annotation.annotationType().getDeclaredAnnotation(InterceptorExecutor.class);
-            Class<? extends MethodInterceptor> executor = interceptorAnnotation.interceptor();
+            Class<? extends MethodInterceptor<?>> executor = interceptorAnnotation.interceptor();
             if (this.getComponentsRegistry() != null) {
-                MethodInterceptor interceptor = this.getComponentsRegistry().findComponent(executor, null);
+                MethodInterceptor<?> interceptor = this.getComponentsRegistry().findComponent(executor, null);
                 if (interceptorClass.isAssignableFrom(interceptor.getClass())) {
                     doInterception(annotation, annotatedFields, service, method, args, result, interceptor);
                 }
@@ -222,7 +222,7 @@ public abstract class WaterAbstractInterceptor<S extends Service> implements it.
      * @param result
      * @param interceptor
      */
-    private void doInterception(Annotation annotation, List<Field> annotatedFields, S service, Method method, Object[] args, Object result, MethodInterceptor interceptor) {
+    private void doInterception(Annotation annotation, List<Field> annotatedFields, S service, Method method, Object[] args, Object result, MethodInterceptor<?> interceptor) {
         //avoiding calling after method with before methods
         if (interceptor != null) {
             //first most specific types since BeforeMethodFieldInterceptor is also BeforeMethodInterceptor

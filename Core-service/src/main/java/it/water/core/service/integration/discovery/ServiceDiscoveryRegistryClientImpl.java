@@ -17,10 +17,13 @@
 package it.water.core.service.integration.discovery;
 
 import it.water.core.api.service.integration.discovery.ServiceInfo;
+import lombok.Data;
 
-public class ServiceDiscoveryRegistryClient implements it.water.core.api.service.integration.discovery.ServiceDiscoveryRegistryClient {
+@Data
+public class ServiceDiscoveryRegistryClientImpl implements it.water.core.api.service.integration.discovery.ServiceDiscoveryRegistryClient {
     private String remoteUrl;
     private String port;
+
     @Override
     public void registerService(ServiceInfo registration) {
         //todo
