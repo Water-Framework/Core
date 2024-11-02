@@ -28,44 +28,10 @@ import java.util.Properties;
  * @Author Aristide Cittadino
  * OSGi Filter And Condition
  */
-public class ComponentDefaultFilterAndCondition extends AbstractComponentFilter implements ComponentFilterAndCondition {
-    @Getter
-    private ComponentFilter first;
-    @Getter
-    private ComponentFilter second;
-    @Getter
-    private boolean not;
+public class ComponentDefaultFilterAndCondition extends AbstractBinaryComponentFilter implements ComponentFilterAndCondition {
 
     public ComponentDefaultFilterAndCondition(ComponentFilter first, ComponentFilter second, FilterImplementation implementation) {
-        super(implementation);
-        this.first = first;
-        this.second = second;
-    }
-
-    @Override
-    public ComponentFilter and(ComponentFilter filter) {
-        return new ComponentDefaultFilterAndCondition(this, filter, this.getFilterImplementation());
-    }
-
-    @Override
-    public ComponentFilter and(String propertyName, String propertyValue) {
-        return new ComponentDefaultFilterAndCondition(this, new ComponentDefaultPropertyFilter(propertyName, propertyValue, getFilterImplementation()), getFilterImplementation());
-    }
-
-    @Override
-    public ComponentFilter or(ComponentFilter filter) {
-        return new ComponentDefaultFilterOrCondition(this, filter, getFilterImplementation());
-    }
-
-    @Override
-    public ComponentFilter or(String propertyName, String propertyValue) {
-        return new ComponentDefaultFilterOrCondition(this, new ComponentDefaultPropertyFilter(propertyName, propertyValue, getFilterImplementation()), getFilterImplementation());
-    }
-
-    @Override
-    public ComponentFilter not() {
-        this.not = true;
-        return this;
+        super(first, second, implementation);
     }
 
     @Override
@@ -73,4 +39,5 @@ public class ComponentDefaultFilterAndCondition extends AbstractComponentFilter 
         boolean matches = first.matches(props) && second.matches(props);
         return (this.not) ? !matches : matches;
     }
+
 }

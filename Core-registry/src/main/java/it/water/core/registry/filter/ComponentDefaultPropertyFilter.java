@@ -29,46 +29,19 @@ import java.util.Properties;
  * @Author Aristide Cittadino
  * OSGi Filter Property filter
  */
-public class ComponentDefaultPropertyFilter extends AbstractComponentFilter implements ComponentPropertyFilter {
+public class ComponentDefaultPropertyFilter extends AbstractBinaryComponentFilter implements ComponentPropertyFilter {
+
     @Getter
     @Setter
     private String name;
     @Getter
     @Setter
     private String value;
-    @Getter
-    private boolean not;
 
     public ComponentDefaultPropertyFilter(String name, String value, FilterImplementation filterImplementation) {
-        super(filterImplementation);
+        super(null,null,filterImplementation);
         this.name = name;
         this.value = value;
-    }
-
-    @Override
-    public ComponentFilter and(ComponentFilter filter) {
-        return new ComponentDefaultFilterAndCondition(this, filter, getFilterImplementation());
-    }
-
-    @Override
-    public ComponentFilter and(String propertyName, String propertyValue) {
-        return new ComponentDefaultFilterAndCondition(this, new ComponentDefaultPropertyFilter(propertyName, propertyValue, getFilterImplementation()), getFilterImplementation());
-    }
-
-    @Override
-    public ComponentFilter or(ComponentFilter filter) {
-        return new ComponentDefaultFilterOrCondition(this, filter, getFilterImplementation());
-    }
-
-    @Override
-    public ComponentFilter or(String propertyName, String propertyValue) {
-        return new ComponentDefaultFilterOrCondition(this, new ComponentDefaultPropertyFilter(propertyName, propertyValue, getFilterImplementation()), getFilterImplementation());
-    }
-
-    @Override
-    public ComponentFilter not() {
-        this.not = true;
-        return this;
     }
 
     @Override

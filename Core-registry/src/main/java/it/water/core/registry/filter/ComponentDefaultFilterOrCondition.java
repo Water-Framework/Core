@@ -21,52 +21,16 @@ import it.water.core.api.registry.filter.ComponentFilter;
 import it.water.core.api.registry.filter.ComponentFilterOrCondition;
 import it.water.core.api.registry.filter.FilterImplementation;
 
-import lombok.Getter;
-
 import java.util.Properties;
 
 /**
  * @Author Aristide Cittadino
  * OSGi Filter OR Condition
  */
-public class ComponentDefaultFilterOrCondition extends AbstractComponentFilter implements ComponentFilterOrCondition {
-    @Getter
-    private ComponentFilter first;
-    @Getter
-    private ComponentFilter second;
-    @Getter
-    private boolean not;
+public class ComponentDefaultFilterOrCondition extends AbstractBinaryComponentFilter implements ComponentFilterOrCondition {
 
-    public ComponentDefaultFilterOrCondition(ComponentFilter first, ComponentFilter second, FilterImplementation filterImplementation) {
-        super(filterImplementation);
-        this.first = first;
-        this.second = second;
-    }
-
-    @Override
-    public ComponentFilter and(ComponentFilter filter) {
-        return new ComponentDefaultFilterOrCondition(this, filter, getFilterImplementation());
-    }
-
-    @Override
-    public ComponentFilter and(String propertyName, String propertyValue) {
-        return new ComponentDefaultFilterAndCondition(this, new ComponentDefaultPropertyFilter(propertyName, propertyValue, getFilterImplementation()), getFilterImplementation());
-    }
-
-    @Override
-    public ComponentFilter or(ComponentFilter filter) {
-        return new ComponentDefaultFilterOrCondition(this, filter, getFilterImplementation());
-    }
-
-    @Override
-    public ComponentFilter or(String propertyName, String propertyValue) {
-        return new ComponentDefaultFilterOrCondition(this, new ComponentDefaultPropertyFilter(propertyName, propertyValue, getFilterImplementation()), getFilterImplementation());
-    }
-
-    @Override
-    public ComponentFilter not() {
-        not = true;
-        return this;
+    public ComponentDefaultFilterOrCondition(ComponentFilter first, ComponentFilter second, FilterImplementation implementation) {
+        super(first, second, implementation);
     }
 
     @Override
