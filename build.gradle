@@ -62,9 +62,9 @@ sonarqube {
 
         // Includes all folder and sources for submodules
         property "sonar.sources", fileTree(dir: '.', include: '**/src/main/java').asPath
-        property "sonar.exclusions", fileTree(dir: '.', include: '**/src/test/java').asPath
         property "sonar.tests", fileTree(dir: '.', include: '**/src/test/java').asPath
         property "sonar.java.binaries", fileTree(dir: '.', include: '**/build/classes').asPath
+        property "sonar.test.exclusions", fileTree(dir: '.', include: '**/src/test/java')
 
         // Global path for jacoco report
         property "sonar.coverage.jacoco.xmlReportPaths", file("${buildDir}/reports/jacoco/jacocoRootReport.xml")

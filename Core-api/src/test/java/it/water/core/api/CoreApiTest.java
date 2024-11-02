@@ -19,6 +19,7 @@ package it.water.core.api;
 import it.water.core.api.model.Resource;
 import it.water.core.api.model.Role;
 import it.water.core.api.permission.PermissionManagerComponentProperties;
+import it.water.core.api.repository.query.Query;
 import it.water.core.api.repository.query.operands.FieldNameOperand;
 import it.water.core.api.repository.query.operands.FieldValueOperand;
 import it.water.core.api.repository.query.operands.ParenthesisNode;
@@ -85,8 +86,9 @@ class CoreApiTest {
         List<String> values = List.of("'prova1'", "'prova2'", "'prova3'", "'prova4'");
         definition = fieldNameOperand.in(values).getDefinition();
         Assertions.assertEquals("fieldName IN ('prova1','prova2','prova3','prova4')", definition);
-        Assertions.assertThrows(IllegalArgumentException.class, () -> fieldNameOperand.greaterThan(10).and(null));
-        Assertions.assertThrows(IllegalArgumentException.class, () -> fieldNameOperand.greaterThan(10).or(null));
+        Query greaterThan = fieldNameOperand.greaterThan(10);
+        Assertions.assertThrows(IllegalArgumentException.class, () -> greaterThan.and(null));
+        Assertions.assertThrows(IllegalArgumentException.class, () -> greaterThan.or(null));
     }
 
     @Test
@@ -95,13 +97,13 @@ class CoreApiTest {
         Assertions.assertNotNull(ServiceDiscoveryServerProperties.SERVICE_DISCOVERY_IN_MEMORY_SERVER_IMPLEMENTATION);
         Assertions.assertNotNull(PermissionManagerComponentProperties.PERMISSION_MANAGER_DEFAILT_IMPLEMENTATION);
         Assertions.assertNotNull(PermissionManagerComponentProperties.PERMISSION_MANAGER_DEFAILT_IMPLEMENTATION);
-        Assertions.assertNotNull(new Role() {
+        Assertions.assertEquals(0L,new Role() {
             @Override
             public String getName() {
-                return "";
+                return "role";
             }
         }.getId());
-        Assertions.assertNotNull(new Resource() {
+        Assertions.assertEquals("it.water.core.api.CoreApiTest$2",new Resource() {
             public String getResourceName() {
                 return Resource.super.getResourceName();
             }
