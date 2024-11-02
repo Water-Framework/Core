@@ -17,16 +17,10 @@
 
 package it.water.core.service;
 
-import it.water.core.api.permission.SecurityContext;
-
-
 /**
  * @Author Aristide Cittadino
  * Abstraction of API Service.
  */
 public abstract class BaseAbstractService extends AbstractService {
-    protected SecurityContext getSecurityContext() {
-        //todo: undestand how to retrieve a valid Security Context object
-        return null;
-    }
+
 }

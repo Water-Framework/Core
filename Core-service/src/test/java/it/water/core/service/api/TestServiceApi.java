@@ -16,7 +16,9 @@
 package it.water.core.service.api;
 
 import it.water.core.api.service.BaseApi;
+import it.water.core.api.service.BaseSystemApi;
 
 public interface TestServiceApi extends BaseApi {
     void doSomething();
+    BaseSystemApi checkSystemApi();
 }

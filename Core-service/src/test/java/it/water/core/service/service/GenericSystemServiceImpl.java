@@ -15,34 +15,37 @@
  */
 package it.water.core.service.service;
 
-import it.water.core.api.permission.SecurityContext;
-import it.water.core.api.service.BaseSystemApi;
+import it.water.core.api.model.Resource;
+import it.water.core.api.validation.WaterValidator;
 import it.water.core.interceptors.annotations.FrameworkComponent;
 import it.water.core.interceptors.annotations.Inject;
-import it.water.core.service.BaseServiceImpl;
-import it.water.core.service.api.TestServiceApi;
+import it.water.core.service.BaseSystemServiceImpl;
 import it.water.core.service.api.TestSystemServiceApi;
-import lombok.Getter;
 import lombok.Setter;
 
 /**
  * Test service just to verifiy bean creation.
  * This service is not associated with an entity it is an integration service.
  */
-@FrameworkComponent
-public class TestServiceImpl extends BaseServiceImpl implements TestServiceApi {
+public class GenericSystemServiceImpl extends it.water.core.service.GenericSystemServiceImpl implements TestSystemServiceApi {
+
     @Inject
     @Setter
-    @Getter
-    private TestSystemServiceApi systemService;
+    private WaterValidator waterValidator;
+
+    public void checkValidate(Resource resource) {
+        this.validate(resource);
+    }
+
+    @Override
+    protected WaterValidator getValidatorInstance() {
+        return waterValidator;
+    }
 
     @Override
     public void doSomething() {
-        this.getSystemService().doSomething();
+        getLog().info("do something");
     }
 
-    @Override
-    public BaseSystemApi checkSystemApi() {
-        return this.getSystemService();
-    }
+
 }

@@ -13,12 +13,19 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package it.water.core.service.api;
 
-import it.water.core.api.model.Resource;
+package it.water.core.service.service;
+
 import it.water.core.api.service.BaseSystemApi;
+import it.water.core.service.BaseServiceImpl;
 
-public interface TestSystemServiceApi extends BaseSystemApi {
-    void doSomething();
-    void checkValidate(Resource resource);
+public class ConcreteBaseService extends BaseServiceImpl {
+    @Override
+    protected BaseSystemApi getSystemService() {
+        return null;
+    }
+
+    public BaseSystemApi checkSystemService(){
+        return getSystemService();
+    }
 }

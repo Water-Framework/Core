@@ -29,6 +29,11 @@ public class TestSystemServiceImpl extends BaseSystemServiceImpl implements Test
     @Override
     protected void validate(Resource resource) {
         //do nothing
+        super.validate(resource);
+    }
+
+    public void checkValidate(Resource resource) {
+        this.validate(resource);
     }
 
     @Override

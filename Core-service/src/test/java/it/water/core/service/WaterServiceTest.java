@@ -17,7 +17,15 @@ package it.water.core.service;
 
 import it.water.core.api.bundle.ApplicationProperties;
 import it.water.core.api.service.Service;
+import it.water.core.api.service.integration.discovery.ServiceInfo;
+import it.water.core.api.validation.WaterValidator;
 import it.water.core.service.api.TestServiceApi;
+import it.water.core.service.api.TestSystemServiceApi;
+import it.water.core.service.integration.discovery.ServiceDiscoveryRegistryInMemoryServer;
+import it.water.core.service.service.ConcreteBaseService;
+import it.water.core.service.service.ConcreteService;
+import it.water.core.service.service.GenericSystemServiceImpl;
+import it.water.core.service.service.TestResoruce;
 import it.water.core.testing.utils.bundle.TestRuntimeInitializer;
 import it.water.core.testing.utils.junit.WaterTestExtension;
 import org.junit.jupiter.api.Assertions;
@@ -52,5 +60,68 @@ class WaterServiceTest implements Service {
     void testIntegrationServices() {
         TestServiceApi testServiceApi = initializer.getComponentRegistry().findComponent(TestServiceApi.class, null);
         Assertions.assertDoesNotThrow(() -> testServiceApi.doSomething());
+    }
+
+    @Test
+    void serviceDiscoveryTest(){
+        ServiceDiscoveryRegistryInMemoryServer server = new ServiceDiscoveryRegistryInMemoryServer();
+        ServiceInfo serviceInfo = new ServiceInfo() {
+            @Override
+            public String getId() {
+                return "id";
+            }
+
+            @Override
+            public String getProtocol() {
+                return "http";
+            }
+
+            @Override
+            public String getIp() {
+                return "10.12.23.12";
+            }
+
+            @Override
+            public String getHost() {
+                return "sample.com";
+            }
+
+            @Override
+            public String getPort() {
+                return "8080";
+            }
+
+            @Override
+            public String getContextRoot() {
+                return "/sample";
+            }
+
+            @Override
+            public String getRelativePath() {
+                return "/sample";
+            }
+        };
+        server.registerService(serviceInfo);
+        Assertions.assertNotNull(server.getServiceInfo("id"));
+        server.unregisterService("id");
+        Assertions.assertNull(server.getServiceInfo("id"));
+    }
+
+    @Test
+    void testBasicServices(){
+        WaterValidator waterValidator = initializer.getComponentRegistry().findComponent(WaterValidator.class,null);
+        TestSystemServiceApi testSystemServiceApi = initializer.getComponentRegistry().findComponent(TestSystemServiceApi.class, null);
+        TestServiceApi testServiceApi = initializer.getComponentRegistry().findComponent(TestServiceApi.class, null);
+        TestResoruce testResoruce = new TestResoruce();
+        GenericSystemServiceImpl genericSystemService = new GenericSystemServiceImpl();
+        genericSystemService.setWaterValidator(waterValidator);
+        Assertions.assertDoesNotThrow(() -> genericSystemService.checkValidate(testResoruce));
+        Assertions.assertDoesNotThrow(() -> testSystemServiceApi.checkValidate(testResoruce));
+        Assertions.assertNotNull(testServiceApi.checkSystemApi());
+        ConcreteService concreteService = new ConcreteService();
+        Assertions.assertNotNull(concreteService);
+        ConcreteBaseService concreteBaseService = new ConcreteBaseService();
+        Assertions.assertNotNull(concreteBaseService);
+        Assertions.assertNull(concreteBaseService.checkSystemService());
     }
 }

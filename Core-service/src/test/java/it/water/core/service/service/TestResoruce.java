@@ -13,12 +13,15 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package it.water.core.service.api;
+
+package it.water.core.service.service;
 
 import it.water.core.api.model.Resource;
-import it.water.core.api.service.BaseSystemApi;
+import lombok.Data;
 
-public interface TestSystemServiceApi extends BaseSystemApi {
-    void doSomething();
-    void checkValidate(Resource resource);
+@Data
+public class TestResoruce implements Resource {
+
+    private String name;
+
 }
