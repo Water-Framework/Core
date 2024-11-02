@@ -21,6 +21,7 @@ import it.water.core.api.service.integration.discovery.ServiceInfo;
 import it.water.core.api.validation.WaterValidator;
 import it.water.core.service.api.TestServiceApi;
 import it.water.core.service.api.TestSystemServiceApi;
+import it.water.core.service.integration.discovery.ServiceDiscoveryRegistryClientImpl;
 import it.water.core.service.integration.discovery.ServiceDiscoveryRegistryInMemoryServer;
 import it.water.core.service.service.ConcreteBaseService;
 import it.water.core.service.service.ConcreteService;
@@ -34,6 +35,8 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.junit.jupiter.MockitoExtension;
+
+import java.util.Properties;
 
 @ExtendWith({MockitoExtension.class, WaterTestExtension.class})
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
@@ -105,6 +108,12 @@ class WaterServiceTest implements Service {
         Assertions.assertNotNull(server.getServiceInfo("id"));
         server.unregisterService("id");
         Assertions.assertNull(server.getServiceInfo("id"));
+        ServiceDiscoveryRegistryClientImpl client = new ServiceDiscoveryRegistryClientImpl();
+        Assertions.assertDoesNotThrow(() -> client.registerService(serviceInfo));
+        Assertions.assertDoesNotThrow(() -> client.getServiceInfo("id"));
+        Assertions.assertDoesNotThrow(() -> client.unregisterService("id"));
+        Assertions.assertDoesNotThrow(() -> client.setup("rmeote","port"));
+
     }
 
     @Test
@@ -123,5 +132,25 @@ class WaterServiceTest implements Service {
         ConcreteBaseService concreteBaseService = new ConcreteBaseService();
         Assertions.assertNotNull(concreteBaseService);
         Assertions.assertNull(concreteBaseService.checkSystemService());
+    }
+
+    @Test
+    void testApplicationProperties(){
+        ApplicationProperties applicationProperties = initializer.getComponentRegistry().findComponent(ApplicationProperties.class, null);
+        Assertions.assertNotNull(applicationProperties);
+        Properties props = new Properties();
+        props.put("propA","valueA");
+        props.put("propB","valueB");
+        props.put("propNumber",3L);
+        props.put("propBoolean",true);
+        applicationProperties.loadProperties(props);
+        Assertions.assertEquals("valueA",applicationProperties.getProperty("propA"));
+        Assertions.assertEquals("valueA",applicationProperties.getPropertyOrDefault("propA","nothing"));
+        Assertions.assertEquals(3L,applicationProperties.getPropertyOrDefault("propNumber",10L));
+        Assertions.assertTrue(applicationProperties.getPropertyOrDefault("propBoolean",false));
+        Assertions.assertEquals("valueC",applicationProperties.getPropertyOrDefault("propC","valueC"));
+        Assertions.assertEquals(4L,applicationProperties.getPropertyOrDefault("propC",4L));
+        Assertions.assertFalse(applicationProperties.getPropertyOrDefault("propC",false));
+
     }
 }

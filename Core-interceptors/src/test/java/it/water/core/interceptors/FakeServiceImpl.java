@@ -18,6 +18,7 @@ package it.water.core.interceptors;
 import it.water.core.api.registry.ComponentRegistry;
 import it.water.core.interceptors.annotations.FrameworkComponent;
 import it.water.core.interceptors.annotations.Inject;
+import it.water.core.interceptors.annotations.LogMethodExecution;
 
 @FrameworkComponent
 public class FakeServiceImpl implements FakeService {
@@ -49,6 +50,7 @@ public class FakeServiceImpl implements FakeService {
         this.registryInjected = registryInjected;
     }
 
+    @LogMethodExecution
     public ComponentRegistry getRegistryNotInjected() {
         return registryNotInjected;
     }

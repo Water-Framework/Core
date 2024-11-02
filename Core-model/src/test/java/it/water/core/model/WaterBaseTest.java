@@ -16,8 +16,10 @@
 package it.water.core.model;
 
 import it.water.core.api.model.ErrorMessage;
+import it.water.core.model.exceptions.ValidationException;
 import it.water.core.model.exceptions.WaterException;
 import it.water.core.model.exceptions.WaterRuntimeException;
+import it.water.core.model.validation.ValidationError;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
@@ -98,5 +100,13 @@ class WaterBaseTest {
         Assertions.assertEquals(1, error.getErrorMessages().size());
         error = BaseError.generateError(new Exception(), 404);
         Assertions.assertEquals(404, error.getStatusCode());
+    }
+
+    @Test
+    void testValidationException(){
+        List<ValidationError> errors = new ArrayList<>();
+        errors.add(new ValidationError("validation error","field","value"));
+        ValidationException validationException  = new ValidationException(errors);
+        Assertions.assertNotNull(validationException.getMessage());
     }
 }

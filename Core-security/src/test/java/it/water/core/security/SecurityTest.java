@@ -260,6 +260,10 @@ class SecurityTest implements Service {
         Assertions.assertFalse(exampleSecurityContext.isLoggedIn());
         Assertions.assertNotNull(exampleSecurityContext.toString());
         Assertions.assertEquals("permissionImplementation", exampleSecurityContext.getPermissionImplementation());
+
+        runtime.fillSecurityContext(exampleSecurityContext);
+        Assertions.assertNotNull(runtime.getSecurityContext());
+        Assertions.assertNotNull(runtime.getApplicationProperties());
     }
 
     /**

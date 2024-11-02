@@ -154,8 +154,4 @@ class InterceptorsTest {
             afterMethodFieldInterceptor.interceptMethod(null, (Method) null, (Object[]) null, null, null);
         });
     }
-
-    void testMethodInterceptors() {
-
-    }
 }

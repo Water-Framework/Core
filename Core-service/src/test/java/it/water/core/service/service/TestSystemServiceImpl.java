@@ -15,9 +15,12 @@
  */
 package it.water.core.service.service;
 
+import it.water.core.api.interceptors.OnActivate;
 import it.water.core.api.model.Resource;
 import it.water.core.interceptors.annotations.FrameworkComponent;
+import it.water.core.interceptors.annotations.LogMethodExecution;
 import it.water.core.service.BaseSystemServiceImpl;
+import it.water.core.service.api.TestServiceApi;
 import it.water.core.service.api.TestSystemServiceApi;
 
 /**
@@ -32,6 +35,12 @@ public class TestSystemServiceImpl extends BaseSystemServiceImpl implements Test
         super.validate(resource);
     }
 
+    @OnActivate
+    public void onActivate(TestServiceApi service) {
+        //do nothing
+    }
+
+    @LogMethodExecution
     public void checkValidate(Resource resource) {
         this.validate(resource);
     }
