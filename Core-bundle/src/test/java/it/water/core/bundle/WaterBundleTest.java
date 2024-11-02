@@ -16,6 +16,7 @@
 package it.water.core.bundle;
 
 import it.water.core.api.bundle.Runtime;
+import it.water.core.api.permission.SecurityContext;
 import it.water.core.api.registry.ComponentRegistry;
 import it.water.core.api.registry.filter.ComponentFilter;
 import it.water.core.api.service.rest.RestApiManager;
@@ -91,5 +92,33 @@ class BundleTest {
         TestComponent t = this.componentRegistry.findComponent(TestComponent.class, null);
         Assertions.assertNotNull(t);
         Assertions.assertNotNull(t.getRegistry());
+    }
+
+    @Test
+    void testRuntime(){
+        WaterRuntime runtime = new WaterRuntime();
+        SecurityContext sampleSecContext = new SecurityContext() {
+            @Override
+            public String getLoggedUsername() {
+                return "";
+            }
+
+            @Override
+            public boolean isLoggedIn() {
+                return false;
+            }
+
+            @Override
+            public boolean isAdmin() {
+                return false;
+            }
+
+            @Override
+            public long getLoggedEntityId() {
+                return 0;
+            }
+        };
+        Assertions.assertDoesNotThrow(() -> runtime.fillSecurityContext(sampleSecContext));
+        Assertions.assertNotNull(runtime.getSecurityContext());
     }
 }

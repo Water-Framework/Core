@@ -57,6 +57,9 @@ class WaterBaseRegistryTest {
         ex = new NoComponentRegistryFoundException("message", new WaterException());
         Assertions.assertEquals("message", ex.getMessage());
         Assertions.assertNotNull(ex.getCause());
+        ex = new NoComponentRegistryFoundException("message", new WaterException(),false,false);
+        Assertions.assertEquals("message", ex.getMessage());
+        Assertions.assertNotNull(ex.getCause());
     }
 
     @Test
