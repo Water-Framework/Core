@@ -45,7 +45,7 @@ class WaterBaseRegistryTest {
     void testComponentBasicFilter() {
         TestComponentFilterBuilder filterBuilder = new TestComponentFilterBuilder();
         String filter = filterBuilder.createFilter("field1", "value1").and("field2", "value2").or("field3", "value3").getFilter();
-        Assertions.assertEquals("field1 = value1 AND field2 = value2 OR field3 = value3", filter);
+        Assertions.assertEquals("(|(&(field1=value1)(field2=value2))(field3=value3))", filter);
     }
 
     @Test
@@ -243,16 +243,16 @@ class WaterBaseRegistryTest {
         ComponentDefaultPropertyFilter componentPropertyFilter = (ComponentDefaultPropertyFilter) cf;
         Assertions.assertFalse(componentPropertyFilter.isNot());
         cf = cf.and(testComponentFilterBuilder.createFilter("field2", "value2"));
-        Assertions.assertEquals("field = value AND field2 = value2", cf.getFilter());
-        Assertions.assertEquals("NOT(field = value AND field2 = value2)", cf.not().getFilter());
+        Assertions.assertEquals("(&(field=value)(field2=value2))", cf.getFilter());
+        Assertions.assertEquals("(!(&(field=value)(field2=value2)))", cf.not().getFilter());
         componentPropertyFilter.setName("newName");
         Assertions.assertEquals("newName", componentPropertyFilter.getName());
         componentPropertyFilter.setValue("newValue");
         Assertions.assertEquals("newValue", componentPropertyFilter.getValue());
         cf = testComponentFilterBuilder.createFilter("field", "value");
         cf = cf.or(testComponentFilterBuilder.createFilter("field3", "value3"));
-        Assertions.assertEquals("field = value OR field3 = value3", cf.getFilter());
-        Assertions.assertEquals("NOT(field = value OR field3 = value3)", cf.not().getFilter());
+        Assertions.assertEquals("(|(field=value)(field3=value3))", cf.getFilter());
+        Assertions.assertEquals("(!(|(field=value)(field3=value3)))", cf.not().getFilter());
     }
 
     @Test

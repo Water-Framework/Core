@@ -15,38 +15,8 @@
  */
 package it.water.core.registry;
 
-import it.water.core.api.registry.filter.*;
+import it.water.core.registry.filter.ComponentAbstractFilter;
 
-public class TestFilterImplementation implements FilterImplementation {
-    @Override
-    public String transform(ComponentFilter filter) {
-        return FilterImplementation.super.transform(filter);
-    }
+public class TestFilterImplementation extends ComponentAbstractFilter {
 
-    @Override
-    public String transform(ComponentFilterAndCondition andCondition) {
-        String andConditionStr = andCondition.getFirst().getFilter() + " AND " + andCondition.getSecond().getFilter();
-        StringBuilder sb = new StringBuilder();
-        if (andCondition.isNot())
-            sb.append("NOT(").append(andConditionStr).append(")");
-        else
-            sb.append(andConditionStr);
-        return sb.toString();
-    }
-
-    @Override
-    public String transform(ComponentFilterOrCondition orCondition) {
-        String orConditionStr = orCondition.getFirst().getFilter() + " OR " + orCondition.getSecond().getFilter();
-        StringBuilder sb = new StringBuilder();
-        if (orCondition.isNot())
-            sb.append("NOT(").append(orConditionStr).append(")");
-        else
-            sb.append(orConditionStr);
-        return sb.toString();
-    }
-
-    @Override
-    public String transform(ComponentPropertyFilter propertyFilter) {
-        return propertyFilter.getName() + " = " + propertyFilter.getValue();
-    }
 }

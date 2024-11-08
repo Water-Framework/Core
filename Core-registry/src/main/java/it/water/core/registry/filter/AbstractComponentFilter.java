@@ -17,8 +17,7 @@
 
 package it.water.core.registry.filter;
 
-import it.water.core.api.registry.filter.ComponentFilter;
-import it.water.core.api.registry.filter.FilterImplementation;
+import it.water.core.api.registry.filter.*;
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
