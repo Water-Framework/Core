@@ -41,9 +41,9 @@ public interface ApplicationProperties {
     Object getProperty(String key);
 
     /**
-     * @return current property with the specified key
+     * @return true if property with the specified key exists
      */
-    Object containsKey(String key);
+    boolean containsKey(String key);
 
     /**
      * Adds properties contained inside file into current properties
