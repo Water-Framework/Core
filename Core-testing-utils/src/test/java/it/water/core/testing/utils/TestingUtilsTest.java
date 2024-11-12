@@ -92,7 +92,7 @@ class TestingUtilsTest implements Service {
     void testApplicationProertiesLoader() {
         ApplicationProperties applicationProperties = initializer.getComponentRegistry().findComponent(ApplicationProperties.class, null);
         Assertions.assertNotNull(applicationProperties.getProperty("rs.security.signature.algorithm"));
-        Assertions.assertNotNull(applicationProperties.containsKey("rs.security.signature.algorithm"));
+        Assertions.assertTrue(applicationProperties.containsKey("rs.security.signature.algorithm"));
         File customPropFile = new File("src/test/resources/custom.properties");
         applicationProperties.loadProperties(customPropFile);
         Assertions.assertTrue((Boolean) applicationProperties.containsKey("custom.property"));
