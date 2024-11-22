@@ -23,6 +23,7 @@ import it.water.core.model.exceptions.WaterRuntimeException;
 import it.water.core.testing.utils.bundle.TestRuntimeInitializer;
 import org.apache.cxf.transport.servlet.CXFServlet;
 import org.eclipse.jetty.server.Server;
+import org.eclipse.jetty.server.ServerConnector;
 import org.eclipse.jetty.servlet.ServletContextHandler;
 import org.eclipse.jetty.servlet.ServletHolder;
 import org.junit.jupiter.api.BeforeAll;
@@ -75,8 +76,11 @@ public class WaterTestExtension extends WaterAbstractInterceptor<Service> implem
     }
 
     private void startJetty() throws Exception {
-        if (TestRuntimeInitializer.getInstance().hasRestApi()) {
-            Server server = new Server(8080);
+        if (TestRuntimeInitializer.getInstance().hasRestApi() && !TestRuntimeInitializer.getInstance().isServerStarted()) {
+            Server server = new Server();
+            ServerConnector connector = new ServerConnector(server);
+            connector.setPort(0);
+            server.addConnector(connector);
             // Register and map the dispatcher servlet
             final ServletHolder servletHolder = new ServletHolder(new CXFServlet());
             final ServletContextHandler context = new ServletContextHandler();
@@ -84,6 +88,8 @@ public class WaterTestExtension extends WaterAbstractInterceptor<Service> implem
             context.addServlet(servletHolder, "/water/*");
             server.setHandler(context);
             server.start();
+            TestRuntimeInitializer.getInstance().setRestServerPort(String.valueOf(connector.getLocalPort()));
+            TestRuntimeInitializer.getInstance().setServerStarted(true);
         }
     }
 

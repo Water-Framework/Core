@@ -29,6 +29,8 @@ import it.water.core.testing.utils.filter.TestComponentFilterBuilder;
 import it.water.core.testing.utils.registry.TestComponentRegistration;
 import it.water.core.testing.utils.registry.TestComponentRegistry;
 import it.water.core.testing.utils.security.TestSecurityContext;
+import lombok.Getter;
+import lombok.Setter;
 import org.reflections.Reflections;
 import org.reflections.util.ClasspathHelper;
 import org.reflections.util.ConfigurationBuilder;
@@ -36,6 +38,12 @@ import org.reflections.util.ConfigurationBuilder;
 public class TestRuntimeInitializer extends RuntimeInitializer<Object, TestComponentRegistration<Object>> {
     private ComponentRegistry componentRegistry;
     private ApplicationProperties waterApplicationProperties;
+    @Getter
+    @Setter
+    private String restServerPort;
+    @Getter
+    @Setter
+    private boolean serverStarted;
     private static TestRuntimeInitializer instance;
 
     private TestRuntimeInitializer() {
@@ -77,7 +85,7 @@ public class TestRuntimeInitializer extends RuntimeInitializer<Object, TestCompo
         return (TestApplicationProperties) waterApplicationProperties;
     }
 
-    public void impersonate(User u,Runtime runtime) {
+    public void impersonate(User u, Runtime runtime) {
         runtime.fillSecurityContext(TestSecurityContext.createContext(u.getId(), u.getUsername(), u.isAdmin()));
     }
 
@@ -88,6 +96,7 @@ public class TestRuntimeInitializer extends RuntimeInitializer<Object, TestCompo
     public boolean hasRestApi() {
         return getAnnotatedClasses(FrameworkRestController.class).iterator().hasNext();
     }
+
 
     /**
      * In test projects it is ok to scan all packages since the amount of classes to scan for each module
