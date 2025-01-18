@@ -19,4 +19,5 @@ package it.water.core.testing.utils.api;
 import it.water.core.api.user.UserManager;
 
 public interface TestUserManager extends UserManager {
+    String getUid();
 }

@@ -30,13 +30,16 @@ import java.util.*;
 public class InMemoryUserManager implements UserManager, TestUserManager, UserIntegrationClient {
     private static int userCounter = 1;
     private static final String ADMIN = "admin";
-    Set<User> users = new HashSet<>();
+    private Set<User> users = new HashSet<>();
+    private String uid;
+
     @Inject
     @Setter
     private UserIntegrationClient userIntegrationClient;
 
     public InMemoryUserManager() {
         long userId = getUserCounterAndIncrement();
+        this.uid = UUID.randomUUID().toString();
         users.add(new User() {
             private final long id = userId;
 
@@ -70,6 +73,10 @@ public class InMemoryUserManager implements UserManager, TestUserManager, UserIn
                 return true;
             }
         });
+    }
+
+    public String getUid() {
+        return uid;
     }
 
     @Override
@@ -147,7 +154,7 @@ public class InMemoryUserManager implements UserManager, TestUserManager, UserIn
     @Override
     public User fetchUserByUsername(String username) {
         //if user integration client is this component avoid stackoverflow
-        if (userIntegrationClient.equals(this))
+        if (this.equals(userIntegrationClient))
             return findUser(username);
         return userIntegrationClient.fetchUserByUsername(username);
     }
@@ -155,7 +162,7 @@ public class InMemoryUserManager implements UserManager, TestUserManager, UserIn
     @Override
     public User fetchUserByEmailAddress(String emailAddress) {
         //if user integration client is this component avoid stackoverflow
-        if (userIntegrationClient.equals(this))
+        if (this.equals(userIntegrationClient))
             return users.stream().filter(user -> user.getEmail().equalsIgnoreCase(emailAddress)).findAny().orElse(null);
         return userIntegrationClient.fetchUserByEmailAddress(emailAddress);
     }
@@ -163,12 +170,23 @@ public class InMemoryUserManager implements UserManager, TestUserManager, UserIn
     @Override
     public User fetchUserByUserId(long userId) {
         //if user integration client is this component avoid stackoverflow
-        if (userIntegrationClient.equals(this))
+        if (this.equals(userIntegrationClient))
             return users.stream().filter(user -> user.getId() == userId).findAny().orElse(null);
         return userIntegrationClient.fetchUserByUserId(userId);
     }
 
-    private static long getUserCounterAndIncrement(){
+    @Override
+    public boolean equals(Object o) {
+        if (o == null || !(o instanceof TestUserManager that)) return false;
+        return Objects.equals(this.getUid(), that.getUid());
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hashCode(this.getUid());
+    }
+
+    private static long getUserCounterAndIncrement() {
         return userCounter++;
     }
 
