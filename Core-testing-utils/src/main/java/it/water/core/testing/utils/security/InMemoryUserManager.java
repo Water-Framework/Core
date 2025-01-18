@@ -22,6 +22,7 @@ import it.water.core.api.user.UserManager;
 import it.water.core.interceptors.annotations.FrameworkComponent;
 import it.water.core.interceptors.annotations.Inject;
 import it.water.core.testing.utils.api.TestUserManager;
+import lombok.Getter;
 import lombok.Setter;
 
 import java.util.*;
@@ -31,6 +32,7 @@ public class InMemoryUserManager implements UserManager, TestUserManager, UserIn
     private static int userCounter = 1;
     private static final String ADMIN = "admin";
     private Set<User> users = new HashSet<>();
+    @Getter
     private String uid;
 
     @Inject
@@ -38,45 +40,8 @@ public class InMemoryUserManager implements UserManager, TestUserManager, UserIn
     private UserIntegrationClient userIntegrationClient;
 
     public InMemoryUserManager() {
-        long userId = getUserCounterAndIncrement();
         this.uid = UUID.randomUUID().toString();
-        users.add(new User() {
-            private final long id = userId;
-
-            @Override
-            public long getId() {
-                return id;
-            }
-
-            @Override
-            public String getName() {
-                return ADMIN;
-            }
-
-            @Override
-            public String getLastname() {
-                return ADMIN;
-            }
-
-            @Override
-            public String getEmail() {
-                return ADMIN;
-            }
-
-            @Override
-            public String getUsername() {
-                return ADMIN;
-            }
-
-            @Override
-            public boolean isAdmin() {
-                return true;
-            }
-        });
-    }
-
-    public String getUid() {
-        return uid;
+        addUser(ADMIN,ADMIN,ADMIN,ADMIN+"@ADMIN.com","Password._","Salt",true);
     }
 
     @Override

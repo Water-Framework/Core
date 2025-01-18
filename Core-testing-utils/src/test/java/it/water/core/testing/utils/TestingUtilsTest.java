@@ -48,14 +48,10 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.util.Assert;
 
 import java.io.File;
 import java.lang.reflect.Proxy;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Properties;
+import java.util.*;
 
 @ExtendWith({MockitoExtension.class, WaterTestExtension.class})
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
@@ -192,15 +188,16 @@ class TestingUtilsTest implements Service {
         }, "username");
         User user = new TestHUser(1000, "name", "lastname", "email", "username", List.of(), false);
         Assertions.assertDoesNotThrow(() -> TestRuntimeUtils.getAs(user, () -> user));
-        Assertions.assertDoesNotThrow(() -> TestRuntimeUtils.runAs(user, () -> {}));
+        Assertions.assertDoesNotThrow(() -> TestRuntimeUtils.runAs(user, () -> {
+        }));
     }
 
     @Test
-    void testInMemoryUserManager(){
+    void testInMemoryUserManager() {
         User toRemove = userManager.addUser("usernameToRemove", "usernameToRemove", "usernameToRemove", "usernameToRemove@mail.com", "usernameToRemove", "salt", false);
-        roleManager.addRole(toRemove.getId(),roleManager.getRole(ROLE));
+        roleManager.addRole(toRemove.getId(), roleManager.getRole(ROLE));
         Assertions.assertTrue(roleManager.hasRole(toRemove.getId(), ROLE));
-        roleManager.removeRole(toRemove.getId(),roleManager.getRole(ROLE));
+        roleManager.removeRole(toRemove.getId(), roleManager.getRole(ROLE));
         Assertions.assertFalse(roleManager.hasRole(toRemove.getId(), ROLE));
         UserIntegrationClient userIntegrationClient = (UserIntegrationClient) userManager;
         Assertions.assertNotNull(userManager.findUser("usernameToRemove"));
@@ -208,7 +205,34 @@ class TestingUtilsTest implements Service {
         Assertions.assertNotNull(userIntegrationClient.fetchUserByEmailAddress("usernameToRemove@mail.com"));
         Assertions.assertNull(userIntegrationClient.fetchUserByUserId(0));
         userManager.removeUser("usernameToRemove");
+        userManager.removeUser(null);
         Assertions.assertNull(userManager.findUser("usernameToRemove"));
         Assertions.assertNotNull(userManager.all());
+        UserManager fakeUserManager = new UserManager() {
+            @Override
+            public User addUser(String username, String name, String lastname, String email, String password, String salt, boolean isAdmin) {
+                return null;
+            }
+
+            @Override
+            public void removeUser(String username) {
+
+            }
+
+            @Override
+            public User findUser(String username) {
+                return null;
+            }
+
+            @Override
+            public Collection<User> all() {
+                return List.of();
+            }
+        };
+        Assertions.assertNotEquals(userManager, fakeUserManager);
+        //for coverage
+        Assertions.assertFalse(userManager.equals(null));
+        //for coverage
+        Assertions.assertTrue(userManager.hashCode() > 0);
     }
 }
