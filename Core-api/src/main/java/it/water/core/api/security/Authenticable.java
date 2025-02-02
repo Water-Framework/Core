@@ -15,13 +15,12 @@
  * limitations under the License.
  */
 
-package it.water.core.api.entity;
+package it.water.core.api.security;
 
 
-import it.water.core.api.model.BaseEntity;
+import it.water.core.api.model.Role;
 
 import java.util.Collection;
-
 
 /**
  * @Author Aristide Cittadino.
@@ -30,7 +29,17 @@ import java.util.Collection;
  * This interface is useful if you want exploits password validation for
  * your entity. This enables sensor, devices, users to connect to your Platform.
  */
-public interface Authenticable extends BaseEntity {
+public interface Authenticable {
+
+    /**
+     * @return
+     */
+    Long getLoggedEntityId();
+
+    /**
+     * @return
+     */
+    String getIssuer();
 
     /**
      * @return the field name which contains the screenName
@@ -38,9 +47,19 @@ public interface Authenticable extends BaseEntity {
     String getScreenNameFieldName();
 
     /**
-     * @return the username or thingname
+     * @return the username or "thing" name
      */
     String getScreenName();
+
+    /**
+     * @return
+     */
+    String getPassword();
+
+    /**
+     * @return
+     */
+    String getSalt();
 
     /**
      * @return true if it is an admin user
@@ -48,22 +67,12 @@ public interface Authenticable extends BaseEntity {
     boolean isAdmin();
 
     /**
-     * @return
-     */
-    Collection<String> getRoles();
-
-    /**
-     * @return the password
-     */
-    String getPassword();
-
-    /**
-     * @return the confirm password
-     */
-    String getPasswordConfirm();
-
-    /**
      * @return true if the authenticable is activated for authentication
      */
     boolean isActive();
+
+    /**
+     * @return
+     */
+    Collection<Role> getRoles();
 }

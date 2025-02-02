@@ -26,6 +26,7 @@ import it.water.core.api.permission.SecurityContext;
 import it.water.core.api.registry.ComponentRegistry;
 import it.water.core.api.registry.filter.ComponentFilter;
 import it.water.core.api.role.RoleManager;
+import it.water.core.api.security.AuthenticationProvider;
 import it.water.core.api.service.Service;
 import it.water.core.api.service.integration.UserIntegrationClient;
 import it.water.core.api.user.UserManager;
@@ -33,6 +34,7 @@ import it.water.core.interceptors.annotations.Inject;
 import it.water.core.model.exceptions.ValidationException;
 import it.water.core.model.validation.ValidationError;
 import it.water.core.permission.action.CrudActions;
+import it.water.core.permission.exceptions.UnauthorizedException;
 import it.water.core.testing.utils.api.TestPermissionManager;
 import it.water.core.testing.utils.bundle.TestRuntimeInitializer;
 import it.water.core.testing.utils.filter.TestComponentFilterBuilder;
@@ -134,7 +136,7 @@ class TestingUtilsTest implements Service {
     @Test
     void testModels() {
         Role testRole = new TestRole(ROLE);
-        User user = new TestHUser(1000, "name", "lastname", "email", "username", Arrays.asList(testRole), false);
+        User user = new TestHUser(1000, "name", "lastname", "email", "username", "pwd", "salt", Arrays.asList(testRole), false,true );
         roleManager.addRole(user.getId(), testRole);
         Assertions.assertTrue(roleManager.hasRole(user.getId(), ROLE));
     }
@@ -156,7 +158,7 @@ class TestingUtilsTest implements Service {
     @Test
     void testSecurity() {
         Role testRole = new TestRole(ROLE);
-        User user = new TestHUser(1001, "name", "lastname", "email", "usernameOk", Arrays.asList(testRole), false);
+        User user = new TestHUser(1001, "name", "lastname", "email", "usernameOk", "pwd", "salt", Arrays.asList(testRole), false,true);
         PermissionManager permissionManager = initializer.getComponentRegistry().findComponents(PermissionManager.class, null).get(0);
         ActionsManager actionManager = initializer.getComponentRegistry().findComponent(ActionsManager.class, null);
         Role role = roleManager.createIfNotExists(ROLE);
@@ -186,7 +188,7 @@ class TestingUtilsTest implements Service {
             errors.add(new ValidationError("username", "username", "username is required"));
             throw new ValidationException(errors);
         }, "username");
-        User user = new TestHUser(1000, "name", "lastname", "email", "username", List.of(), false);
+        User user = new TestHUser(1000, "name", "lastname", "email", "username", "pwd", "salt", List.of(), false,true);
         Assertions.assertDoesNotThrow(() -> TestRuntimeUtils.getAs(user, () -> user));
         Assertions.assertDoesNotThrow(() -> TestRuntimeUtils.runAs(user, () -> {
         }));
@@ -234,5 +236,21 @@ class TestingUtilsTest implements Service {
         Assertions.assertFalse(userManager.equals(null));
         //for coverage
         Assertions.assertTrue(userManager.hashCode() > 0);
+    }
+
+    @Test
+    void testAuthenticationProvider() {
+        User u = this.userManager.findUser("usernameOk");
+        Assertions.assertTrue(u.isActive());
+        Assertions.assertEquals(u.getId(), u.getLoggedEntityId());
+        AuthenticationProvider authenticationProvider = (AuthenticationProvider) this.userManager;
+        Optional<String> issuerNameOpt = authenticationProvider.issuersNames().stream().findFirst();
+        Assertions.assertTrue(issuerNameOpt.isPresent());
+        Assertions.assertEquals(u.getIssuer(), issuerNameOpt.get());
+        Assertions.assertDoesNotThrow(() -> authenticationProvider.login("usernameOk", "pwd"));
+        Assertions.assertThrows(UnauthorizedException.class, () -> authenticationProvider.login("usernameKo", "pwd"));
+        Assertions.assertThrows(UnauthorizedException.class, () -> authenticationProvider.login("usernameOk", null));
+        Assertions.assertThrows(UnauthorizedException.class, () -> authenticationProvider.login("usernameOk", ""));
+        Assertions.assertThrows(UnauthorizedException.class, () -> authenticationProvider.login(null, null));
     }
 }

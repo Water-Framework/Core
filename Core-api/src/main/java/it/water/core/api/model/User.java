@@ -17,11 +17,13 @@
 
 package it.water.core.api.model;
 
+import it.water.core.api.security.Authenticable;
+
 /**
  * @Author Aristide Cittadino.
  * Interface for defining the concept of user.
  */
-public interface User {
+public interface User extends Authenticable {
     /**
      * Identifies an user uniquely
      * @return
@@ -63,4 +65,31 @@ public interface User {
      * @return true if User is administrator
      */
     boolean isAdmin();
+
+    /**
+     *
+     * @return
+     */
+    @Override
+    default String getScreenName() {
+        return this.getUsername();
+    }
+
+    /**
+     *
+     * @return
+     */
+    @Override
+    default String getScreenNameFieldName() {
+        return "username";
+    }
+
+    /**
+     *
+     * @return
+     */
+    @Override
+    default boolean isActive() {
+        return false;
+    }
 }

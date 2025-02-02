@@ -15,11 +15,12 @@
  */
 package it.water.core.testing.utils.model;
 
-import it.water.core.api.model.User;
 import it.water.core.api.model.Role;
+import it.water.core.api.model.User;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 
+import java.util.Collection;
 import java.util.List;
 
 @AllArgsConstructor
@@ -35,8 +36,25 @@ public class TestHUser implements User {
     private String email;
     @Getter
     private String username;
+    @Getter
+    private String password;
+    @Getter
+    private String salt;
+    @Getter
     private List<Role> roles;
     @Getter
     private boolean isAdmin;
+    @Getter
+    private boolean isActive;
+
+    @Override
+    public Long getLoggedEntityId() {
+        return id;
+    }
+
+    @Override
+    public String getIssuer() {
+        return TestHUser.class.getName();
+    }
 
 }
