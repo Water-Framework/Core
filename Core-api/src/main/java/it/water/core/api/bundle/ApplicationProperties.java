@@ -20,6 +20,8 @@ import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.util.Properties;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 /**
  * @Autor Aristide Cittadino
@@ -27,6 +29,9 @@ import java.util.Properties;
  * Every technology has its own method to load app props, this class is necessary to abstracts this logic for each technology.
  */
 public interface ApplicationProperties {
+    Pattern ENV_PATTERN = Pattern.compile(
+            "\\$\\{env:([^:}]+)(:-([^}]+))?}"
+    );
 
     Logger log = LoggerFactory.getLogger(ApplicationProperties.class);
 
@@ -72,6 +77,34 @@ public interface ApplicationProperties {
      * @param props
      */
     void unloadProperties(Properties props);
+
+    /**
+     * Resolve property value trying to load it from env variable or using the default value
+     * property can be prop=value or prop=${ENV_VAR} or prop=${ENV_VAR:-default}
+     * @param propertyValue
+     * @return
+     */
+    default String resolvePropertyValue(String propertyValue) {
+        if (propertyValue == null) {
+            return null;
+        }
+        Matcher matcher = ENV_PATTERN.matcher(propertyValue);
+        if (!matcher.find()) {
+            return propertyValue;
+        }
+        StringBuffer sb = new StringBuffer();
+        do {
+            String varName = matcher.group(1);
+            String defaultValue = matcher.group(3);
+            String envValue = System.getenv(varName);
+            if (envValue == null) {
+                envValue = (defaultValue != null) ? defaultValue : "";
+            }
+            matcher.appendReplacement(sb, Matcher.quoteReplacement(envValue));
+        } while (matcher.find());
+        matcher.appendTail(sb);
+        return sb.toString();
+    }
 
     /**
      * @param propName     property name
