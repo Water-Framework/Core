@@ -6,6 +6,7 @@ dependencies {
     annotationProcessor 'org.projectlombok:lombok:' + project.lombokVersion
     //For indexing annotations and retrieve them at runtime
     implementation 'org.atteo.classindex:classindex:' + project.atteoClassIndexVersion
+    annotationProcessor('org.atteo.classindex:classindex:' + project.atteoClassIndexVersion)
 
     implementation project(":Core-api")
     implementation project(":Core-interceptors")
