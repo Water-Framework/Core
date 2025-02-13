@@ -112,7 +112,7 @@ public class WaterComponentsInjector implements BeforeMethodFieldInterceptor<Inj
                 m.setAccessible(true);
                 return m;
             } catch (NoSuchMethodException e) {
-                log.warn("No setter method {} found on {}, trying with superclass ", setterMethodName, destination.getClass().getName());
+                log.debug("No setter method {} found on {}, trying with superclass ", setterMethodName, destination.getClass().getName());
             }
             objClass = objClass.getSuperclass();
         }
