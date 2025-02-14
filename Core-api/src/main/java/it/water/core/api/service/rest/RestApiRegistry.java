@@ -50,4 +50,9 @@ public interface RestApiRegistry extends Service {
      * @return copy of the current registry
      */
     Map<Class<? extends RestApi>, Class<?>> getRegisteredRestApis();
+
+    /**
+     * Request for a restart to the current rest api manager if any
+     */
+    void sendRestartApiManagerRestartRequest();
 }

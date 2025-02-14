@@ -104,18 +104,22 @@ public abstract class AbstractInitializer<T, K> {
         try {
             RestApiRegistry restApiRegistry = getComponentRegistry().findComponent(RestApiRegistry.class, null);
             //discover all concrete implementation for every defined rest api
-            this.setupRestApis(getAnnotatedClasses(FrameworkRestController.class), restApiRegistry);
+            Iterable<Class<?>> moduleRestApis = getAnnotatedClasses(FrameworkRestController.class);
+            this.setupRestApis(moduleRestApis, restApiRegistry);
+            //request for server restart if any change is made
+            restApiRegistry.sendRestartApiManagerRestartRequest();
         } catch (NoComponentRegistryFoundException e) {
-            log.warn("No Rest API Manager found, skipping rest api automatic registration...");
+            log.warn("No Rest API Manager or RestApiRegistry found, skipping rest api automatic registration...");
         }
+
     }
 
     /**
      * @param frameworkRestApis list of @FrameworkRestApi
-     * There are 3 main objects for rest api definitions.
-     * Generic Rest Api - defines only swagger documentation and methods that a rest API should expose
-     * Concrete Rest Api - it's the interface in a specific technology which extends the previous one ex. Jax RS interface with related annotations
-     * Concrete Implementations - Class which implements the generic interface but must be exposed following the concrete. This binding is done dinamically
+     *                          There are 3 main objects for rest api definitions.
+     *                          Generic Rest Api - defines only swagger documentation and methods that a rest API should expose
+     *                          Concrete Rest Api - it's the interface in a specific technology which extends the previous one ex. Jax RS interface with related annotations
+     *                          Concrete Implementations - Class which implements the generic interface but must be exposed following the concrete. This binding is done dinamically
      */
     protected void setupRestApis(Iterable<Class<?>> frameworkRestApis, RestApiRegistry restApiRegistry) {
         //register to rest api manager every service
@@ -128,6 +132,7 @@ public abstract class AbstractInitializer<T, K> {
                     //add a rest api service passing all registered Rest Apis in order to find the right one
                     Class<? extends RestApi> genericRestApi = frameworkRestControllerAnnotation.referredRestApi();
                     Class<? extends RestApi> concreteRestApi = (Class<? extends RestApi>) findConcreteRestApi(getAnnotatedClasses(FrameworkRestApi.class), genericRestApi);
+                    log.debug("REST Controller Found, Rest API: {}, Implementation: {}", genericRestApi.getName(), concreteRestApi.getName());
                     restApiRegistry.addRestApiService(concreteRestApi, (Class<? extends RestApi>) restApiService);
                 }
             }
@@ -142,7 +147,7 @@ public abstract class AbstractInitializer<T, K> {
                 return;
             }
         });
-        if(foundConcreteRestApiClass.get() == null){
+        if (foundConcreteRestApiClass.get() == null) {
             //if there's no specialization , let's return the cross framework api with is supposed to expose jaxrs annotations
             return crossFrameworkRestApi;
         }
@@ -158,7 +163,9 @@ public abstract class AbstractInitializer<T, K> {
      * @return Iterable of annotated classes
      */
     protected Iterable<Class<?>> getAnnotatedClasses(Class<? extends Annotation> annotation) {
-        return ClassIndex.getAnnotated(annotation, this.getCurrentClassLoader());
+        ClassLoader classLoader = getCurrentClassLoader();
+        log.debug("Loading annotation {} from class Loader {}", annotation.getName(), classLoader);
+        return ClassIndex.getAnnotated(annotation, classLoader);
     }
 
     /**
