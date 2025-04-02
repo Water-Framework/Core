@@ -269,4 +269,3 @@ The Water Core project applies several architectural patterns and design princip
 ## Attribution
 
 This documentation was generated automatically by ACSoftware AI.
-```
