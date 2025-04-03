@@ -53,4 +53,25 @@ public interface BaseEntity extends Resource {
      */
     void setEntityVersion(Integer entityVersion);
 
+    /**
+     * Get the content of the extension entity from the container entity
+     *
+     * @return
+     */
+    default EntityExtension getEntityExtension() {
+        if (isExpandableEntity()) {
+            return ((ExpandableEntity) this).getExtension();
+        }
+        return null;
+    }
+
+    /**
+     * Checks wheter the entity is expandable
+     *
+     * @return
+     */
+    default boolean isExpandableEntity() {
+        return ExpandableEntity.class.isAssignableFrom(this.getClass());
+    }
+
 }

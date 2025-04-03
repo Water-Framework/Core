@@ -21,6 +21,7 @@ import it.water.core.api.registry.ComponentRegistration;
 import it.water.core.api.registry.ComponentRegistry;
 import it.water.core.api.registry.filter.ComponentFilter;
 import it.water.core.api.registry.filter.ComponentFilterBuilder;
+import it.water.core.api.repository.BaseRepository;
 import it.water.core.api.service.BaseEntitySystemApi;
 import it.water.core.api.service.Service;
 import it.water.core.model.exceptions.WaterRuntimeException;
@@ -38,11 +39,15 @@ public class TestComponentRegistry extends AbstractComponentRegistry implements 
     private Map<Class<?>, List<ComponentRegistration<?, TestComponentRegistration<?>>>> registrations;
 
     private Map<String, BaseEntitySystemApi<?>> baseEntitySystemApis;
+    private Map<String, BaseRepository<?>> baseRepositories;
     private Map<String, Integer> baseEntitySystemApiPriority;
+    private Map<String, Integer> baseRepositoriesPriority;
 
     public TestComponentRegistry() {
         this.registrations = new HashMap<>();
         this.baseEntitySystemApis = new HashMap<>();
+        this.baseRepositories = new HashMap<>();
+        this.baseRepositoriesPriority = new HashMap<>();
     }
 
     @Override
@@ -82,18 +87,30 @@ public class TestComponentRegistry extends AbstractComponentRegistry implements 
             //registration
             ComponentRegistration<T, K> registration = doRegistration(componentClass, toRegister, configuration);
 
-            if(BaseEntitySystemApi.class.isAssignableFrom(component.getClass())){
+            if (BaseEntitySystemApi.class.isAssignableFrom(component.getClass())) {
                 BaseEntitySystemApi<?> entitySystemApi = (BaseEntitySystemApi) component;
                 String entityType = entitySystemApi.getEntityType().getName();
-                baseEntitySystemApis.computeIfAbsent(entityType,key -> entitySystemApi);
-                baseEntitySystemApiPriority.computeIfAbsent(entityType,key -> configuration.getPriority());
+                baseEntitySystemApis.computeIfAbsent(entityType, key -> (BaseEntitySystemApi<?>) toRegister);
+                baseEntitySystemApiPriority.computeIfAbsent(entityType, key -> configuration.getPriority());
                 long currentPriority = baseEntitySystemApiPriority.get(entityType);
                 //updating system apis with the one with highest priority
-                if(configuration.getPriority() > currentPriority){
-                    baseEntitySystemApis.put(entityType,entitySystemApi);
-                    baseEntitySystemApiPriority.put(entityType,configuration.getPriority());
+                if (configuration.getPriority() > currentPriority) {
+                    baseEntitySystemApis.put(entityType, entitySystemApi);
+                    baseEntitySystemApiPriority.put(entityType, configuration.getPriority());
                 }
+            }
 
+            if (BaseRepository.class.isAssignableFrom(component.getClass())) {
+                BaseRepository<?> baseRepository = (BaseRepository<?>) component;
+                String entityType = baseRepository.getEntityType().getName();
+                baseRepositories.computeIfAbsent(entityType, key -> (BaseRepository<?>) toRegister);
+                baseRepositoriesPriority.computeIfAbsent(entityType, key -> configuration.getPriority());
+                long currentPriority = baseRepositoriesPriority.get(entityType);
+                //updating system apis with the one with highest priority
+                if (configuration.getPriority() > currentPriority) {
+                    baseRepositories.put(entityType, baseRepository);
+                    baseRepositoriesPriority.put(entityType, configuration.getPriority());
+                }
             }
             //if it is water service we set the registration inside the proxy itself
             if (proxy != null) {
@@ -177,14 +194,19 @@ public class TestComponentRegistry extends AbstractComponentRegistry implements 
 
     @Override
     public <T extends BaseEntitySystemApi> T findEntitySystemApi(String entityClassName) {
-        return (T)baseEntitySystemApis.get(entityClassName);
+        return (T) baseEntitySystemApis.get(entityClassName);
+    }
+
+    @Override
+    public <T extends BaseRepository> T findEntityRepository(String entityClassName) {
+        return (T) baseRepositories.get(entityClassName);
     }
 
     private <T> List<T> filterComponents(Class<T> componentClass, ComponentFilter filter) {
         //Ordering found components by priority, the first one is the one with the highest priority
-        TreeMap<Integer,List<T>> foundComponents = new TreeMap<>();
+        TreeMap<Integer, List<T>> foundComponents = new TreeMap<>();
         this.registrations.get(componentClass).forEach(registration -> {
-            foundComponents.computeIfAbsent(registration.getConfiguration().getPriority(),key -> new ArrayList<>());
+            foundComponents.computeIfAbsent(registration.getConfiguration().getPriority(), key -> new ArrayList<>());
             if (filter == null || filter.matches(registration.getConfiguration().getConfiguration()))
                 foundComponents.get(registration.getConfiguration().getPriority()).add((T) registration.getComponent());
         });

@@ -17,8 +17,10 @@
 
 package it.water.core.api.registry;
 
+import it.water.core.api.model.BaseEntity;
 import it.water.core.api.registry.filter.ComponentFilter;
 import it.water.core.api.registry.filter.ComponentFilterBuilder;
+import it.water.core.api.repository.BaseRepository;
 import it.water.core.api.service.BaseEntitySystemApi;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -95,6 +97,25 @@ public interface ComponentRegistry {
      * @param <T>
      */
     <T extends BaseEntitySystemApi> T findEntitySystemApi(String entityClassName);
+
+    /**
+     * Returns the entity repository object associated with a specific entity class.
+     * Useful in context where you want to manage an entity starting from the class name in a generic way.
+     * @param entityClassName
+     * @return
+     * @param <T>
+     */
+    <T extends BaseRepository> T findEntityRepository(String entityClassName);
+
+    /**
+     * Returns the system api associated with the extension entity of a specific type.
+     * For example User has an extension UserDetails. Invoking findEntityExtensionRepository(User.class)
+     * the component registry will return the UserRepository.
+     * @param type
+     * @return
+     * @param <T>
+     */
+    <T extends BaseEntity> BaseRepository<T> findEntityExtensionRepository(Class<T> type);
 
     /**
      * Method used to invoke lifecycle methods like @OnActivate or @OnDeactivate

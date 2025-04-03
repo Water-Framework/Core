@@ -16,7 +16,36 @@
 
 package it.water.core.registry;
 
+import it.water.core.api.model.BaseEntity;
 import it.water.core.api.registry.ComponentRegistry;
+import it.water.core.api.registry.filter.ComponentFilter;
+import it.water.core.api.repository.BaseRepository;
+import it.water.core.api.service.EntityExtensionService;
+import it.water.core.registry.model.exception.NoComponentRegistryFoundException;
 
+/**
+ * @Author Aristide Cittadino
+ * Abstract layer of all component registries
+ */
 public abstract class AbstractComponentRegistry implements ComponentRegistry {
+
+    /**
+     * Finds the system service related to the extension entity
+     *
+     * @return
+     */
+    public <T extends BaseEntity> BaseRepository<T> findEntityExtensionRepository(Class<T> type) {
+        try {
+            ComponentFilter filter = this.getComponentFilterBuilder().createFilter(EntityExtensionService.RELATED_ENTITY_PROPERTY, type.getName());
+            EntityExtensionService entityExtensionService = this.findComponent(EntityExtensionService.class, filter);
+            if (entityExtensionService != null) {
+                log.debug("Found entity extension :{} for entity type: {} ", entityExtensionService.type(), entityExtensionService.relatedType().getName());
+                //find the system api of the extension in order to propagate changes
+                return this.findEntityRepository(entityExtensionService.type().getName());
+            }
+        } catch (NoComponentRegistryFoundException ex) {
+            log.debug("No extension point found fot entity {}", type.getName(), ex);
+        }
+        return null;
+    }
 }

@@ -80,6 +80,9 @@ class TestingUtilsTest implements Service {
     public void initializeTestFramework() {
         initializer = TestRuntimeInitializer.getInstance();
         this.userOk = userManager.addUser("usernameOk", "username", "username", "email@mail.com", "pwd", "salt", false);
+        Assertions.assertEquals("usernameOk", userOk.getScreenName());
+        Assertions.assertEquals("username", userOk.getScreenNameFieldName());
+        Assertions.assertTrue(userOk.isActive());
         Assertions.assertEquals("usernameOk", userOk.getUsername());
         Assertions.assertEquals("username", userOk.getName());
         Assertions.assertEquals("username", userOk.getLastname());
@@ -89,6 +92,10 @@ class TestingUtilsTest implements Service {
     @Test
     void testApplicationProertiesLoader() {
         ApplicationProperties applicationProperties = initializer.getComponentRegistry().findComponent(ApplicationProperties.class, null);
+        //example of property reading from environment
+        Assertions.assertNotNull(applicationProperties.resolvePropertyValue("${env:WATER_LAYER:-microservices}"));
+        Assertions.assertNull(applicationProperties.resolvePropertyValue(null));
+        Assertions.assertNotNull(applicationProperties.resolvePropertyValue("customValue"));
         Assertions.assertNotNull(applicationProperties.getProperty("rs.security.signature.algorithm"));
         Assertions.assertTrue(applicationProperties.containsKey("rs.security.signature.algorithm"));
         File customPropFile = new File("src/test/resources/custom.properties");
@@ -136,7 +143,7 @@ class TestingUtilsTest implements Service {
     @Test
     void testModels() {
         Role testRole = new TestRole(ROLE);
-        User user = new TestHUser(1000, "name", "lastname", "email", "username", "pwd", "salt", Arrays.asList(testRole), false,true );
+        User user = new TestHUser(1000, "name", "lastname", "email", "username", "pwd", "salt", Arrays.asList(testRole), false, true);
         roleManager.addRole(user.getId(), testRole);
         Assertions.assertTrue(roleManager.hasRole(user.getId(), ROLE));
     }
@@ -144,8 +151,13 @@ class TestingUtilsTest implements Service {
     @Test
     void testRegistry() {
         final ComponentRegistry registry = initializer.getComponentRegistry();
+        Assertions.assertNull(registry.findEntityExtensionRepository(FakeEntity.class));
         Assertions.assertThrows(RuntimeException.class, () -> registry.registerComponent(TestServiceApi.class, null, null));
         Assertions.assertNotNull(initializer.getComponentRegistry().getComponentFilterBuilder());
+        TestSystemApi testSystemApi = registry.findComponent(TestSystemApi.class, null);
+        Assertions.assertNotNull(registry.findEntityRepository(FakeEntity.class.getName()));
+        Assertions.assertNotNull(registry.findEntitySystemApi(FakeEntity.class.getName()));
+        Assertions.assertDoesNotThrow(() -> registry.unregisterComponent(TestSystemApi.class, testSystemApi));
     }
 
     @Test
@@ -158,7 +170,7 @@ class TestingUtilsTest implements Service {
     @Test
     void testSecurity() {
         Role testRole = new TestRole(ROLE);
-        User user = new TestHUser(1001, "name", "lastname", "email", "usernameOk", "pwd", "salt", Arrays.asList(testRole), false,true);
+        User user = new TestHUser(1001, "name", "lastname", "email", "usernameOk", "pwd", "salt", Arrays.asList(testRole), false, true);
         PermissionManager permissionManager = initializer.getComponentRegistry().findComponents(PermissionManager.class, null).get(0);
         ActionsManager actionManager = initializer.getComponentRegistry().findComponent(ActionsManager.class, null);
         Role role = roleManager.createIfNotExists(ROLE);
@@ -188,7 +200,7 @@ class TestingUtilsTest implements Service {
             errors.add(new ValidationError("username", "username", "username is required"));
             throw new ValidationException(errors);
         }, "username");
-        User user = new TestHUser(1000, "name", "lastname", "email", "username", "pwd", "salt", List.of(), false,true);
+        User user = new TestHUser(1000, "name", "lastname", "email", "username", "pwd", "salt", List.of(), false, true);
         Assertions.assertDoesNotThrow(() -> TestRuntimeUtils.getAs(user, () -> user));
         Assertions.assertDoesNotThrow(() -> TestRuntimeUtils.runAs(user, () -> {
         }));
@@ -235,7 +247,7 @@ class TestingUtilsTest implements Service {
         //for coverage
         Assertions.assertFalse(userManager.equals(null));
         //for coverage
-        Assertions.assertTrue(userManager.hashCode() > 0);
+        Assertions.assertNotEquals(0, userManager.hashCode());
     }
 
     @Test
@@ -252,5 +264,12 @@ class TestingUtilsTest implements Service {
         Assertions.assertThrows(UnauthorizedException.class, () -> authenticationProvider.login("usernameOk", null));
         Assertions.assertThrows(UnauthorizedException.class, () -> authenticationProvider.login("usernameOk", ""));
         Assertions.assertThrows(UnauthorizedException.class, () -> authenticationProvider.login(null, null));
+    }
+
+    @Test
+    void testDefaultBehaviours() {
+        FakeEntity fk = new FakeEntity();
+        Assertions.assertFalse(fk.isExpandableEntity());
+        Assertions.assertNull(fk.getEntityExtension());
     }
 }

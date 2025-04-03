@@ -42,4 +42,9 @@ public class FakeRestApiRegistry implements RestApiRegistry {
     public Map<Class<? extends RestApi>, Class<?>> getRegisteredRestApis() {
         throw new UnsupportedOperationException();
     }
+
+    @Override
+    public void sendRestartApiManagerRestartRequest() {
+        //do nothing
+    }
 }

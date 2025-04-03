@@ -34,12 +34,26 @@ import it.water.core.api.service.Service;
 public interface BaseRepository<T extends BaseEntity> extends Service {
 
     /**
+     *
+     * @return
+     */
+    Class<T> getEntityType();
+
+    /**
      * Save an entity in database
      *
      * @param entity parameter that indicates a generic entity
      * @return entity saved
      */
     T persist(T entity);
+
+    /**
+     * Save an entity and executes task inside the same transaction
+     * @param entity
+     * @param executeInTransaction
+     * @return
+     */
+    T persist(T entity, Runnable executeInTransaction);
 
     /**
      * Update an existing entity in database
@@ -49,11 +63,25 @@ public interface BaseRepository<T extends BaseEntity> extends Service {
     T update(T entity);
 
     /**
+     * Update an existing entity in database and executes task inside the same transaction
+     *
+     * @param entity parameter that indicates a generic entity
+     */
+    T update(T entity,Runnable executeInTransaction);
+
+    /**
      * Remove an entity in database
      *
      * @param id parameter that indicates a entity id
      */
     void remove(long id);
+
+    /**
+     * Remove an entity in database
+     *
+     * @param id parameter that indicates a entity id
+     */
+    void remove(long id,Runnable executeInTransaction);
 
     /**
      * @param entity
