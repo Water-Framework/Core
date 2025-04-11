@@ -18,7 +18,6 @@
 package it.water.core.api.entity.owned;
 
 import it.water.core.api.model.BaseEntity;
-import it.water.core.api.model.User;
 
 
 /**
@@ -34,7 +33,7 @@ public interface OwnedResource extends BaseEntity {
     /**
      * @return User who owns the entity
      */
-    User getUserOwner();
+    Long getOwnerUserId();
 
-    void setUserOwner(User user);
+    void setOwnerUserId(Long userId);
 }

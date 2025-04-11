@@ -125,7 +125,7 @@ public class InMemoryTestPermissionManager implements TestPermissionManager {
         if (user.isAdmin())
             return true;
         if (resource instanceof OwnedResource || resource instanceof OwnedChildResource) {
-            return ((OwnedResource) resource).getUserOwner().getUsername().equals(user.getUsername());
+            return ((OwnedResource) resource).getOwnerUserId() == (user.getId());
         }
         return true;
     }
