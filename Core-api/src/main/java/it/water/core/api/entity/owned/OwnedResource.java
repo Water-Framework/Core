@@ -29,7 +29,7 @@ import it.water.core.api.model.BaseEntity;
  * This prevents maliciuous users to create entities with other user's ids.
  */
 public interface OwnedResource extends BaseEntity {
-    static final String OWNER_USER_ID_FIELD_NAME = "ownedResource";
+    static final String OWNER_USER_ID_FIELD_NAME = "ownerUserId";
     /**
      * @return User who owns the entity
      */
