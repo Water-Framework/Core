@@ -36,4 +36,12 @@ public interface OwnedResource extends BaseEntity {
     Long getOwnerUserId();
 
     void setOwnerUserId(Long userId);
+
+    /**
+     * Method returning the field name of the owner user id
+     * @return
+     */
+    static String getOwnerUserIdFieldName(){
+        return "ownerUserId";
+    }
 }
