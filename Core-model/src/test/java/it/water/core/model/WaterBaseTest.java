@@ -15,6 +15,7 @@
  */
 package it.water.core.model;
 
+import it.water.core.api.entity.owned.OwnedResource;
 import it.water.core.api.model.ErrorMessage;
 import it.water.core.model.exceptions.ValidationException;
 import it.water.core.model.exceptions.WaterException;
@@ -46,6 +47,11 @@ class WaterBaseTest {
         TestResource resource = new TestResource("field1");
         Assertions.assertNotNull(resource.getField1());
         Assertions.assertEquals(resource.getClass().getName(), resource.getResourceName());
+    }
+
+    @Test
+    void testOwnedResource() {
+        Assertions.assertNotNull(OwnedResource.getOwnerUserIdFieldName());
     }
 
     @Test

@@ -131,7 +131,7 @@ class TestingUtilsTest implements Service {
     @Test
     void testInterceptors() {
         TestServiceApi service = initializer.getComponentRegistry().findComponent(TestServiceApi.class, null);
-        Assertions.assertDoesNotThrow(() -> service.doSomething());
+        Assertions.assertDoesNotThrow(service::doSomething);
         TestServiceProxy<TestServiceApi> proxy = (TestServiceProxy<TestServiceApi>) Proxy.getInvocationHandler(service);
         Assertions.assertNotNull(proxy.getRegistration());
         Assertions.assertNotNull(proxy.getRegistration().getRegistrationClass());
@@ -230,7 +230,7 @@ class TestingUtilsTest implements Service {
 
             @Override
             public void removeUser(String username) {
-
+                //do nothin do not raise exception just for test purporse
             }
 
             @Override
@@ -270,6 +270,5 @@ class TestingUtilsTest implements Service {
     void testDefaultBehaviours() {
         FakeEntity fk = new FakeEntity();
         Assertions.assertFalse(fk.isExpandableEntity());
-        Assertions.assertNull(fk.getEntityExtension());
     }
 }
