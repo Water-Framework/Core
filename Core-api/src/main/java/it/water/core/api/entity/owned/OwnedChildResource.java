@@ -25,6 +25,6 @@ import it.water.core.api.model.BaseEntity;
  * This interface represent water resource which is a child of a owned resource.
  * It is used basically to let the system know ho to retrieve the parent information from the inner children.
  */
-public interface OwnedChildResource {
+public interface OwnedChildResource extends OwnedResource {
     BaseEntity getParent();
 }
