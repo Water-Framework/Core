@@ -50,6 +50,7 @@ import javax.security.auth.x500.X500PrivateCredential;
 import java.io.FileInputStream;
 import java.io.StringWriter;
 import java.math.BigInteger;
+import java.net.URL;
 import java.nio.charset.StandardCharsets;
 import java.security.*;
 import java.security.cert.Certificate;
@@ -94,7 +95,15 @@ public class WaterEncryprionUtilImpl implements EncryptionUtil {
      */
 
     public String getServerKeystoreFilePath() {
-        return props.getProperty("water.keystore.file").toString();
+        String filePath = props.getProperty("water.keystore.file").toString();
+        if (filePath == null || filePath.isEmpty()) return "";
+        if (filePath.toLowerCase().startsWith("classpath:")) {
+            filePath = filePath.substring("classpath:".length());
+            URL fileUrl = Thread.currentThread().getContextClassLoader().getResource(filePath);
+            if (fileUrl == null) return "";
+            return fileUrl.getPath();
+        }
+        return filePath;
     }
 
 
