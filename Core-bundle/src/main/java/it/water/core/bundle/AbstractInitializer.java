@@ -20,6 +20,8 @@ import it.water.core.api.action.ActionsManager;
 import it.water.core.api.model.Resource;
 import it.water.core.api.registry.ComponentRegistration;
 import it.water.core.api.registry.ComponentRegistry;
+import it.water.core.api.service.cluster.ClusterCoordinatorClient;
+import it.water.core.api.service.cluster.ClusterNodeOptions;
 import it.water.core.api.service.rest.FrameworkRestApi;
 import it.water.core.api.service.rest.FrameworkRestController;
 import it.water.core.api.service.rest.RestApi;
@@ -137,6 +139,34 @@ public abstract class AbstractInitializer<T, K> {
                 }
             }
         });
+    }
+
+    /**
+     * If the current node is setup to run inside a cluster, it tries to register to it.
+     */
+    protected void setupClusterMode() {
+        try {
+            ClusterCoordinatorClient clusterCoordinatorClient = getComponentRegistry().findComponent(ClusterCoordinatorClient.class, null);
+            ClusterNodeOptions clusterNodeOptions = getComponentRegistry().findComponent(ClusterNodeOptions.class, null);
+            if (clusterNodeOptions.clusterModeEnabled())
+                clusterCoordinatorClient.registerToCluster();
+        } catch (NoComponentRegistryFoundException e) {
+            log.warn("No ClusterCoordinatorClient found, skipping Cluster configuration...");
+        }
+    }
+
+    /**
+     * If the current node is setup to run inside a cluster, it tries to shutdown cluster registration.
+     */
+    protected void shutDownClusterMode() {
+        try {
+            ClusterCoordinatorClient clusterCoordinatorClient = getComponentRegistry().findComponent(ClusterCoordinatorClient.class, null);
+            ClusterNodeOptions clusterNodeOptions = getComponentRegistry().findComponent(ClusterNodeOptions.class, null);
+            if (clusterNodeOptions.clusterModeEnabled())
+                clusterCoordinatorClient.unregisterToCluster();
+        } catch (NoComponentRegistryFoundException e) {
+            log.warn("No ClusterCoordinatorClient found, skipping Cluster shutdown...");
+        }
     }
 
     private Class<?> findConcreteRestApi(Iterable<Class<?>> iterableFrameworkRestApis, Class<? extends RestApi> crossFrameworkRestApi) {

@@ -22,9 +22,9 @@ import it.water.core.api.service.Service;
  * @Author Aristide Cittadino
  */
 public interface ServiceDiscoveryRegistry extends Service {
-    void registerService(ServiceInfo registration);
+    void registerService(DiscoverableServiceInfo registration);
 
     void unregisterService(String id);
 
-    ServiceInfo getServiceInfo(String id);
+    DiscoverableServiceInfo getServiceInfo(String id);
 }

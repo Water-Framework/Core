@@ -71,6 +71,8 @@ public class TestRuntimeInitializer extends RuntimeInitializer<Object, TestCompo
         //running onActivate Methods
         this.activateComponents();
         this.initializeResourcePermissionsAndActions();
+        //setup cluster mode
+        this.setupClusterMode();
         this.initializeRestApis();
     }
 

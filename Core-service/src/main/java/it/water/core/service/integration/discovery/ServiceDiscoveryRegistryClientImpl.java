@@ -16,7 +16,7 @@
 
 package it.water.core.service.integration.discovery;
 
-import it.water.core.api.service.integration.discovery.ServiceInfo;
+import it.water.core.api.service.integration.discovery.DiscoverableServiceInfo;
 import lombok.Data;
 
 @Data
@@ -25,7 +25,7 @@ public class ServiceDiscoveryRegistryClientImpl implements it.water.core.api.ser
     private String port;
 
     @Override
-    public void registerService(ServiceInfo registration) {
+    public void registerService(DiscoverableServiceInfo registration) {
         //todo
     }
 
@@ -35,7 +35,7 @@ public class ServiceDiscoveryRegistryClientImpl implements it.water.core.api.ser
     }
 
     @Override
-    public ServiceInfo getServiceInfo(String id) {
+    public DiscoverableServiceInfo getServiceInfo(String id) {
         //todo
         return null;
     }

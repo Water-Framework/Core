@@ -17,7 +17,7 @@
 package it.water.core.service.integration.discovery;
 
 import it.water.core.api.service.integration.discovery.ServiceDiscoveryServerProperties;
-import it.water.core.api.service.integration.discovery.ServiceInfo;
+import it.water.core.api.service.integration.discovery.DiscoverableServiceInfo;
 import it.water.core.interceptors.annotations.FrameworkComponent;
 
 import java.util.HashMap;
@@ -29,11 +29,11 @@ import java.util.Map;
  */
 @FrameworkComponent(priority = 0, properties = {ServiceDiscoveryServerProperties.SERVICE_DISCOVERY_SERVER_IMPLEMENTATION_PROP + "=" + ServiceDiscoveryServerProperties.SERVICE_DISCOVERY_IN_MEMORY_SERVER_IMPLEMENTATION})
 public class ServiceDiscoveryRegistryInMemoryServer implements it.water.core.api.service.integration.discovery.ServiceDiscoveryRegistryServer {
-    Map<String, ServiceInfo> serviceInfoMap = new HashMap<>();
+    Map<String, DiscoverableServiceInfo> serviceInfoMap = new HashMap<>();
 
     @Override
-    public void registerService(ServiceInfo registration) {
-        serviceInfoMap.put(registration.getId(), registration);
+    public void registerService(DiscoverableServiceInfo registration) {
+        serviceInfoMap.put(registration.getServiceId(), registration);
     }
 
     @Override
@@ -42,7 +42,7 @@ public class ServiceDiscoveryRegistryInMemoryServer implements it.water.core.api
     }
 
     @Override
-    public ServiceInfo getServiceInfo(String id) {
+    public DiscoverableServiceInfo getServiceInfo(String id) {
         return serviceInfoMap.get(id);
     }
 }

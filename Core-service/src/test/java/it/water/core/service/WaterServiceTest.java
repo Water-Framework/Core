@@ -17,7 +17,7 @@ package it.water.core.service;
 
 import it.water.core.api.bundle.ApplicationProperties;
 import it.water.core.api.service.Service;
-import it.water.core.api.service.integration.discovery.ServiceInfo;
+import it.water.core.api.service.integration.discovery.DiscoverableServiceInfo;
 import it.water.core.api.validation.WaterValidator;
 import it.water.core.service.api.TestServiceApi;
 import it.water.core.service.api.TestSystemServiceApi;
@@ -68,7 +68,7 @@ class WaterServiceTest implements Service {
     @Test
     void serviceDiscoveryTest(){
         ServiceDiscoveryRegistryInMemoryServer server = new ServiceDiscoveryRegistryInMemoryServer();
-        ServiceInfo serviceInfo = new ServiceInfo() {
+        DiscoverableServiceInfo serviceInfo = new DiscoverableServiceInfo() {
             @Override
             public String getId() {
                 return "id";

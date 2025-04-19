@@ -18,13 +18,8 @@ package it.water.core.api.service.integration.discovery;
 
 /**
  * @Author Aristide Cittadino
+ * Marker interface that makes a service discoverable, so it is registered to the central discovery server.
  */
-public interface ServiceInfo {
-    String getId();
-    String getProtocol();
-    String getIp();
-    String getHost();
-    String getPort();
-    String getContextRoot();
-    String getRelativePath();
+public interface DiscoverableService {
+    void registerToServiceDiscoveryRegistry(DiscoverableServiceInfo discoverableServiceInfo);
 }

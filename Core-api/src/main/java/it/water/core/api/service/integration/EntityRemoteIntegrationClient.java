@@ -16,11 +16,11 @@
 
 package it.water.core.api.service.integration;
 
-import it.water.core.api.service.integration.discovery.ServiceInfo;
+import it.water.core.api.service.integration.discovery.DiscoverableServiceInfo;
 
 /**
  * @Author Aristide Cittadino
  */
 public interface EntityRemoteIntegrationClient extends EntityIntegrationClient {
-    void setup(ServiceInfo serviceInfo);
+    void setup(DiscoverableServiceInfo serviceInfo);
 }
