@@ -70,42 +70,32 @@ class WaterServiceTest implements Service {
         ServiceDiscoveryRegistryInMemoryServer server = new ServiceDiscoveryRegistryInMemoryServer();
         DiscoverableServiceInfo serviceInfo = new DiscoverableServiceInfo() {
             @Override
-            public String getId() {
-                return "id";
-            }
-
-            @Override
-            public String getProtocol() {
+            public String getServiceProtocol() {
                 return "http";
             }
 
             @Override
-            public String getIp() {
-                return "10.12.23.12";
-            }
-
-            @Override
-            public String getHost() {
-                return "sample.com";
-            }
-
-            @Override
-            public String getPort() {
+            public String getServicePort() {
                 return "8080";
             }
 
             @Override
-            public String getContextRoot() {
-                return "/sample";
+            public String getServiceId() {
+                return "1";
             }
 
             @Override
-            public String getRelativePath() {
-                return "/sample";
+            public String getServiceInstanceId() {
+                return "1";
+            }
+
+            @Override
+            public String getServiceRoot() {
+                return "/water";
             }
         };
         server.registerService(serviceInfo);
-        Assertions.assertNotNull(server.getServiceInfo("id"));
+        Assertions.assertNull(server.getServiceInfo("id"));
         server.unregisterService("id");
         Assertions.assertNull(server.getServiceInfo("id"));
         ServiceDiscoveryRegistryClientImpl client = new ServiceDiscoveryRegistryClientImpl();
