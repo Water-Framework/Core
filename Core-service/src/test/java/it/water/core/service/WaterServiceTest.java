@@ -17,6 +17,7 @@ package it.water.core.service;
 
 import it.water.core.api.bundle.ApplicationProperties;
 import it.water.core.api.service.Service;
+import it.water.core.api.service.cluster.ClusterNodeOptions;
 import it.water.core.api.service.integration.discovery.DiscoverableServiceInfo;
 import it.water.core.api.validation.WaterValidator;
 import it.water.core.service.api.TestServiceApi;
@@ -104,6 +105,17 @@ class WaterServiceTest implements Service {
         Assertions.assertDoesNotThrow(() -> client.unregisterService("id"));
         Assertions.assertDoesNotThrow(() -> client.setup("rmeote","port"));
 
+    }
+
+    @Test
+    void testClusterNodeOptions(){
+        ClusterNodeOptions clusterNodeOptions = initializer.getComponentRegistry().findComponent(ClusterNodeOptions.class, null);
+        Assertions.assertFalse(clusterNodeOptions.clusterModeEnabled());
+        Assertions.assertEquals("water-node-0",clusterNodeOptions.getNodeId());
+        Assertions.assertEquals("microservices",clusterNodeOptions.getLayer());
+        Assertions.assertEquals("127.0.0.1",clusterNodeOptions.getIp());
+        Assertions.assertEquals("localhost",clusterNodeOptions.getHost());
+        Assertions.assertEquals(false,clusterNodeOptions.useIpInClusterRegistration());
     }
 
     @Test

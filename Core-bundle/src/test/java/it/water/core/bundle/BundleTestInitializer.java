@@ -61,5 +61,10 @@ public class BundleTestInitializer extends RuntimeInitializer<Object, Object> {
     public void start() {
         this.initializeFrameworkComponents();
         this.initializeRestApis();
+        this.setupClusterMode();
+    }
+
+    public void stop(){
+        this.shutDownClusterMode();
     }
 }

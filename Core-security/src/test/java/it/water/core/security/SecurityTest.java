@@ -60,6 +60,7 @@ import java.security.*;
 import java.security.spec.InvalidKeySpecException;
 import java.util.Base64;
 import java.util.HashSet;
+import java.util.Properties;
 import java.util.Set;
 
 @ExtendWith(WaterTestExtension.class)
@@ -328,6 +329,12 @@ class SecurityTest implements Service {
         byte[] encprypted = Base64.getDecoder().decode(encodedBase64);
         byte[] decrypted = waterEncryptionUtil.decodeMessageWithServerPrivateKey(encprypted, waterEncryptionUtil.getCipherRSA(null));
         Assertions.assertEquals(cipherText, new String(decrypted));
+        Properties props = new Properties();
+        props.put("water.keystore.file","classpath:certs/server.keystore");
+        waterApplicationProperties.loadProperties(props);
+        Assertions.assertTrue(waterEncryptionUtil.getServerKeystoreFilePath().contains("certs/server.keystore"));
+        props.put("water.keystore.file","src/test/resources/certs/server.keystore");
+        waterApplicationProperties.loadProperties(props);
     }
 
     /**

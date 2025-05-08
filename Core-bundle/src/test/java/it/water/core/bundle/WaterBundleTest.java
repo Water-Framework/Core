@@ -19,11 +19,13 @@ import it.water.core.api.bundle.Runtime;
 import it.water.core.api.permission.SecurityContext;
 import it.water.core.api.registry.ComponentRegistry;
 import it.water.core.api.registry.filter.ComponentFilter;
+import it.water.core.api.service.cluster.ClusterCoordinatorClient;
+import it.water.core.api.service.cluster.ClusterNodeInfo;
+import it.water.core.api.service.cluster.ClusterNodeOptions;
+import it.water.core.api.service.cluster.ClusterObserver;
 import it.water.core.api.service.rest.RestApiManager;
 import it.water.core.api.service.rest.RestApiRegistry;
-import org.junit.jupiter.api.Assertions;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.*;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.Mockito;
@@ -31,10 +33,7 @@ import org.mockito.invocation.InvocationOnMock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.mockito.stubbing.Answer;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 @ExtendWith(MockitoExtension.class)
 class BundleTest {
@@ -65,6 +64,10 @@ class BundleTest {
                     return new FakeRestApiManager();
                 if(RestApiRegistry.class.isAssignableFrom((Class)(invocation.getArguments()[0])))
                     return new FakeRestApiRegistry();
+                if(ClusterCoordinatorClient.class.isAssignableFrom((Class)(invocation.getArguments()[0])))
+                    return new FakeClusterCoordinatorClient();
+                if(ClusterNodeInfo.class.isAssignableFrom((Class)(invocation.getArguments()[0])))
+                    return new FakeClusterNodeOptions();
                 return components.get(invocation.getArguments()[0]).get(0);
             }
         });
@@ -88,6 +91,7 @@ class BundleTest {
     }
 
     @Test
+    @Order(1)
     void test001_checkRegistryAndInitializer() {
         TestComponent t = this.componentRegistry.findComponent(TestComponent.class, null);
         Assertions.assertNotNull(t);
@@ -95,6 +99,7 @@ class BundleTest {
     }
 
     @Test
+    @Order(2)
     void testRuntime(){
         WaterRuntime runtime = new WaterRuntime();
         SecurityContext sampleSecContext = new SecurityContext() {
@@ -120,5 +125,11 @@ class BundleTest {
         };
         Assertions.assertDoesNotThrow(() -> runtime.fillSecurityContext(sampleSecContext));
         Assertions.assertNotNull(runtime.getSecurityContext());
+    }
+
+    @Test
+    @Order(3)
+    void shutDownlClusterMode(){
+        Assertions.assertDoesNotThrow(() -> this.bundleTestInitializer.stop());
     }
 }

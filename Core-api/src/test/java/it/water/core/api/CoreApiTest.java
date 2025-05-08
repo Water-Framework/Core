@@ -26,6 +26,7 @@ import it.water.core.api.repository.query.operands.ParenthesisNode;
 import it.water.core.api.repository.query.operations.AbstractOperation;
 import it.water.core.api.repository.query.operations.NotEqualTo;
 import it.water.core.api.repository.query.operations.NotOperation;
+import it.water.core.api.service.cluster.ClusterEvent;
 import it.water.core.api.service.integration.discovery.ServiceDiscoveryServerProperties;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
@@ -97,6 +98,12 @@ class CoreApiTest {
         Assertions.assertNotNull(ServiceDiscoveryServerProperties.SERVICE_DISCOVERY_IN_MEMORY_SERVER_IMPLEMENTATION);
         Assertions.assertNotNull(PermissionManagerComponentProperties.PERMISSION_MANAGER_DEFAILT_IMPLEMENTATION);
         Assertions.assertNotNull(PermissionManagerComponentProperties.PERMISSION_MANAGER_DEFAILT_IMPLEMENTATION);
+        Assertions.assertNotNull(ClusterEvent.PEER_CONNECTED);
+        Assertions.assertNotNull(ClusterEvent.PEER_CUSTOM_EVENT);
+        Assertions.assertNotNull(ClusterEvent.PEER_DATA_EVENT);
+        Assertions.assertNotNull(ClusterEvent.PEER_DISCONNECTED);
+        Assertions.assertNotNull(ClusterEvent.PEER_INFO_CHANGED);
+        Assertions.assertNotNull(ClusterEvent.PEER_ERROR);
         Assertions.assertEquals(0L,new Role() {
             @Override
             public String getName() {
