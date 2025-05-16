@@ -22,6 +22,13 @@ public interface ClusterNodeOptions extends Service {
     String PROP_USE_IP = "water.core.api.service.cluster.node.useIp";
     String PROP_CLUSTER_MODE_ENABLED = "water.core.api.service.cluster.mode.enabled";
 
+    String NODE_ID_FIELD_NAME = "nodeId";
+    String LAYER_FIELD_NAME = "layer";
+    String IP_FIELD_NAME = "ip";
+    String HOST_FIELD_NAME = "host";
+    String IP_REGISTRATION_FIELD_NAME = "useIpInClusterRegistration";
+    String CLUSTER_MODE_FIELD_NAME = "clusterModeEnabled";
+
     /**
      * Activate the cluster mode
      * @return
