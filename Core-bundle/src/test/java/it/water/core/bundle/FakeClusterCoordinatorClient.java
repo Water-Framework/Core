@@ -15,10 +15,9 @@
  */
 package it.water.core.bundle;
 
-import it.water.core.api.service.Service;
+import it.water.core.api.registry.ComponentRegistry;
 import it.water.core.api.service.cluster.ClusterCoordinatorClient;
 import it.water.core.api.service.cluster.ClusterNodeInfo;
-import it.water.core.api.service.cluster.ClusterNodeOptions;
 import it.water.core.api.service.cluster.ClusterObserver;
 import it.water.core.interceptors.annotations.FrameworkComponent;
 
@@ -29,7 +28,7 @@ import java.util.List;
  * @Author Aristide Cittadino
  * Testing component registration without services attribute inside @FrameworkComponent.
  * This cause the component registry to register this class with the implemented interfaces, in
- * this case Service.
+ * this case Service
  */
 @FrameworkComponent
 public class FakeClusterCoordinatorClient implements ClusterCoordinatorClient {
@@ -50,12 +49,12 @@ public class FakeClusterCoordinatorClient implements ClusterCoordinatorClient {
     }
 
     @Override
-    public boolean peerStillExists(ClusterNodeOptions clusterNodeOptions) {
+    public boolean peerStillExists(ClusterNodeInfo clusterNodeInfo) {
         return false;
     }
 
     @Override
-    public Collection<ClusterNodeInfo> getPeerNodes(ClusterNodeOptions clusterNodeOptions) {
+    public Collection<ClusterNodeInfo> getPeerNodes() {
         return List.of();
     }
 
@@ -66,6 +65,36 @@ public class FakeClusterCoordinatorClient implements ClusterCoordinatorClient {
 
     @Override
     public void unsubscribeToClusterEvents(ClusterObserver clusterObserver) {
+        //do nothing
+    }
+
+    @Override
+    public void onActivate(ComponentRegistry componentRegistry) {
+        //do nothing
+    }
+
+    @Override
+    public void onDeactivate() {
+        //do nothing
+    }
+
+    @Override
+    public boolean isStarted() {
+        return false;
+    }
+
+    @Override
+    public void awaitConnection() throws InterruptedException {
+        //do nothing
+    }
+
+    @Override
+    public void registerForLeadership(String leadershipServiceKey) {
+        //do nothing
+    }
+
+    @Override
+    public void unregisterForLeadership(String leadershipServiceKey) {
         //do nothing
     }
 }
