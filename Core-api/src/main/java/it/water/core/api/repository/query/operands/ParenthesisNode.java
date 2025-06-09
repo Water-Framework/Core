@@ -17,7 +17,6 @@
 
 package it.water.core.api.repository.query.operands;
 
-import it.water.core.api.repository.query.Query;
 import it.water.core.api.repository.query.operations.AbstractOperation;
 
 
@@ -25,7 +24,7 @@ import it.water.core.api.repository.query.operations.AbstractOperation;
  * @Author Aristide Cittadino
  * Rule Node which maps parenthesis concept.
  */
-public class ParenthesisNode extends AbstractOperation implements Query {
+public class ParenthesisNode extends AbstractOperation {
     /**
      * return the string rappresentaion of the rule
      */

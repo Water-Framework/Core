@@ -117,6 +117,7 @@ public class DefaultActionsManager implements it.water.core.api.action.ActionsMa
     }
 
 
+    @SuppressWarnings("unchecked")
     @Override
     public Map<String, ActionList<? extends Resource>> getActions() {
         return Collections.unmodifiableMap(actionsRegistry);

@@ -96,6 +96,7 @@ public interface ComponentRegistry {
      * @return
      * @param <T>
      */
+    @SuppressWarnings("rawtypes")
     <T extends BaseEntitySystemApi> T findEntitySystemApi(String entityClassName);
 
     /**
@@ -105,6 +106,7 @@ public interface ComponentRegistry {
      * @return
      * @param <T>
      */
+    @SuppressWarnings("rawtypes")
     <T extends BaseRepository> T findEntityRepository(String entityClassName);
 
     /**

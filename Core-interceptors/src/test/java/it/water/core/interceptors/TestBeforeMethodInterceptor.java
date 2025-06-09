@@ -36,6 +36,7 @@ public class TestBeforeMethodInterceptor implements BeforeMethodInterceptor<Test
         log.info("#### METHOD INTERCEPTED! ####");
     }
 
+    @SuppressWarnings({ "unchecked", "rawtypes" })
     @Override
     public Class getAnnotation() {
         return TestMethodAnnotation.class;

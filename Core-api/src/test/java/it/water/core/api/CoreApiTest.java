@@ -25,7 +25,6 @@ import it.water.core.api.repository.query.operands.FieldValueOperand;
 import it.water.core.api.repository.query.operands.ParenthesisNode;
 import it.water.core.api.repository.query.operations.AbstractOperation;
 import it.water.core.api.repository.query.operations.NotEqualTo;
-import it.water.core.api.repository.query.operations.NotOperation;
 import it.water.core.api.service.cluster.ClusterEvent;
 import it.water.core.api.service.integration.discovery.ServiceDiscoveryServerProperties;
 import org.junit.jupiter.api.Assertions;
@@ -64,7 +63,7 @@ class CoreApiTest {
         Assertions.assertEquals("fieldName <> 'prova'", strDefinition);
         Assertions.assertThrows(UnsupportedOperationException.class, () -> fieldNameOperand.and(null));
         Assertions.assertThrows(UnsupportedOperationException.class, () -> fieldNameOperand.or(null));
-        Assertions.assertThrows(UnsupportedOperationException.class, () -> fieldNameOperand.not());
+        Assertions.assertThrows(UnsupportedOperationException.class, fieldNameOperand::not);
         FieldValueOperand fieldValueOperand = new FieldValueOperand("value");
         Assertions.assertEquals("value", fieldValueOperand.getValue());
         ParenthesisNode parenthesisNode = new ParenthesisNode();
@@ -111,6 +110,7 @@ class CoreApiTest {
             }
         }.getId());
         Assertions.assertEquals("it.water.core.api.CoreApiTest$2",new Resource() {
+            @Override
             public String getResourceName() {
                 return Resource.super.getResourceName();
             }

@@ -19,6 +19,7 @@ import it.water.core.interceptors.annotations.FrameworkComponent;
 
 @FrameworkComponent(services = {TestEntitySystemService.class})
 public class TestEntitySystemServiceImpl implements TestEntitySystemService {
+    @SuppressWarnings("unused")
     private TestProtectedEntity resource = new TestProtectedEntity();
 
     public boolean genericPermissionMethod() {
@@ -30,8 +31,7 @@ public class TestEntitySystemServiceImpl implements TestEntitySystemService {
     }
 
     public TestProtectedEntity permissionOnReturnMethod() {
-        TestProtectedEntity r = new TestProtectedEntity();
-        return r;
+        return new TestProtectedEntity();
     }
 
     public boolean allowRolesMethod() {

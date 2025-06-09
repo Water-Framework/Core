@@ -24,6 +24,7 @@ import org.junit.jupiter.api.Assertions;
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Method;
 
+@SuppressWarnings("rawtypes")
 public class FakeInterceptor extends WaterAbstractInterceptor implements Service, BeforeMethodInterceptor, AfterMethodInterceptor {
 
     private ComponentRegistry registry;
@@ -42,11 +43,13 @@ public class FakeInterceptor extends WaterAbstractInterceptor implements Service
         return super.getService();
     }
 
+    @SuppressWarnings("unchecked")
     @Override
     public void setService(Service service) {
         super.setService(service);
     }
 
+    @SuppressWarnings("unchecked")
     @Override
     public void interceptMethod(Service destination, Method m, Object[] args, Object returnResult, Annotation annotation) {
         try {
@@ -57,6 +60,7 @@ public class FakeInterceptor extends WaterAbstractInterceptor implements Service
         }
     }
 
+    @SuppressWarnings("unchecked")
     @Override
     public void interceptMethod(Service destination, Method m, Object[] args, Annotation annotation) {
         try {

@@ -27,6 +27,7 @@ import java.util.List;
 public class BundleTestInitializer extends RuntimeInitializer<Object, Object> {
 
     private ComponentRegistry registry;
+    @SuppressWarnings("unused")
     private Runtime runtime;
 
     public BundleTestInitializer(ComponentRegistry registry, Runtime runtime) {
@@ -43,11 +44,11 @@ public class BundleTestInitializer extends RuntimeInitializer<Object, Object> {
     @Override
     protected Iterable<Class<?>> getAnnotatedClasses(Class<? extends Annotation> annotation) {
         List<Class<?>> classes = new ArrayList<>();
-        super.getAnnotatedClasses(annotation).forEach(it -> classes.add(it));
-        if (annotation.getName().equals(FrameworkComponent.class.getName())) {
+        super.getAnnotatedClasses(annotation).forEach(classes::add);
+        if (annotation.isAssignableFrom(FrameworkComponent.class)) {
             classes.add(FakeFrameworkComponent.class);
             classes.add(TestComponent.class);
-        } else if (annotation.getName().equals(FrameworkRestController.class.getName())) {
+        } else if (annotation.isAssignableFrom(FrameworkRestController.class)) {
             classes.add(TestRestController.class);
         }
         return classes;
@@ -64,7 +65,7 @@ public class BundleTestInitializer extends RuntimeInitializer<Object, Object> {
         this.setupClusterMode();
     }
 
-    public void stop(){
+    public void stop() {
         this.shutDownClusterMode();
     }
 }

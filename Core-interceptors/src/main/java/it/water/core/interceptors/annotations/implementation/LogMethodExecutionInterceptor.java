@@ -69,6 +69,7 @@ public class LogMethodExecutionInterceptor extends WaterAbstractInterceptor<Serv
         }
     }
 
+    @SuppressWarnings({ "unchecked", "rawtypes" })
     @Override
     public Class getAnnotation() {
         return LogMethodExecution.class;

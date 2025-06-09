@@ -40,6 +40,7 @@ import java.util.List;
 
 @ExtendWith(MockitoExtension.class)
 class InterceptorsTest {
+    @SuppressWarnings("unused")
     private static Logger log = LoggerFactory.getLogger(InterceptorsTest.class);
     @Mock
     private ComponentRegistry registry;
@@ -121,7 +122,7 @@ class InterceptorsTest {
     }
 
     @Test
-    void componentProxyTest() throws NoSuchMethodException, NoSuchFieldException {
+    void componentProxyTest() throws NoSuchMethodException {
         Method m = fakeService.getClass().getMethod("invokeMethod");
         //invoking intercept before method
         fakeProxy.interceptMethod(fakeService, m, null, null);
@@ -132,6 +133,7 @@ class InterceptorsTest {
         Assertions.assertNotNull(fakeProxy.getService());
     }
 
+    @SuppressWarnings("unchecked")
     @Test
     void injectorFail() throws NoSuchMethodException {
         Method m = fakeService.getClass().getMethod("invokeMethod");
@@ -139,6 +141,7 @@ class InterceptorsTest {
             injector.interceptMethod(fakeService, m, null, null);
         });
 
+        @SuppressWarnings("rawtypes")
         final AfterMethodFieldInterceptor afterMethodFieldInterceptor = new AfterMethodFieldInterceptor<>() {
             @Override
             public <S extends Service> void interceptMethod(S destination, Method m, List<Field> annotatedFields, Object[] args, Annotation annotation) {

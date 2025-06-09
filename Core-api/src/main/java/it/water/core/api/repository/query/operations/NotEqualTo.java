@@ -17,14 +17,11 @@
 
 package it.water.core.api.repository.query.operations;
 
-import it.water.core.api.repository.query.Query;
-
-
 /**
  * @Author Aristide Cittadino
  * Not equal to operation
  */
-public class NotEqualTo extends BinaryValueOperation implements Query {
+public class NotEqualTo extends BinaryValueOperation {
 
     public NotEqualTo() {
         super("NotEqualTo (!=)", "<>");

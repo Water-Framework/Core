@@ -15,10 +15,20 @@
  */
 package it.water.core.testing.utils.registry;
 
+import java.lang.reflect.ParameterizedType;
+import java.lang.reflect.Proxy;
+import java.lang.reflect.Type;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import java.util.TreeMap;
+
 import it.water.core.api.interceptors.OnDeactivate;
 import it.water.core.api.registry.ComponentConfiguration;
 import it.water.core.api.registry.ComponentRegistration;
-import it.water.core.api.registry.ComponentRegistry;
 import it.water.core.api.registry.filter.ComponentFilter;
 import it.water.core.api.registry.filter.ComponentFilterBuilder;
 import it.water.core.api.repository.BaseRepository;
@@ -30,12 +40,7 @@ import it.water.core.registry.model.exception.NoComponentRegistryFoundException;
 import it.water.core.testing.utils.filter.TestComponentFilterBuilder;
 import it.water.core.testing.utils.interceptors.TestServiceProxy;
 
-import java.lang.reflect.ParameterizedType;
-import java.lang.reflect.Proxy;
-import java.lang.reflect.Type;
-import java.util.*;
-
-public class TestComponentRegistry extends AbstractComponentRegistry implements ComponentRegistry {
+public class TestComponentRegistry extends AbstractComponentRegistry {
     private Map<Class<?>, List<ComponentRegistration<?, TestComponentRegistration<?>>>> registrations;
 
     private Map<String, BaseEntitySystemApi<?>> baseEntitySystemApis;
@@ -63,6 +68,7 @@ public class TestComponentRegistry extends AbstractComponentRegistry implements 
         return (components != null && !components.isEmpty()) ? components.get(0) : null;
     }
 
+    @SuppressWarnings({ "rawtypes", "unchecked" })
     @Override
     public <T, K> ComponentRegistration<T, K> registerComponent(Class<? extends T> componentClass, T component, ComponentConfiguration configuration) {
         if (component != null) {
@@ -135,6 +141,7 @@ public class TestComponentRegistry extends AbstractComponentRegistry implements 
         }
     }
 
+    @SuppressWarnings("unchecked")
     private <T, K> ComponentRegistration<T, K> doRegistration(Class<?> componentClass, Object toRegister, ComponentConfiguration configuration) {
         this.registrations.computeIfAbsent(componentClass, k -> new ArrayList<>());
         ComponentRegistration<?, K> registration = (ComponentRegistration<T, K>) new TestComponentRegistration<>(componentClass, toRegister, configuration);
@@ -192,16 +199,19 @@ public class TestComponentRegistry extends AbstractComponentRegistry implements 
         return new TestComponentFilterBuilder();
     }
 
+    @SuppressWarnings({ "rawtypes", "unchecked" })
     @Override
     public <T extends BaseEntitySystemApi> T findEntitySystemApi(String entityClassName) {
         return (T) baseEntitySystemApis.get(entityClassName);
     }
 
+    @SuppressWarnings({ "rawtypes", "unchecked" })
     @Override
     public <T extends BaseRepository> T findEntityRepository(String entityClassName) {
         return (T) baseRepositories.get(entityClassName);
     }
 
+    @SuppressWarnings("unchecked")
     private <T> List<T> filterComponents(Class<T> componentClass, ComponentFilter filter) {
         //Ordering found components by priority, the first one is the one with the highest priority
         TreeMap<Integer, List<T>> foundComponents = new TreeMap<>();

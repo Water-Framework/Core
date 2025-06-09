@@ -16,11 +16,8 @@
 
 package it.water.core.testing.utils.junit;
 
-import it.water.core.api.registry.ComponentRegistry;
-import it.water.core.api.service.Service;
-import it.water.core.interceptors.WaterAbstractInterceptor;
-import it.water.core.model.exceptions.WaterRuntimeException;
-import it.water.core.testing.utils.bundle.TestRuntimeInitializer;
+import java.lang.reflect.Method;
+
 import org.apache.cxf.transport.servlet.CXFServlet;
 import org.eclipse.jetty.server.Server;
 import org.eclipse.jetty.server.ServerConnector;
@@ -29,12 +26,15 @@ import org.eclipse.jetty.servlet.ServletHolder;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.extension.BeforeAllCallback;
 import org.junit.jupiter.api.extension.BeforeEachCallback;
-import org.junit.jupiter.api.extension.Extension;
 import org.junit.jupiter.api.extension.ExtensionContext;
 
-import java.lang.reflect.Method;
+import it.water.core.api.registry.ComponentRegistry;
+import it.water.core.api.service.Service;
+import it.water.core.interceptors.WaterAbstractInterceptor;
+import it.water.core.model.exceptions.WaterRuntimeException;
+import it.water.core.testing.utils.bundle.TestRuntimeInitializer;
 
-public class WaterTestExtension extends WaterAbstractInterceptor<Service> implements Extension, BeforeEachCallback, BeforeAllCallback {
+public class WaterTestExtension extends WaterAbstractInterceptor<Service> implements BeforeEachCallback, BeforeAllCallback {
 
     @Override
     protected ComponentRegistry getComponentsRegistry() {

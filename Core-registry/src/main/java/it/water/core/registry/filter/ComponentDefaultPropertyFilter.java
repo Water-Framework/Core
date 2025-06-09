@@ -17,13 +17,12 @@
 
 package it.water.core.registry.filter;
 
-import it.water.core.api.registry.filter.ComponentFilter;
+import java.util.Properties;
+
 import it.water.core.api.registry.filter.ComponentPropertyFilter;
 import it.water.core.api.registry.filter.FilterImplementation;
 import lombok.Getter;
 import lombok.Setter;
-
-import java.util.Properties;
 
 /**
  * @Author Aristide Cittadino

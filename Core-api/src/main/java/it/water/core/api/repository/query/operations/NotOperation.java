@@ -17,7 +17,6 @@
 
 package it.water.core.api.repository.query.operations;
 
-import it.water.core.api.repository.query.Query;
 import it.water.core.api.repository.query.QueryFilterOperator;
 
 
@@ -25,7 +24,7 @@ import it.water.core.api.repository.query.QueryFilterOperator;
  * @Author Aristide Cittadino.
  * Not operator
  */
-public class NotOperation extends UnaryOperation implements Query, QueryFilterOperator {
+public class NotOperation extends UnaryOperation implements QueryFilterOperator {
 
     public NotOperation() {
         super("Not", "NOT", 1, false);

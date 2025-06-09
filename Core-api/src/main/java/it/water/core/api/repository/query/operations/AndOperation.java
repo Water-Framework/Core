@@ -17,14 +17,12 @@
 
 package it.water.core.api.repository.query.operations;
 
-import it.water.core.api.repository.query.Query;
-
 
 /**
  * @Author Aristide Cittadino.
  * AND logic operation
  */
-public class AndOperation extends BinaryLogicOperation implements Query {
+public class AndOperation extends BinaryLogicOperation {
 
     public AndOperation() {
         super("And", "AND", true);

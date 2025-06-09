@@ -17,9 +17,7 @@ package it.water.core.service.service;
 
 import it.water.core.api.model.Resource;
 import it.water.core.api.validation.WaterValidator;
-import it.water.core.interceptors.annotations.FrameworkComponent;
 import it.water.core.interceptors.annotations.Inject;
-import it.water.core.service.BaseSystemServiceImpl;
 import it.water.core.service.api.TestSystemServiceApi;
 import lombok.Setter;
 

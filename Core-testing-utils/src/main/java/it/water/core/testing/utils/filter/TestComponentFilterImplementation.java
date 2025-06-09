@@ -15,9 +15,8 @@
  */
 package it.water.core.testing.utils.filter;
 
-import it.water.core.api.registry.filter.FilterImplementation;
 import it.water.core.registry.filter.ComponentAbstractFilter;
 
-public class TestComponentFilterImplementation extends ComponentAbstractFilter implements FilterImplementation {
+public class TestComponentFilterImplementation extends ComponentAbstractFilter {
 
 }

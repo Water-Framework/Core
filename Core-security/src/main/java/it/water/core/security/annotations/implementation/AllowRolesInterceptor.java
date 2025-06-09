@@ -71,6 +71,7 @@ public class AllowRolesInterceptor extends AbstractPermissionInterceptor impleme
     /**
      * @return
      */
+    @SuppressWarnings({ "unchecked", "rawtypes" })
     @Override
     public Class getAnnotation() {
         return AllowRoles.class;

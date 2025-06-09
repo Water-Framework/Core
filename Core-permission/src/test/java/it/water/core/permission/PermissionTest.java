@@ -65,44 +65,38 @@ class WaterPermissionTest {
 
     @Test
     void testEntityIsProtectedWithClassName() {
-        String className = "it.water.core.permission.ProtectedEntity";
-        Assertions.assertTrue(PermissionManager.isProtectedEntity(className));
+        assertIsProtected("it.water.core.permission.ProtectedResource");
+        assertIsProtected("it.water.core.permission.ProtectedResource");
+        assertIsProtected("it.water.core.permission.NoExistsClass");
+    }
+
+    private void assertIsProtected(String className) {
+        assertTrue(PermissionManager.isProtectedEntity(className));
     }
 
     @Test
-    void testResourceIsProtectedWithClassName() {
-        String className = "it.water.core.permission.ProtectedResource";
-        Assertions.assertTrue(PermissionManager.isProtectedEntity(className));
-    }
-
-    @Test
-    void testIsNotProtectedWithNoExistingClassName() {
-        String className = "it.water.core.permission.NoExistsClass";
-        Assertions.assertTrue(PermissionManager.isProtectedEntity(className));
-    }
-
-    @Test
-    void actionFactoryShouldCreateResourceAction() throws InvocationTargetException, IllegalStateException, InstantiationException, IllegalAccessException, NoSuchMethodException {
+    void actionFactoryShouldCreateResourceAction() throws IllegalStateException, NoSuchMethodException {
         Assertions.assertNotNull(ActionFactory.createEmptyActionList(TestResource.class));
         Resource resource = new TestResource();
         assertEquals(resource.getResourceName(), resource.getClass().getName());
+        @SuppressWarnings("rawtypes")
         DefaultResourceAction resourceAction = ActionFactory.createResourceAction(TestResource.class, ActionFactory.createGenericAction(TestResource.class, CrudActions.FIND, 1));
         assertNotNull(resourceAction);
         Assertions.assertEquals(1, resourceAction.getAction().getActionId());
         Assertions.assertEquals(CrudActions.FIND, resourceAction.getAction().getActionName());
         Constructor<ActionFactory> constructor = ActionFactory.class.getDeclaredConstructor();
         constructor.setAccessible(true);
-        assertThrows(InvocationTargetException.class, () -> {
-            constructor.newInstance();
-        });
+        assertThrows(InvocationTargetException.class, constructor::newInstance);
     }
 
     @Test
     void actionListShouldWorkAsExpected() {
+        @SuppressWarnings("rawtypes")
         DefaultActionList actionList = ActionFactory.createBaseCrudActionList(TestResource.class);
         //adding one action that should maintain the order
         actionList.addAction(ActionFactory.createGenericAction(TestResource.class, ShareAction.SHARE, 16));
         Assertions.assertNotNull(actionList.toString());
+        @SuppressWarnings({"rawtypes", "unchecked"})
         List<DefaultResourceAction> resourceActions = actionList.getList();
         List<String> actionsListNames = new ArrayList<>();
         //same order as they are put inside actions factory
@@ -113,6 +107,7 @@ class WaterPermissionTest {
         actionsListNames.add(ShareAction.SHARE);
         //should be ordered
         for (int i = 0; i < resourceActions.size(); i++) {
+            @SuppressWarnings("rawtypes")
             DefaultResourceAction resourceAction = resourceActions.get(i);
             long actionId = resourceAction.getAction().getActionId();
             //assert pow of two

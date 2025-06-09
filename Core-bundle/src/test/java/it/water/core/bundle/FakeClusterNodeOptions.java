@@ -15,14 +15,9 @@
  */
 package it.water.core.bundle;
 
-import it.water.core.api.service.cluster.ClusterCoordinatorClient;
-import it.water.core.api.service.cluster.ClusterNodeInfo;
 import it.water.core.api.service.cluster.ClusterNodeOptions;
-import it.water.core.api.service.cluster.ClusterObserver;
 import it.water.core.interceptors.annotations.FrameworkComponent;
 
-import java.util.Collection;
-import java.util.List;
 
 /**
  * @Author Aristide Cittadino

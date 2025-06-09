@@ -24,7 +24,7 @@ public class TestComponentRegistration<T> implements ComponentRegistration<Objec
     private T component;
     @Getter
     private Class<?> registrationClass;
-    @Getter
+    
     private ComponentConfiguration configuration;
 
     public TestComponentRegistration(Class<?> registrationClass, T component, ComponentConfiguration configuration) {

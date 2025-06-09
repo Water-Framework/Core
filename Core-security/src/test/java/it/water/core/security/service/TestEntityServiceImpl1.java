@@ -20,6 +20,7 @@ import it.water.core.permission.annotations.AllowPermissions;
 
 @FrameworkComponent(services = {TestEntityService1.class})
 public class TestEntityServiceImpl1 implements TestEntityService1 {
+    @SuppressWarnings("unused")
     private TestProtectedEntity resource = new TestProtectedEntity();
 
     @AllowPermissions(actions = "GET", checkById = true, systemApiRef = "it.water.core.security.service.TestEntitySystemService")

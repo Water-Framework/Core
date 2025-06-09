@@ -16,7 +16,6 @@
 package it.water.core.bundle;
 
 import it.water.core.api.service.rest.RestApi;
-import it.water.core.api.service.rest.RestApiManager;
 import it.water.core.api.service.rest.RestApiRegistry;
 
 import java.util.Map;

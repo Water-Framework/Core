@@ -108,6 +108,7 @@ public class TestRuntimeInitializer extends RuntimeInitializer<Object, TestCompo
      * @param annotationClass Annotation that has to be searched
      * @return
      */
+    @SuppressWarnings({ "rawtypes", "unchecked" })
     @Override
     protected Iterable<Class<?>> getAnnotatedClasses(Class annotationClass) {
         ConfigurationBuilder builder = new ConfigurationBuilder();

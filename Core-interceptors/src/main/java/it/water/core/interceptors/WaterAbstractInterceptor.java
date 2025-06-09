@@ -77,7 +77,7 @@ public abstract class WaterAbstractInterceptor<S extends Service> implements it.
      * @param interceptorClass
      * @throws NoSuchMethodException
      */
-    protected void executeInterceptor(S service, Method method, Object[] args, Object result, Class<? extends MethodInterceptor> interceptorClass) throws NoSuchMethodException {
+    protected void executeInterceptor(S service, Method method, Object[] args, Object result, @SuppressWarnings("rawtypes") Class<? extends MethodInterceptor> interceptorClass) throws NoSuchMethodException {
         interceptAnnotationsOnFields(service, method, args, result, interceptorClass);
         interceptAnnotationsOnMethod(service, method, args, result, interceptorClass);
     }
@@ -109,7 +109,7 @@ public abstract class WaterAbstractInterceptor<S extends Service> implements it.
      * @param result
      * @param interceptorClass
      */
-    private void interceptAnnotationsOnFields(S service, Method method, Object[] args, Object result, Class<? extends MethodInterceptor> interceptorClass) {
+    private void interceptAnnotationsOnFields(S service, Method method, Object[] args, Object result, @SuppressWarnings("rawtypes") Class<? extends MethodInterceptor> interceptorClass) {
         Map<Annotation, List<Field>> annotationsMap = new HashMap<>();
         Arrays.stream(getAllDeclaredFields(service)).forEach(field -> Arrays.stream(field.getDeclaredAnnotations())
                 //ex. WaterInject annotation that are not injected at startup
@@ -135,7 +135,7 @@ public abstract class WaterAbstractInterceptor<S extends Service> implements it.
      * @param interceptorClass
      * @throws NoSuchMethodException
      */
-    private void interceptAnnotationsOnMethod(S service, Method method, Object[] args, Object result, Class<? extends MethodInterceptor> interceptorClass) throws NoSuchMethodException {
+    private void interceptAnnotationsOnMethod(S service, Method method, Object[] args, Object result, @SuppressWarnings("rawtypes") Class<? extends MethodInterceptor> interceptorClass) throws NoSuchMethodException {
         try {
             Annotation[] annotations = service.getClass().getMethod(method.getName(), method.getParameterTypes()).getDeclaredAnnotations();
             for (int i = 0; i < annotations.length; i++) {
@@ -163,7 +163,7 @@ public abstract class WaterAbstractInterceptor<S extends Service> implements it.
      * @param interceptorClass
      * @return
      */
-    private boolean interceptBasedOnAnnotationInterceptorExecutor(Annotation annotation, List<Field> annotatedFields, S service, Method method, Object[] args, Object result, Class<? extends MethodInterceptor> interceptorClass) {
+    private boolean interceptBasedOnAnnotationInterceptorExecutor(Annotation annotation, List<Field> annotatedFields, S service, Method method, Object[] args, Object result, @SuppressWarnings("rawtypes") Class<? extends MethodInterceptor> interceptorClass) {
         if (annotation.annotationType().isAnnotationPresent(InterceptorExecutor.class)) {
             InterceptorExecutor interceptorAnnotation = annotation.annotationType().getDeclaredAnnotation(InterceptorExecutor.class);
             Class<? extends MethodInterceptor<?>> executor = interceptorAnnotation.interceptor();
@@ -190,12 +190,14 @@ public abstract class WaterAbstractInterceptor<S extends Service> implements it.
      * @param interceptorClass
      * @return
      */
-    private boolean interceptBasedOnRegisterdInterceptorExecutor(Annotation annotation, List<Field> annotatedFields, S service, Method method, Object[] args, Object result, Class<? extends MethodInterceptor> interceptorClass) {
+    private boolean interceptBasedOnRegisterdInterceptorExecutor(Annotation annotation, List<Field> annotatedFields, S service, Method method, Object[] args, Object result, @SuppressWarnings("rawtypes") Class<? extends MethodInterceptor> interceptorClass) {
         if (this.getComponentsRegistry() != null) {
             //find the executor implementation based on registerd components which expose for example BeforeMethodInterceptor or AfterMethodInterceptor
             try {
+                @SuppressWarnings("rawtypes")
                 List<? extends MethodInterceptor> interceptors = this.getComponentsRegistry().findComponents(interceptorClass, null);
                 //Filter amongs all interceptors which use the same annotation
+                @SuppressWarnings("rawtypes")
                 Optional<? extends MethodInterceptor> executor = interceptors.stream().filter(interceptor -> interceptor.getAnnotation().equals(annotation.annotationType())).findFirst();
                 //if an interceptor is matched then run the interception
                 if (executor.isPresent()) {
@@ -227,17 +229,21 @@ public abstract class WaterAbstractInterceptor<S extends Service> implements it.
         if (interceptor != null) {
             //first most specific types since BeforeMethodFieldInterceptor is also BeforeMethodInterceptor
             if (BeforeMethodFieldInterceptor.class.isAssignableFrom(interceptor.getClass())) {
+                @SuppressWarnings({ "rawtypes", "unchecked" })
                 BeforeMethodFieldInterceptor<Annotation> beforeInterceptor = (BeforeMethodFieldInterceptor) interceptor;
                 beforeInterceptor.interceptMethod(service, method, annotatedFields, args, annotation);
             } else if (AfterMethodFieldInterceptor.class.isAssignableFrom(interceptor.getClass())) {
+                @SuppressWarnings({ "rawtypes", "unchecked" })
                 AfterMethodFieldInterceptor<Annotation> afterInterceptor = (AfterMethodFieldInterceptor) interceptor;
                 afterInterceptor.interceptMethod(service, method, annotatedFields, args, annotation);
             }
             //Then we compare generic types
             else if (BeforeMethodInterceptor.class.isAssignableFrom(interceptor.getClass())) {
+                @SuppressWarnings({ "rawtypes", "unchecked" })
                 BeforeMethodInterceptor<Annotation> beforeInterceptor = (BeforeMethodInterceptor) interceptor;
                 beforeInterceptor.interceptMethod(service, method, args, annotation);
             } else if (AfterMethodInterceptor.class.isAssignableFrom(interceptor.getClass())) {
+                @SuppressWarnings({ "rawtypes", "unchecked" })
                 AfterMethodInterceptor<Annotation> afterInterceptor = (AfterMethodInterceptor) interceptor;
                 afterInterceptor.interceptMethod(service, method, args, result, annotation);
             }

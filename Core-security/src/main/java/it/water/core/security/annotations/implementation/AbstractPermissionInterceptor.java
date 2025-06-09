@@ -118,6 +118,7 @@ public abstract class AbstractPermissionInterceptor implements Service {
      * @param <T>
      * @return
      */
+    @SuppressWarnings("unchecked")
     protected <T extends Resource> T findObjectTypeInParams(Class<T> type, Object[] args) {
         for (int i = 0; i < args.length; i++) {
             if (type.isAssignableFrom(args[i].getClass())) {

@@ -17,14 +17,11 @@
 
 package it.water.core.api.repository.query.operations;
 
-import it.water.core.api.repository.query.Query;
-
-
 /**
  * @Author Aristide Cittadino
  * Like operation
  */
-public class Like extends BinaryValueOperation implements Query {
+public class Like extends BinaryValueOperation {
 
     public Like() {
         super("Like (Like)", "LIKE");

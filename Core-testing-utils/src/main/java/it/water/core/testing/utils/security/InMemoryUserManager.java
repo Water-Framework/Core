@@ -32,7 +32,7 @@ import lombok.Setter;
 import java.util.*;
 
 @FrameworkComponent(priority = 0, services = {UserManager.class, TestUserManager.class, UserIntegrationClient.class, AuthenticationProvider.class})
-public class InMemoryUserManager implements UserManager, TestUserManager, UserIntegrationClient, AuthenticationProvider {
+public class InMemoryUserManager implements TestUserManager, UserIntegrationClient, AuthenticationProvider {
     private static int userCounter = 1;
     private static final String ADMIN = "admin";
     private Set<User> users = new HashSet<>();

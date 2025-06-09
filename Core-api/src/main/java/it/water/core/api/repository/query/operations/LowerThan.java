@@ -17,14 +17,11 @@
 
 package it.water.core.api.repository.query.operations;
 
-import it.water.core.api.repository.query.Query;
-
-
 /**
  * @Author Aristide Cittadino.
  * Lower than operation
  */
-public class LowerThan extends BinaryValueOperation implements Query {
+public class LowerThan extends BinaryValueOperation {
 
     public LowerThan() {
         super("LowerThan (<)", "<");

@@ -17,14 +17,11 @@
 
 package it.water.core.api.repository.query.operations;
 
-import it.water.core.api.repository.query.Query;
-
-
 /**
  * @Author Aristide Cittadino.
  * Or logic operation
  */
-public class OrOperation extends BinaryLogicOperation implements Query {
+public class OrOperation extends BinaryLogicOperation {
 
     public OrOperation() {
         super("OR", "OR", true);

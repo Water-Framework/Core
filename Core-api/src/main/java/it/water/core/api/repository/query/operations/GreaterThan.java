@@ -17,14 +17,12 @@
 
 package it.water.core.api.repository.query.operations;
 
-import it.water.core.api.repository.query.Query;
-
 
 /**
  * @Author Aristide Cittadino
  * Greater than operation
  */
-public class GreaterThan extends BinaryValueOperation implements Query {
+public class GreaterThan extends BinaryValueOperation {
 
     public GreaterThan() {
         super("GreaterThan (>)", ">");

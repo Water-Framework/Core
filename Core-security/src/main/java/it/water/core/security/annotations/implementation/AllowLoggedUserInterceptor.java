@@ -46,6 +46,7 @@ public class AllowLoggedUserInterceptor extends AbstractPermissionInterceptor im
             throw new UnauthorizedException("No security context found, please login");
     }
 
+    @SuppressWarnings({ "unchecked", "rawtypes" })
     @Override
     public Class getAnnotation() {
         return AllowLoggedUser.class;

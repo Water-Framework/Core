@@ -17,14 +17,11 @@
 
 package it.water.core.api.repository.query.operations;
 
-import it.water.core.api.repository.query.Query;
-
-
 /**
  * @Author Aristide Cittadino.
  * Equal to operation
  */
-public class EqualTo extends BinaryValueOperation implements Query {
+public class EqualTo extends BinaryValueOperation {
 
     public EqualTo() {
         super("EqualTo (=)", "=");

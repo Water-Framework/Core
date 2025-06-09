@@ -15,7 +15,6 @@
  */
 package it.water.core.service.service;
 
-import it.water.core.api.permission.SecurityContext;
 import it.water.core.api.service.BaseSystemApi;
 import it.water.core.interceptors.annotations.FrameworkComponent;
 import it.water.core.interceptors.annotations.Inject;

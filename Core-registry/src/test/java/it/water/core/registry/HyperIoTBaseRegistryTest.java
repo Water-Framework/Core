@@ -37,7 +37,7 @@ class WaterBaseRegistryTest {
     private PropertiesComponentConfiguration config;
 
     @BeforeEach
-    public void setUp() {
+    void setUp() {
         config = new PropertiesComponentConfiguration();
     }
 
@@ -62,12 +62,15 @@ class WaterBaseRegistryTest {
         Assertions.assertNotNull(ex.getCause());
     }
 
+    @SuppressWarnings("unchecked")
     @Test
     void testComponentPropertiesFactory() {
         ComponentConfigurationFactory<Object> factory = new ComponentConfigurationFactory<>();
+        @SuppressWarnings("rawtypes")
         Dictionary props = new Hashtable();
         props.put("newProp", "propValue");
         props.put("newProp1", "propValue1");
+        @SuppressWarnings({ "rawtypes" })
         ComponentConfigurationFactory conf = factory.fromGenericDictionary(props);
         Assertions.assertNotNull(conf);
         Assertions.assertTrue(conf.build().hasProperty("newProp"));
@@ -78,7 +81,7 @@ class WaterBaseRegistryTest {
     void testGetConfiguration() {
         // Verify that the returned Properties object is not the same object as the internal props
         Properties configuration = config.getConfiguration();
-        Assertions.assertNotSame(config.getConfiguration(), config.getConfiguration());
+        Assertions.assertNotSame(configuration, config.getConfiguration());
     }
 
     @Test
@@ -121,16 +124,6 @@ class WaterBaseRegistryTest {
         Assertions.assertEquals("value", configFromFile.getConfiguration().getProperty("key"));
     }
 
-    //TODO verify if this method should be added 
-    /*@Test
-    public void testConstructorWithMap() throws IOException {
-        // Verify that a Map can be used to initialize the configuration
-        Map<String, Object> map = new HashMap<>();
-        map.put("key", "value");
-        ComponentConfiguration configFromMap = new ComponentConfiguration(map);
-        Assertions.assertEquals(configFromMap.getConfiguration().getProperty("key"), "value");
-    }*/
-
     @Test
     void testCreateFromDictionary() {
         // create a dictionary with some properties
@@ -138,15 +131,15 @@ class WaterBaseRegistryTest {
         dictionary.put("foo", "bar");
         dictionary.put("baz", 123);
         // create the configuration using the factory
-        ComponentConfiguration config = ComponentConfigurationFactory
+        ComponentConfiguration tempConfig = ComponentConfigurationFactory
                 .createNewComponentPropertyFactory()
                 .fromStringDictionary(dictionary)
                 .build();
         // check that the properties are set correctly
-        Assertions.assertTrue(config.hasProperty("foo"));
-        Assertions.assertEquals("bar", config.getConfiguration().getProperty("foo"));
-        Assertions.assertTrue(config.hasProperty("baz"));
-        Assertions.assertEquals(123, config.getConfiguration().get("baz"));
+        Assertions.assertTrue(tempConfig.hasProperty("foo"));
+        Assertions.assertEquals("bar", tempConfig.getConfiguration().getProperty("foo"));
+        Assertions.assertTrue(tempConfig.hasProperty("baz"));
+        Assertions.assertEquals(123, tempConfig.getConfiguration().get("baz"));
     }
 
     @Test
@@ -156,15 +149,15 @@ class WaterBaseRegistryTest {
         dictionary.put("foo", "bar");
         dictionary.put("42", "answer");
         // create the configuration using the factory
-        ComponentConfiguration config = ComponentConfigurationFactory
+        ComponentConfiguration tempConfig = ComponentConfigurationFactory
                 .createNewComponentPropertyFactory()
                 .fromGenericDictionary(dictionary)
                 .build();
         // check that the properties are set correctly
-        Assertions.assertTrue(config.hasProperty("foo"));
-        Assertions.assertEquals("bar", config.getConfiguration().getProperty("foo"));
-        Assertions.assertTrue(config.hasProperty("42"));
-        Assertions.assertEquals("answer", config.getConfiguration().getProperty("42"));
+        Assertions.assertTrue(tempConfig.hasProperty("foo"));
+        Assertions.assertEquals("bar", tempConfig.getConfiguration().getProperty("foo"));
+        Assertions.assertTrue(tempConfig.hasProperty("42"));
+        Assertions.assertEquals("answer", tempConfig.getConfiguration().getProperty("42"));
     }
 
     @Test
@@ -178,23 +171,23 @@ class WaterBaseRegistryTest {
         dict2.put("qux", "quux");
         dict2.put("corge", 42);
         // create the configuration using the factory
-        ComponentConfiguration config = ComponentConfigurationFactory
+        ComponentConfiguration tempConfig = ComponentConfigurationFactory
                 .createNewComponentPropertyFactory()
                 .fromStringDictionary(dict1)
                 .fromGenericDictionary(dict2)
                 .withProp("grault", "garply")
                 .build();
         // check that the properties are set correctly
-        Assertions.assertTrue(config.hasProperty("foo"));
-        Assertions.assertEquals("bar", config.getConfiguration().getProperty("foo"));
-        Assertions.assertTrue(config.hasProperty("baz"));
-        Assertions.assertEquals(123, config.getConfiguration().get("baz"));
-        Assertions.assertTrue(config.hasProperty("qux"));
-        Assertions.assertEquals("quux", config.getConfiguration().getProperty("qux"));
-        Assertions.assertTrue(config.hasProperty("corge"));
-        Assertions.assertEquals(42, config.getConfiguration().get("corge"));
-        Assertions.assertTrue(config.hasProperty("grault"));
-        Assertions.assertEquals("garply", config.getConfiguration().getProperty("grault"));
+        Assertions.assertTrue(tempConfig.hasProperty("foo"));
+        Assertions.assertEquals("bar", tempConfig.getConfiguration().getProperty("foo"));
+        Assertions.assertTrue(tempConfig.hasProperty("baz"));
+        Assertions.assertEquals(123, tempConfig.getConfiguration().get("baz"));
+        Assertions.assertTrue(tempConfig.hasProperty("qux"));
+        Assertions.assertEquals("quux", tempConfig.getConfiguration().getProperty("qux"));
+        Assertions.assertTrue(tempConfig.hasProperty("corge"));
+        Assertions.assertEquals(42, tempConfig.getConfiguration().get("corge"));
+        Assertions.assertTrue(tempConfig.hasProperty("grault"));
+        Assertions.assertEquals("garply", tempConfig.getConfiguration().getProperty("grault"));
     }
 
     @Test

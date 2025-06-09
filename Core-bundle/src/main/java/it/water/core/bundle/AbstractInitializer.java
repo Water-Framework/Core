@@ -88,6 +88,7 @@ public abstract class AbstractInitializer<T, K> {
             ActionsManager manager = this.getComponentRegistry().findComponent(ActionsManager.class, null);
             try {
                 if (Resource.class.isAssignableFrom(accessControlledClass)) {
+                    @SuppressWarnings("unchecked")
                     Class<N> resourceClass = (Class<N>) accessControlledClass;
                     manager.registerActions(resourceClass);
                 }
@@ -123,6 +124,7 @@ public abstract class AbstractInitializer<T, K> {
      *                          Concrete Rest Api - it's the interface in a specific technology which extends the previous one ex. Jax RS interface with related annotations
      *                          Concrete Implementations - Class which implements the generic interface but must be exposed following the concrete. This binding is done dinamically
      */
+    @SuppressWarnings("unchecked")
     protected void setupRestApis(Iterable<Class<?>> frameworkRestApis, RestApiRegistry restApiRegistry) {
         //register to rest api manager every service
         frameworkRestApis.forEach(restApiService -> {

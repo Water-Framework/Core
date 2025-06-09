@@ -77,7 +77,7 @@ class TestingUtilsTest implements Service {
     private User userOk;
 
     @BeforeAll
-    public void initializeTestFramework() {
+    void initializeTestFramework() {
         initializer = TestRuntimeInitializer.getInstance();
         this.userOk = userManager.addUser("usernameOk", "username", "username", "email@mail.com", "pwd", "salt", false);
         Assertions.assertEquals("usernameOk", userOk.getScreenName());
@@ -128,6 +128,7 @@ class TestingUtilsTest implements Service {
         Assertions.assertEquals("(!(|(!(name=value))(nameNone=value2)))", filterOr.not().getFilter());
     }
 
+    @SuppressWarnings("unchecked")
     @Test
     void testInterceptors() {
         TestServiceApi service = initializer.getComponentRegistry().findComponent(TestServiceApi.class, null);
@@ -245,7 +246,7 @@ class TestingUtilsTest implements Service {
         };
         Assertions.assertNotEquals(userManager, fakeUserManager);
         //for coverage
-        Assertions.assertFalse(userManager.equals(null));
+        Assertions.assertNotEquals(null,userManager);
         //for coverage
         Assertions.assertNotEquals(0, userManager.hashCode());
     }

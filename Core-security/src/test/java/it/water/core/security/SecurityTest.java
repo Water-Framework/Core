@@ -20,12 +20,12 @@ import it.water.core.api.action.ActionsManager;
 import it.water.core.api.bundle.ApplicationProperties;
 import it.water.core.api.bundle.Runtime;
 import it.water.core.api.interceptors.BeforeMethodInterceptor;
+import it.water.core.api.model.Role;
 import it.water.core.api.model.User;
 import it.water.core.api.permission.PermissionUtil;
-import it.water.core.api.model.Role;
-import it.water.core.api.role.RoleManager;
 import it.water.core.api.permission.SecurityContext;
 import it.water.core.api.registry.ComponentRegistry;
+import it.water.core.api.role.RoleManager;
 import it.water.core.api.security.EncryptionUtil;
 import it.water.core.api.service.Service;
 import it.water.core.api.user.UserManager;
@@ -44,7 +44,6 @@ import it.water.core.testing.utils.bundle.TestRuntimeInitializer;
 import it.water.core.testing.utils.junit.WaterTestExtension;
 import lombok.Setter;
 import org.bouncycastle.openssl.PEMException;
-import org.bouncycastle.operator.OperatorCreationException;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
@@ -76,6 +75,7 @@ class SecurityTest implements Service {
     @Inject
     @Setter
     private ApplicationProperties applicationProperties;
+    @SuppressWarnings("rawtypes")
     @Inject
     @Setter
     private BeforeMethodInterceptor beforeMethodInterceptor;
@@ -105,8 +105,8 @@ class SecurityTest implements Service {
 
     @BeforeAll
     void beforeAll() {
-        this.userOk = userManager.addUser("usernameOk", "username", "username", "email@mail.com", "pwd","salt",true);
-        this.userKo = userManager.addUser("usernameKo", "usernameKo", "usernameKo", "email1@mail.com", "pwd","salt",false);
+        this.userOk = userManager.addUser("usernameOk", "username", "username", "email@mail.com", "pwd", "salt", true);
+        this.userKo = userManager.addUser("usernameKo", "usernameKo", "usernameKo", "email1@mail.com", "pwd", "salt", false);
         this.testRole = roleManager.getRole(TestProtectedResource.TEST_ROLE_NAME);
         Action saveAction = this.actionsManager.getActions().get(TestProtectedResource.class.getName()).getAction(CrudActions.SAVE);
         roleManager.addRole(this.userOk.getId(), testRole);
@@ -178,13 +178,13 @@ class SecurityTest implements Service {
         Assertions.assertNotNull(testService.permissionOnReturnMethod());
         initializer.impersonate(this.userKo, runtime);
         TestProtectedEntity entity = new TestProtectedEntity();
-        Assertions.assertThrows(UnauthorizedException.class, () -> testService.genericPermissionMethod());
-        Assertions.assertThrows(UnauthorizedException.class, () -> testService.genericPermissionMethodWithoutResourceName());
-        Assertions.assertThrows(UnauthorizedException.class, () -> testService.allowRolesMethod());
+        Assertions.assertThrows(UnauthorizedException.class, testService::genericPermissionMethod);
+        Assertions.assertThrows(UnauthorizedException.class, testService::genericPermissionMethodWithoutResourceName);
+        Assertions.assertThrows(UnauthorizedException.class, testService::allowRolesMethod);
         Assertions.assertThrows(UnauthorizedException.class, () -> testService.specificPermissionMethod(1));
         Assertions.assertThrows(UnauthorizedException.class, () -> testService.specificPermissionMethodWithoutIdIndex(entity));
         Assertions.assertThrows(UnauthorizedException.class, () -> testService.specificPermissionMethodWithSystemApi(1));
-        Assertions.assertThrows(UnauthorizedException.class, () -> testService.permissionOnReturnMethod());
+        Assertions.assertThrows(UnauthorizedException.class, testService::permissionOnReturnMethod);
         //testing protected resource that are not entities
         initializer.impersonate(this.userOk, runtime);
         TestResourceService testResourceService = initializer.getComponentRegistry().findComponent(TestResourceService.class, null);
@@ -269,11 +269,9 @@ class SecurityTest implements Service {
 
     /**
      * Testing encryption utils for all RSA algorithms
-     *
-     * @throws OperatorCreationException
      */
     @Test
-    void testEncryptionUtilsRSA() throws OperatorCreationException {
+    void testEncryptionUtilsRSA() {
         EncryptionUtil waterEncryptionUtil = initializer.getComponentRegistry().findComponent(EncryptionUtil.class, null);
         KeyPair keyPair = waterEncryptionUtil.generateSSLKeyPairValue(1024);
         PublicKey publicKey = keyPair.getPublic();
@@ -315,7 +313,7 @@ class SecurityTest implements Service {
      * @throws NoSuchProviderException
      */
     @Test
-    void testServerCerts() throws PEMException, NoSuchPaddingException, NoSuchAlgorithmException, NoSuchProviderException {
+    void testServerCerts() throws PEMException {
         ApplicationProperties waterApplicationProperties = initializer.getComponentRegistry().findComponent(ApplicationProperties.class, null);
         EncryptionUtil waterEncryptionUtil = initializer.getComponentRegistry().findComponent(EncryptionUtil.class, null);
         Assertions.assertNotNull(waterApplicationProperties);
@@ -330,10 +328,10 @@ class SecurityTest implements Service {
         byte[] decrypted = waterEncryptionUtil.decodeMessageWithServerPrivateKey(encprypted, waterEncryptionUtil.getCipherRSA(null));
         Assertions.assertEquals(cipherText, new String(decrypted));
         Properties props = new Properties();
-        props.put("water.keystore.file","classpath:certs/server.keystore");
+        props.put("water.keystore.file", "classpath:certs/server.keystore");
         waterApplicationProperties.loadProperties(props);
         Assertions.assertTrue(waterEncryptionUtil.getServerKeystoreFilePath().contains("certs/server.keystore"));
-        props.put("water.keystore.file","src/test/resources/certs/server.keystore");
+        props.put("water.keystore.file", "src/test/resources/certs/server.keystore");
         waterApplicationProperties.loadProperties(props);
     }
 
@@ -346,7 +344,7 @@ class SecurityTest implements Service {
      * @throws NoSuchProviderException
      */
     @Test
-    void testCertsGenerations() throws PEMException, NoSuchPaddingException, NoSuchAlgorithmException, NoSuchProviderException {
+    void testCertsGenerations() throws PEMException {
         EncryptionUtil waterEncryptionUtil = initializer.getComponentRegistry().findComponent(EncryptionUtil.class, null);
         KeyPair keyPair = waterEncryptionUtil.generateSSLKeyPairValue(1024);
         X500PrivateCredential certificate = waterEncryptionUtil.createServerClientX509Cert("subject", 100, keyPair, waterEncryptionUtil.getServerRootCert());
@@ -413,7 +411,7 @@ class SecurityTest implements Service {
      * @throws InvalidKeySpecException
      */
     @Test
-    void testAESEncprytion() throws NoSuchPaddingException, NoSuchAlgorithmException, NoSuchProviderException, InvalidAlgorithmParameterException, IllegalBlockSizeException, BadPaddingException, InvalidKeyException, InvalidKeySpecException {
+    void testAESEncprytion() throws NoSuchAlgorithmException, InvalidAlgorithmParameterException, IllegalBlockSizeException, BadPaddingException, InvalidKeyException, InvalidKeySpecException {
         EncryptionUtil waterEncryptionUtil = initializer.getComponentRegistry().findComponent(EncryptionUtil.class, null);
         Assertions.assertNotNull(waterEncryptionUtil.getCipherAES());
         byte[] password = waterEncryptionUtil.generateRandomAESPassword();

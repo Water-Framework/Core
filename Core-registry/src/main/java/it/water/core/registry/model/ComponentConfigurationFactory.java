@@ -65,6 +65,7 @@ public class ComponentConfigurationFactory<T> {
         Map<T, Object> map = new HashMap<>();
         Enumeration<?> keys = dictionary.keys();
         while (keys.hasMoreElements()) {
+            @SuppressWarnings("unchecked")
             T key = (T) keys.nextElement();
             map.put(key, dictionary.get(key));
         }

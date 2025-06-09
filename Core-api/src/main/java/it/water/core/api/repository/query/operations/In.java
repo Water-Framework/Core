@@ -17,14 +17,11 @@
 
 package it.water.core.api.repository.query.operations;
 
-import it.water.core.api.repository.query.Query;
-
-
 /**
  * @Author Aristide Cittadino
  * Like operation
  */
-public class In extends BinaryValueListOperation implements Query {
+public class In extends BinaryValueListOperation {
 
     public In() {
         super("IN (in)", "IN");

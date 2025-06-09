@@ -76,6 +76,7 @@ public class AllowPermissionInterceptor extends AbstractPermissionInterceptor im
         }
     }
 
+    @SuppressWarnings({ "rawtypes", "unchecked" })
     @Override
     public Class getAnnotation() {
         return AllowPermissions.class;
@@ -103,6 +104,7 @@ public class AllowPermissionInterceptor extends AbstractPermissionInterceptor im
      * @param systemApiRef
      * @return
      */
+    @SuppressWarnings("rawtypes")
     private BaseEntitySystemApi<?> findSystemApi(String systemApiRef) {
         try {
             return (BaseEntitySystemApi) getComponentRegistry().findComponent(Class.forName(systemApiRef), null);

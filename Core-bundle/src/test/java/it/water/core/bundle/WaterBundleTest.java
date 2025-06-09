@@ -21,8 +21,6 @@ import it.water.core.api.registry.ComponentRegistry;
 import it.water.core.api.registry.filter.ComponentFilter;
 import it.water.core.api.service.cluster.ClusterCoordinatorClient;
 import it.water.core.api.service.cluster.ClusterNodeInfo;
-import it.water.core.api.service.cluster.ClusterNodeOptions;
-import it.water.core.api.service.cluster.ClusterObserver;
 import it.water.core.api.service.rest.RestApiManager;
 import it.water.core.api.service.rest.RestApiRegistry;
 import org.junit.jupiter.api.*;
@@ -58,6 +56,7 @@ class BundleTest {
         });
 
         Mockito.lenient().when(componentRegistry.findComponent(Mockito.any(), Mockito.any())).thenAnswer(new Answer<Object>() {
+            @SuppressWarnings("rawtypes")
             @Override
             public Object answer(InvocationOnMock invocation) throws Throwable {
                 if(RestApiManager.class.isAssignableFrom((Class)(invocation.getArguments()[0])))
@@ -75,6 +74,7 @@ class BundleTest {
         Mockito.lenient().when(componentRegistry.registerComponent(Mockito.any(), Mockito.any(), Mockito.any())).thenAnswer(new Answer<Object>() {
             @Override
             public Object answer(InvocationOnMock invocation) throws Throwable {
+                @SuppressWarnings("rawtypes")
                 Class<?> componentClass = (Class) invocation.getArguments()[0];
                 Object component = invocation.getArguments()[1];
                 if (!components.containsKey(componentClass))
@@ -101,7 +101,7 @@ class BundleTest {
     @Test
     @Order(2)
     void testRuntime(){
-        WaterRuntime runtime = new WaterRuntime();
+        WaterRuntime localRuntime = new WaterRuntime();
         SecurityContext sampleSecContext = new SecurityContext() {
             @Override
             public String getLoggedUsername() {
@@ -123,8 +123,8 @@ class BundleTest {
                 return 0;
             }
         };
-        Assertions.assertDoesNotThrow(() -> runtime.fillSecurityContext(sampleSecContext));
-        Assertions.assertNotNull(runtime.getSecurityContext());
+        Assertions.assertDoesNotThrow(() -> localRuntime.fillSecurityContext(sampleSecContext));
+        Assertions.assertNotNull(localRuntime.getSecurityContext());
     }
 
     @Test

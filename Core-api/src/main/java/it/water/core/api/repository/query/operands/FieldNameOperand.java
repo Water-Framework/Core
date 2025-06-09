@@ -25,7 +25,7 @@ import it.water.core.api.repository.query.operations.*;
  * @Author Aristide Cittadino.
  * Field Rule Operand, this is a special operand which contains a field name.
  */
-public class FieldNameOperand extends AbstractOperand<String> implements Query {
+public class FieldNameOperand extends AbstractOperand<String> {
 
     /**
      * @param value

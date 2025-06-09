@@ -74,6 +74,7 @@ public class AllowPermissionOnReturnInterceptor extends AbstractPermissionInterc
         throw new UnauthorizedException();
     }
 
+    @SuppressWarnings({ "unchecked", "rawtypes" })
     @Override
     public Class getAnnotation() {
         return AllowPermissionsOnReturn.class;

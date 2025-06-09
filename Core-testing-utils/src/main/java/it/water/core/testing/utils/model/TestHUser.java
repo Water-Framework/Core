@@ -15,13 +15,12 @@
  */
 package it.water.core.testing.utils.model;
 
+import java.util.List;
+
 import it.water.core.api.model.Role;
 import it.water.core.api.model.User;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
-
-import java.util.Collection;
-import java.util.List;
 
 @AllArgsConstructor
 public class TestHUser implements User {

@@ -245,6 +245,7 @@ public abstract class ApplicationInitializer<T, K> extends AbstractInitializer<T
                         .setPrimary(isPrimary)
                         .fromStringDictionary(dictionary)
                         .build();
+                @SuppressWarnings("unchecked")
                 ComponentRegistration<T, K> registration = (ComponentRegistration<T, K>) registry.registerComponent(componentClass, service, componentConfiguration);
                 if (registration.getComponent() != null) {
                     registeredServices.add(registration);
