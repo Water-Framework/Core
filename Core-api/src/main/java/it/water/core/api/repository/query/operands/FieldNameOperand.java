@@ -21,6 +21,8 @@ package it.water.core.api.repository.query.operands;
 import it.water.core.api.repository.query.Query;
 import it.water.core.api.repository.query.operations.*;
 
+import java.util.Date;
+
 /**
  * @Author Aristide Cittadino.
  * Field Rule Operand, this is a special operand which contains a field name.
@@ -57,7 +59,19 @@ public class FieldNameOperand extends AbstractOperand<String> {
         return op;
     }
 
+    public Query greaterThan(Date value) {
+        BinaryOperation op = new GreaterThan();
+        op.defineOperands(this, new FieldValueOperand(value));
+        return op;
+    }
+
     public Query greaterOrEqualThan(Number value) {
+        BinaryOperation op = new GreaterOrEqualThan();
+        op.defineOperands(this, new FieldValueOperand(value));
+        return op;
+    }
+
+    public Query greaterOrEqualThan(Date value) {
         BinaryOperation op = new GreaterOrEqualThan();
         op.defineOperands(this, new FieldValueOperand(value));
         return op;
@@ -69,7 +83,19 @@ public class FieldNameOperand extends AbstractOperand<String> {
         return op;
     }
 
+    public Query lowerThan(Date value) {
+        BinaryOperation op = new LowerThan();
+        op.defineOperands(this, new FieldValueOperand(value));
+        return op;
+    }
+
     public Query lowerOrEqualThan(Number value) {
+        BinaryOperation op = new LowerOrEqualThan();
+        op.defineOperands(this, new FieldValueOperand(value));
+        return op;
+    }
+
+    public Query lowerOrEqualThan(Date value) {
         BinaryOperation op = new LowerOrEqualThan();
         op.defineOperands(this, new FieldValueOperand(value));
         return op;
