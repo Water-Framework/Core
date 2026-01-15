@@ -24,6 +24,6 @@ package it.water.core.api.repository.query.operations;
 public abstract class BinaryValueListOperation extends BinaryOperation {
 
     protected BinaryValueListOperation(String name, String operator) {
-        super(name, operator, -1, false);
+        super(name, operator, 2, false);
     }
 }
