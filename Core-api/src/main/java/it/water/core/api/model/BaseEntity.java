@@ -62,4 +62,33 @@ public interface BaseEntity extends Resource {
         return ExpandableEntity.class.isAssignableFrom(this.getClass());
     }
 
+    /**
+     * Used to reference categories with AssetCategoryManager
+     * @return categoryIds
+     */
+    default long[] getCategoryIds() {
+        return null;
+    }
+
+    /**
+     * @param categoryIds category Ids
+     */
+    default void setCategoryIds(long[] categoryIds) {
+        // default: no-op, override in AbstractEntity
+    }
+
+    /**
+     * Used to reference tags with AssetTagManager
+     * @return tagIds
+     */
+    default long[] getTagIds() {
+        return null;
+    }
+
+    /**
+     * @param tagIds tag Ids
+     */
+    default void setTagIds(long[] tagIds) {
+        // default: no-op, override in AbstractEntity
+    }
 }
