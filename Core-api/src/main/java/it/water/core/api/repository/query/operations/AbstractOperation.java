@@ -19,6 +19,7 @@ package it.water.core.api.repository.query.operations;
 
 import it.water.core.api.repository.query.Query;
 import it.water.core.api.repository.query.QueryFilterOperation;
+import it.water.core.api.repository.query.operands.FieldValueListOperand;
 import it.water.core.api.repository.query.operands.FieldValueOperand;
 import lombok.Getter;
 import org.slf4j.Logger;
@@ -119,18 +120,14 @@ public abstract class AbstractOperation implements QueryFilterOperation, Query {
     @Override
     public Query in(List<?> values) {
         In in = new In();
-        //wrapping input inside an array
-        Query[] inOperands = new Query[values.size() + 1];
-        inOperands[0] = this;
-        for (int i = 0; i < values.size(); i++) {
-            int j = i + 1;
-            Object value = values.get(i);
-            if (!(value instanceof FieldValueOperand))
-                inOperands[j] = new FieldValueOperand(value);
+        List<Object> listValues = new ArrayList<>();
+        for (Object value : values) {
+            if (value instanceof FieldValueOperand fvo)
+                listValues.add(fvo.getValue());
             else
-                inOperands[j] = (Query) value;
+                listValues.add(value);
         }
-        in.defineOperands(inOperands);
+        in.defineOperands(this, new FieldValueListOperand(listValues));
         return in;
     }
 
