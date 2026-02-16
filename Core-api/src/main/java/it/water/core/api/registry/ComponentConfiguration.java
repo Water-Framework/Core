@@ -27,6 +27,7 @@ import java.util.Properties;
  * Some framework may have this others not.
  */
 public interface ComponentConfiguration {
+    String COMPONENT_PRIORITY_PROPERTY = "it.water.component.priority";
     int getPriority();
 
     boolean isPrimary();
