@@ -67,7 +67,7 @@ public interface BaseEntity extends Resource {
      * @return categoryIds
      */
     default long[] getCategoryIds() {
-        return null;
+        return new long[0];
     }
 
     /**
@@ -82,7 +82,7 @@ public interface BaseEntity extends Resource {
      * @return tagIds
      */
     default long[] getTagIds() {
-        return null;
+        return new long[0];
     }
 
     /**
