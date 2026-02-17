@@ -16,14 +16,16 @@
 
 package it.water.core.api;
 
-import it.water.core.api.model.Resource;
-import it.water.core.api.model.Role;
+import it.water.core.api.bundle.ApplicationProperties;
+import it.water.core.api.model.*;
+import it.water.core.api.permission.PermissionManager;
 import it.water.core.api.permission.PermissionManagerComponentProperties;
 import it.water.core.api.repository.query.Query;
 import it.water.core.api.repository.query.operands.FieldNameOperand;
 import it.water.core.api.repository.query.operands.FieldValueListOperand;
 import it.water.core.api.repository.query.operands.FieldValueOperand;
 import it.water.core.api.repository.query.operands.ParenthesisNode;
+import it.water.core.api.registry.filter.ComponentFilter;
 import it.water.core.api.repository.query.operations.AbstractOperation;
 import it.water.core.api.repository.query.operations.In;
 import it.water.core.api.repository.query.operations.NotEqualTo;
@@ -31,8 +33,13 @@ import it.water.core.api.service.cluster.ClusterEvent;
 import it.water.core.api.service.integration.discovery.ServiceDiscoveryServerProperties;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
+import org.mockito.Mockito;
 
+import java.lang.annotation.Annotation;
+import java.lang.reflect.Method;
+import java.util.Date;
 import java.util.List;
+import java.util.Properties;
 
 class CoreApiTest {
 
@@ -69,9 +76,8 @@ class CoreApiTest {
         FieldValueOperand fieldValueOperand = new FieldValueOperand("value");
         Assertions.assertEquals("value", fieldValueOperand.getValue());
         ParenthesisNode parenthesisNode = new ParenthesisNode();
-        Assertions.assertNotNull(parenthesisNode);
         parenthesisNode.defineOperands(fieldNameOperand);
-        Assertions.assertEquals("( fieldName )",parenthesisNode.getDefinition());
+        Assertions.assertEquals("( fieldName )", parenthesisNode.getDefinition());
     }
 
     @Test
@@ -79,8 +85,6 @@ class CoreApiTest {
         FieldNameOperand fieldNameOperand = new FieldNameOperand("fieldName");
         String definition = fieldNameOperand.equalTo("'prova'").and(fieldNameOperand.equalTo("'prova1'")).getDefinition();
         Assertions.assertEquals("fieldName = 'prova' AND fieldName = 'prova1'", definition);
-        definition = fieldNameOperand.equalTo("'prova'").or(fieldNameOperand.equalTo("'prova1'")).getDefinition();
-        Assertions.assertEquals("fieldName = 'prova' OR fieldName = 'prova1'", definition);
         definition = fieldNameOperand.equalTo("'prova'").or(fieldNameOperand.equalTo("'prova1'")).getDefinition();
         Assertions.assertEquals("fieldName = 'prova' OR fieldName = 'prova1'", definition);
         definition = fieldNameOperand.equalTo("'prova'").not().getDefinition();
@@ -95,10 +99,8 @@ class CoreApiTest {
     }
 
     @Test
-    void coverageFix(){
+    void checkSystemConstantsAndModels() {
         Assertions.assertNotNull(ServiceDiscoveryServerProperties.SERVICE_DISCOVERY_IN_MEMORY_SERVER_IMPLEMENTATION);
-        Assertions.assertNotNull(ServiceDiscoveryServerProperties.SERVICE_DISCOVERY_IN_MEMORY_SERVER_IMPLEMENTATION);
-        Assertions.assertNotNull(PermissionManagerComponentProperties.PERMISSION_MANAGER_DEFAILT_IMPLEMENTATION);
         Assertions.assertNotNull(PermissionManagerComponentProperties.PERMISSION_MANAGER_DEFAILT_IMPLEMENTATION);
         Assertions.assertNotNull(ClusterEvent.PEER_CONNECTED);
         Assertions.assertNotNull(ClusterEvent.PEER_CUSTOM_EVENT);
@@ -118,5 +120,31 @@ class CoreApiTest {
                 return Resource.super.getResourceName();
             }
         }.getResourceName());
+    }
+
+    @Test
+    void checkBaseEntityAndUserDefaults() {
+        BaseEntity baseEntity = new TestEntity(1L, new Date(), new Date(), 1);
+        Assertions.assertFalse(baseEntity.isExpandableEntity());
+        Assertions.assertEquals(0, baseEntity.getCategoryIds().length);
+        Assertions.assertEquals(0, baseEntity.getTagIds().length);
+
+        User user = new TestUser(1L, "name", "lastname", "email@test.com", "demo", false, "issuer", "pwd", "salt");
+        Assertions.assertEquals("username", user.getScreenNameFieldName());
+        Assertions.assertEquals("demo", user.getScreenName());
+        Assertions.assertFalse(user.isActive());
+    }
+
+    public static class LifecycleTarget {
+        boolean invoked;
+        String text;
+        Integer number;
+
+        @it.water.core.api.interceptors.OnActivate
+        public void activate(String text, Integer number) {
+            this.invoked = true;
+            this.text = text;
+            this.number = number;
+        }
     }
 }

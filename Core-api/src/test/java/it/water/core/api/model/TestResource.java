@@ -16,25 +16,15 @@
 
 package it.water.core.api.model;
 
-/**
- * Interface representing the association between a resource (any entity) and a tag.
- * This allows generic tagging of any entity in the system.
- */
-public interface AssetTagResource extends Resource {
+public class TestResource implements Resource {
+    private final String resourceName;
 
-    /**
-     * @return the resource class name (typically entity.getClass().getName())
-     */
+    public TestResource(String resourceName) {
+        this.resourceName = resourceName;
+    }
+
     @Override
-    String getResourceName();
-
-    /**
-     * @return the resource primary key
-     */
-    long getResourceId();
-
-    /**
-     * @return the tag id associated with this resource
-     */
-    long getTagId();
+    public String getResourceName() {
+        return resourceName;
+    }
 }

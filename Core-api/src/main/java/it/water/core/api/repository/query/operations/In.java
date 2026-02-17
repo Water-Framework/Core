@@ -19,8 +19,6 @@ package it.water.core.api.repository.query.operations;
 
 import it.water.core.api.repository.query.operands.ParenthesisNode;
 
-import java.util.ArrayList;
-import java.util.List;
 
 /**
  * @Author Aristide Cittadino
@@ -40,11 +38,10 @@ public class In extends BinaryValueListOperation {
                 .append(this.operator()+" (");
 
         for (int i = 1; i < operands.size(); i++) {
-            if(!(operands.get(i) instanceof ParenthesisNode))
-                sb.append(operands.get(i).getDefinition());
+            if(operands.get(i) instanceof ParenthesisNode pNode)
+                sb.append(pNode.operands.get(0).getDefinition());
             else {
-                //jumping the render of parenthesis since we already print them inside the in definition
-                sb.append(((ParenthesisNode) operands.get(i)).operands.get(0).getDefinition());
+                sb.append(operands.get(i).getDefinition());
             }
 
             if (i < operands.size() - 1)

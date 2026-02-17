@@ -25,6 +25,7 @@ public interface AssetCategoryResource extends Resource {
     /**
      * @return the resource class name (typically entity.getClass().getName())
      */
+    @Override
     String getResourceName();
 
     /**

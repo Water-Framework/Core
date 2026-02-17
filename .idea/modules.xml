@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="ProjectModuleManager">
+    <modules>
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/Core-api/Core.Core-api.main.iml" filepath="$PROJECT_DIR$/.idea/modules/Core-api/Core.Core-api.main.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/Core-api/Core.Core-api.test.iml" filepath="$PROJECT_DIR$/.idea/modules/Core-api/Core.Core-api.test.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/Core-bundle/Core.Core-bundle.main.iml" filepath="$PROJECT_DIR$/.idea/modules/Core-bundle/Core.Core-bundle.main.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/Core-bundle/Core.Core-bundle.test.iml" filepath="$PROJECT_DIR$/.idea/modules/Core-bundle/Core.Core-bundle.test.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/Core-interceptors/Core.Core-interceptors.main.iml" filepath="$PROJECT_DIR$/.idea/modules/Core-interceptors/Core.Core-interceptors.main.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/Core-interceptors/Core.Core-interceptors.test.iml" filepath="$PROJECT_DIR$/.idea/modules/Core-interceptors/Core.Core-interceptors.test.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/Core-model/Core.Core-model.main.iml" filepath="$PROJECT_DIR$/.idea/modules/Core-model/Core.Core-model.main.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/Core-permission/Core.Core-permission.main.iml" filepath="$PROJECT_DIR$/.idea/modules/Core-permission/Core.Core-permission.main.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/Core-permission/Core.Core-permission.test.iml" filepath="$PROJECT_DIR$/.idea/modules/Core-permission/Core.Core-permission.test.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/Core-registry/Core.Core-registry.main.iml" filepath="$PROJECT_DIR$/.idea/modules/Core-registry/Core.Core-registry.main.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/Core-registry/Core.Core-registry.test.iml" filepath="$PROJECT_DIR$/.idea/modules/Core-registry/Core.Core-registry.test.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/Core-security/Core.Core-security.main.iml" filepath="$PROJECT_DIR$/.idea/modules/Core-security/Core.Core-security.main.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/Core-security/Core.Core-security.test.iml" filepath="$PROJECT_DIR$/.idea/modules/Core-security/Core.Core-security.test.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/Core-service/Core.Core-service.main.iml" filepath="$PROJECT_DIR$/.idea/modules/Core-service/Core.Core-service.main.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/Core-service/Core.Core-service.test.iml" filepath="$PROJECT_DIR$/.idea/modules/Core-service/Core.Core-service.test.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/Core-testing-utils/Core.Core-testing-utils.main.iml" filepath="$PROJECT_DIR$/.idea/modules/Core-testing-utils/Core.Core-testing-utils.main.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/Core-testing-utils/Core.Core-testing-utils.test.iml" filepath="$PROJECT_DIR$/.idea/modules/Core-testing-utils/Core.Core-testing-utils.test.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/Core-validation/Core.Core-validation.main.iml" filepath="$PROJECT_DIR$/.idea/modules/Core-validation/Core.Core-validation.main.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/Core-validation/Core.Core-validation.test.iml" filepath="$PROJECT_DIR$/.idea/modules/Core-validation/Core.Core-validation.test.iml" />
+    </modules>
+  </component>
+</project>
