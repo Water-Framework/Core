@@ -135,16 +135,22 @@ class CoreApiTest {
         Assertions.assertFalse(user.isActive());
     }
 
-    public static class LifecycleTarget {
-        boolean invoked;
-        String text;
-        Integer number;
 
-        @it.water.core.api.interceptors.OnActivate
-        public void activate(String text, Integer number) {
-            this.invoked = true;
-            this.text = text;
-            this.number = number;
-        }
+    @Test
+    void checkDateOperandsAndBaseEntitySetters() {
+        FieldNameOperand fieldNameOperand = new FieldNameOperand("createdAt");
+        Date d = new Date(0L);
+
+        Assertions.assertEquals("createdAt > " + d, fieldNameOperand.greaterThan(d).getDefinition());
+        Assertions.assertEquals("createdAt >= " + d, fieldNameOperand.greaterOrEqualThan(d).getDefinition());
+        Assertions.assertEquals("createdAt < " + d, fieldNameOperand.lowerThan(d).getDefinition());
+        Assertions.assertEquals("createdAt <= " + d, fieldNameOperand.lowerOrEqualThan(d).getDefinition());
+
+        BaseEntity baseEntity = new TestEntity(1L, new Date(), new Date(), 1);
+        baseEntity.setCategoryIds(new long[]{1L, 2L});
+        baseEntity.setTagIds(new long[]{3L, 4L});
+        Assertions.assertEquals(0, baseEntity.getCategoryIds().length);
+        Assertions.assertEquals(0, baseEntity.getTagIds().length);
     }
+
 }
