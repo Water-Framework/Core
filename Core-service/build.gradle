@@ -2,11 +2,13 @@
 dependencies {
 	//SLF4J
 	implementation group: 'org.slf4j', name: 'slf4j-api', version: project.slf4jVersion
+	implementation group: 'com.fasterxml.jackson.core', name: 'jackson-databind', version: project.jacksonVersion
 	//lombok
 	implementation group: 'org.projectlombok', name: 'lombok', version: project.lombokVersion
 	annotationProcessor 'org.projectlombok:lombok:'+project.lombokVersion
 
 	implementation 'org.atteo.classindex:classindex:'+project.atteoClassIndexVersion
+	annotationProcessor('org.atteo.classindex:classindex:' + project.atteoClassIndexVersion)
 
 	implementation project(":Core-api")
 	implementation project(":Core-model")
@@ -24,6 +26,7 @@ dependencies {
 	testImplementation 'org.junit.jupiter:junit-jupiter-api:' + project.junitJupiterVersion
 	testImplementation 'org.junit.jupiter:junit-jupiter-engine:' + project.junitJupiterVersion
 	testImplementation 'org.atteo.classindex:classindex:' + project.atteoClassIndexVersion
+	testAnnotationProcessor('org.atteo.classindex:classindex:' + project.atteoClassIndexVersion)
 	testImplementation 'jakarta.persistence:jakarta.persistence-api:'+project.jakartaPersistenceVersion
 	testImplementation 'org.hsqldb:hsqldb:2.4.1'
 }
@@ -39,4 +42,3 @@ publishing {
         	}
     }
  }
- 

@@ -15,11 +15,13 @@
  */
 package it.water.core.bundle;
 
+import it.water.core.api.bundle.ApplicationProperties;
 import it.water.core.api.interceptors.OnActivate;
 import it.water.core.api.registry.ComponentConfiguration;
 import it.water.core.api.registry.ComponentRegistration;
 import it.water.core.api.registry.ComponentRegistry;
 import it.water.core.api.service.Service;
+import it.water.core.api.service.integration.discovery.DescriptorDrivenServiceRegistrationLifecycleManager;
 import it.water.core.interceptors.annotations.FrameworkComponent;
 import it.water.core.interceptors.annotations.Inject;
 import it.water.core.interceptors.annotations.implementation.WaterComponentsInjector;
@@ -55,6 +57,10 @@ public abstract class ApplicationInitializer<T, K> extends AbstractInitializer<T
         frameworkComponents.iterator().forEachRemaining(componentClass -> {
             log.debug("Found @FrameworkComponent {}", componentClass.getName());
             FrameworkComponent frameworkComponentAnnotation = componentClass.getAnnotation(FrameworkComponent.class);
+            if (frameworkComponentAnnotation == null) {
+                log.debug("Skipping class {} because FrameworkComponent annotation is not available at runtime", componentClass.getName());
+                return;
+            }
             //if current component priority is listed in the component priority list
             //this means this component has the highest priority so it's primary
             boolean isPrimary = checkComponentIsPrimary(componentsPriorities, frameworkComponentAnnotation);
@@ -106,7 +112,27 @@ public abstract class ApplicationInitializer<T, K> extends AbstractInitializer<T
                 }
             });
         }
+        activateDescriptorDrivenServiceRegistrations();
         toInitialize.clear();
+    }
+
+    protected void activateDescriptorDrivenServiceRegistrations() {
+        try {
+            ComponentRegistry registry = getComponentRegistry();
+            DescriptorDrivenServiceRegistrationLifecycleManager manager =
+                    registry.findComponent(DescriptorDrivenServiceRegistrationLifecycleManager.class, null);
+            if (manager == null) {
+                return;
+            }
+            ApplicationProperties applicationProperties = registry.findComponent(ApplicationProperties.class, null);
+            if (applicationProperties == null) {
+                log.warn("ApplicationProperties not available, skipping descriptor-driven registration lifecycle");
+                return;
+            }
+            manager.activateDescriptorRegistrations(registry, applicationProperties, getCurrentClassLoader());
+        } catch (Exception e) {
+            log.warn("Descriptor-driven registration lifecycle skipped: {}", e.getMessage());
+        }
     }
 
     protected boolean registerMultiInterfaceComponents() {
@@ -117,6 +143,11 @@ public abstract class ApplicationInitializer<T, K> extends AbstractInitializer<T
         Map<Class<?>, Integer> componentsPriorities = new HashMap<>();
         frameworkComponents.forEach(component -> {
             FrameworkComponent frameworkComponentAnnotation = component.getAnnotation(FrameworkComponent.class);
+            if (frameworkComponentAnnotation == null) {
+                log.debug("Skipping class {} while computing component priorities because FrameworkComponent annotation is not available at runtime",
+                        component.getName());
+                return;
+            }
             int componentPriority = frameworkComponentAnnotation.priority();
             List<Class<?>> services = getDeclaredServices(frameworkComponentAnnotation, component, null);
             services.forEach(service -> {

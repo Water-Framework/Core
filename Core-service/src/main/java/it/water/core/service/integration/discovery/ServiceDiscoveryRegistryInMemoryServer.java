@@ -19,6 +19,8 @@ package it.water.core.service.integration.discovery;
 import it.water.core.api.service.integration.discovery.ServiceDiscoveryServerProperties;
 import it.water.core.api.service.integration.discovery.DiscoverableServiceInfo;
 import it.water.core.interceptors.annotations.FrameworkComponent;
+import lombok.Getter;
+import lombok.Setter;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -29,20 +31,37 @@ import java.util.Map;
  */
 @FrameworkComponent(priority = 0, properties = {ServiceDiscoveryServerProperties.SERVICE_DISCOVERY_SERVER_IMPLEMENTATION_PROP + "=" + ServiceDiscoveryServerProperties.SERVICE_DISCOVERY_IN_MEMORY_SERVER_IMPLEMENTATION})
 public class ServiceDiscoveryRegistryInMemoryServer implements it.water.core.api.service.integration.discovery.ServiceDiscoveryRegistryServer {
+    // Key = serviceName + ":" + instanceId to support multiple instances of the same service.
     Map<String, DiscoverableServiceInfo> serviceInfoMap = new HashMap<>();
+    @Getter
+    @Setter
+    private String implementation;
 
     @Override
     public void registerService(DiscoverableServiceInfo registration) {
-        serviceInfoMap.put(registration.getServiceId(), registration);
+        serviceInfoMap.put(buildKey(registration.getServiceId(), registration.getServiceInstanceId()), registration);
     }
 
     @Override
-    public void unregisterService(String id) {
-        serviceInfoMap.remove(id);
+    public void unregisterService(String serviceName, String instanceId) {
+        serviceInfoMap.remove(buildKey(serviceName, instanceId));
     }
 
     @Override
     public DiscoverableServiceInfo getServiceInfo(String id) {
-        return serviceInfoMap.get(id);
+        // Backward-friendly lookup: caller provides either a composite key or just a serviceName.
+        // First try exact match, then fall back to the first entry matching serviceId.
+        DiscoverableServiceInfo exact = serviceInfoMap.get(id);
+        if (exact != null) {
+            return exact;
+        }
+        return serviceInfoMap.values().stream()
+                .filter(info -> id != null && id.equals(info.getServiceId()))
+                .findFirst()
+                .orElse(null);
+    }
+
+    private static String buildKey(String serviceName, String instanceId) {
+        return serviceName + ":" + instanceId;
     }
 }
