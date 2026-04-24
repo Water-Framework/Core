@@ -18,10 +18,10 @@ package it.water.core.service;
 import it.water.core.api.bundle.ApplicationProperties;
 import it.water.core.api.service.Service;
 import it.water.core.api.service.cluster.ClusterNodeOptions;
-import it.water.core.api.service.integration.discovery.DiscoverableServiceInfo;
 import it.water.core.api.validation.WaterValidator;
 import it.water.core.service.api.TestServiceApi;
 import it.water.core.service.api.TestSystemServiceApi;
+import it.water.core.service.integration.discovery.DiscoverableServiceInfoImpl;
 import it.water.core.service.integration.discovery.ServiceDiscoveryRegistryClientImpl;
 import it.water.core.service.integration.discovery.ServiceDiscoveryRegistryInMemoryServer;
 import it.water.core.service.service.ConcreteBaseService;
@@ -69,41 +69,20 @@ class WaterServiceTest implements Service {
     @Test
     void serviceDiscoveryTest(){
         ServiceDiscoveryRegistryInMemoryServer server = new ServiceDiscoveryRegistryInMemoryServer();
-        DiscoverableServiceInfo serviceInfo = new DiscoverableServiceInfo() {
-            @Override
-            public String getServiceProtocol() {
-                return "http";
-            }
-
-            @Override
-            public String getServicePort() {
-                return "8080";
-            }
-
-            @Override
-            public String getServiceId() {
-                return "1";
-            }
-
-            @Override
-            public String getServiceInstanceId() {
-                return "1";
-            }
-
-            @Override
-            public String getServiceRoot() {
-                return "/water";
-            }
-        };
+        DiscoverableServiceInfoImpl serviceInfo = new DiscoverableServiceInfoImpl(
+                "http", "8080", "1", "1", "/water", "1.0.0", "localhost", null
+        );
         server.registerService(serviceInfo);
-        Assertions.assertNull(server.getServiceInfo("id"));
-        server.unregisterService("id");
-        Assertions.assertNull(server.getServiceInfo("id"));
+        Assertions.assertNotNull(server.getServiceInfo("1"));
+        server.unregisterService("1", "1");
+        Assertions.assertNull(server.getServiceInfo("1"));
         ServiceDiscoveryRegistryClientImpl client = new ServiceDiscoveryRegistryClientImpl();
+        // setup() must be called before any operation
+        Assertions.assertDoesNotThrow(() -> client.setup("http://localhost:19999/water", "8080"));
+        // registerService will fail to connect (no server running) but should not throw unchecked exceptions
         Assertions.assertDoesNotThrow(() -> client.registerService(serviceInfo));
         Assertions.assertDoesNotThrow(() -> client.getServiceInfo("id"));
-        Assertions.assertDoesNotThrow(() -> client.unregisterService("id"));
-        Assertions.assertDoesNotThrow(() -> client.setup("rmeote","port"));
+        Assertions.assertDoesNotThrow(() -> client.unregisterService("1", "1"));
 
     }
 

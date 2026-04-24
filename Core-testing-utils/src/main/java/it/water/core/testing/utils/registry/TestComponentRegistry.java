@@ -52,6 +52,7 @@ public class TestComponentRegistry extends AbstractComponentRegistry {
         this.registrations = new HashMap<>();
         this.baseEntitySystemApis = new HashMap<>();
         this.baseRepositories = new HashMap<>();
+        this.baseEntitySystemApiPriority = new HashMap<>();
         this.baseRepositoriesPriority = new HashMap<>();
     }
 

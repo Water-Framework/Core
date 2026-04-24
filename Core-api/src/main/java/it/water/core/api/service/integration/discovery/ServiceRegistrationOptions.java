@@ -1,0 +1,48 @@
+/*
+ * Copyright 2024 Aristide Cittadino
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License")
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+package it.water.core.api.service.integration.discovery;
+
+import it.water.core.api.service.Service;
+
+/**
+ * Identity of a single discoverable service: logical name, version, network
+ * coordinates (protocol/port/host/root/advertised endpoint) and, optionally,
+ * a module-specific discovery URL.
+ * <p>
+ * Infrastructure concerns that apply runtime-wide (heartbeat cadence, retry
+ * policy, HTTP timeouts, default host/discovery URL fallbacks) live in
+ * {@link ServiceDiscoveryGlobalOptions} and must NOT be duplicated here.
+ */
+public interface ServiceRegistrationOptions extends Service {
+    String getDiscoveryUrl();
+
+    String getServiceName();
+
+    String getServiceVersion();
+
+    String getInstanceId();
+
+    String getProtocol();
+
+    String getRoot();
+
+    String getAdvertisedEndpoint();
+
+    String getServicePort();
+
+    String getServiceHost();
+}

@@ -16,22 +16,12 @@
 
 package it.water.core.api.service.integration.discovery;
 
+import it.water.core.api.bundle.ApplicationProperties;
+import it.water.core.api.registry.ComponentRegistry;
 import it.water.core.api.service.Service;
 
-/**
- * @Author Aristide Cittadino
- */
-public interface ServiceDiscoveryRegistry extends Service {
-    void registerService(DiscoverableServiceInfo registration);
-
-    /**
-     * Removes a previously registered service instance identified by its
-     * logical coordinates (serviceName + instanceId). The single-argument
-     * bridge that used to accept just the instanceId has been removed: a
-     * stable deregistration needs both the logical service name and the
-     * instance identifier.
-     */
-    void unregisterService(String serviceName, String instanceId);
-
-    DiscoverableServiceInfo getServiceInfo(String id);
+public interface DescriptorDrivenServiceRegistrationLifecycleManager extends Service {
+    void activateDescriptorRegistrations(ComponentRegistry componentRegistry,
+                                        ApplicationProperties applicationProperties,
+                                        ClassLoader classLoader);
 }
