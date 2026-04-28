@@ -15,13 +15,12 @@
  */
 package it.water.core.bundle;
 
-import it.water.core.api.bundle.ApplicationProperties;
 import it.water.core.api.interceptors.OnActivate;
 import it.water.core.api.registry.ComponentConfiguration;
 import it.water.core.api.registry.ComponentRegistration;
 import it.water.core.api.registry.ComponentRegistry;
 import it.water.core.api.service.Service;
-import it.water.core.api.service.integration.discovery.DescriptorDrivenServiceRegistrationLifecycleManager;
+import it.water.core.api.service.integration.discovery.RestApiServiceRegistrationLifecycleManager;
 import it.water.core.interceptors.annotations.FrameworkComponent;
 import it.water.core.interceptors.annotations.Inject;
 import it.water.core.interceptors.annotations.implementation.WaterComponentsInjector;
@@ -112,26 +111,21 @@ public abstract class ApplicationInitializer<T, K> extends AbstractInitializer<T
                 }
             });
         }
-        activateDescriptorDrivenServiceRegistrations();
+        activateRestApiServiceRegistrations();
         toInitialize.clear();
     }
 
-    protected void activateDescriptorDrivenServiceRegistrations() {
+    protected void activateRestApiServiceRegistrations() {
         try {
             ComponentRegistry registry = getComponentRegistry();
-            DescriptorDrivenServiceRegistrationLifecycleManager manager =
-                    registry.findComponent(DescriptorDrivenServiceRegistrationLifecycleManager.class, null);
+            RestApiServiceRegistrationLifecycleManager manager =
+                    registry.findComponent(RestApiServiceRegistrationLifecycleManager.class, null);
             if (manager == null) {
                 return;
             }
-            ApplicationProperties applicationProperties = registry.findComponent(ApplicationProperties.class, null);
-            if (applicationProperties == null) {
-                log.warn("ApplicationProperties not available, skipping descriptor-driven registration lifecycle");
-                return;
-            }
-            manager.activateDescriptorRegistrations(registry, applicationProperties, getCurrentClassLoader());
+            manager.activateRestApiRegistrations(registry, getCurrentClassLoader());
         } catch (Exception e) {
-            log.warn("Descriptor-driven registration lifecycle skipped: {}", e.getMessage());
+            log.warn("REST API service registration lifecycle skipped: {}", e.getMessage());
         }
     }
 

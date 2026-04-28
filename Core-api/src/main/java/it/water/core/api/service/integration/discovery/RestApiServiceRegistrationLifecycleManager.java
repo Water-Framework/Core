@@ -16,10 +16,12 @@
 
 package it.water.core.api.service.integration.discovery;
 
+import it.water.core.api.registry.ComponentRegistry;
+import it.water.core.api.service.Service;
+
 /**
- * @Author Aristide Cittadino
- * Marker interface that makes a service discoverable, so it is registered to the central discovery server.
+ * Coordinates automatic registration of business REST APIs discovered in the current runtime classloader.
  */
-public interface DiscoverableService {
-    void registerToServiceDiscoveryRegistry(DiscoverableServiceInfo discoverableServiceInfo);
+public interface RestApiServiceRegistrationLifecycleManager extends Service {
+    void activateRestApiRegistrations(ComponentRegistry componentRegistry, ClassLoader classLoader);
 }

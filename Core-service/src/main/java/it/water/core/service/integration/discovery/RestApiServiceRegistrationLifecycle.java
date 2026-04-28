@@ -16,16 +16,16 @@
 
 package it.water.core.service.integration.discovery;
 
-import it.water.core.api.bundle.ApplicationProperties;
 import it.water.core.api.registry.ComponentRegistry;
+import it.water.core.api.service.integration.discovery.ServiceRegistrationOptions;
 
-public class DescriptorDrivenServiceRegistrationLifecycle extends ServiceRegistrationLifecycleSupport {
+/**
+ * Lifecycle wrapper for a single REST API registration, reusing the shared retry and heartbeat support.
+ */
+public class RestApiServiceRegistrationLifecycle extends ServiceRegistrationLifecycleSupport {
 
-    public void activate(ComponentRegistry componentRegistry,
-                         WaterServiceRegistrationDescriptor descriptor,
-                         ApplicationProperties applicationProperties) {
-        bootstrapRegister(componentRegistry,
-                new DescriptorBackedServiceRegistrationOptions(descriptor, applicationProperties));
+    public void activate(ComponentRegistry componentRegistry, ServiceRegistrationOptions options) {
+        bootstrapRegister(componentRegistry, options);
     }
 
     public void deactivate() {
