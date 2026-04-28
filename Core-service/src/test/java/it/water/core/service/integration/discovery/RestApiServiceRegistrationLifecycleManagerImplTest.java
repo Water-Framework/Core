@@ -1,19 +1,3 @@
-/*
- * Copyright 2024 Aristide Cittadino
- *
- * Licensed under the Apache License, Version 2.0 (the "License")
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-
 package it.water.core.service.integration.discovery;
 
 import it.water.core.api.bundle.ApplicationProperties;
@@ -23,81 +7,109 @@ import it.water.core.api.registry.ComponentRegistration;
 import it.water.core.api.registry.ComponentRegistry;
 import it.water.core.api.registry.filter.ComponentFilterBuilder;
 import it.water.core.api.repository.BaseRepository;
+import it.water.core.api.service.BaseApi;
 import it.water.core.api.service.BaseEntitySystemApi;
+import it.water.core.api.service.BaseSystemApi;
 import it.water.core.api.service.integration.discovery.DiscoverableServiceInfo;
 import it.water.core.api.service.integration.discovery.ServiceDiscoveryGlobalOptions;
 import it.water.core.api.service.integration.discovery.ServiceLivenessClient;
 import it.water.core.api.service.integration.discovery.ServiceLivenessListener;
 import it.water.core.api.service.integration.discovery.ServiceLivenessRegistration;
 import it.water.core.api.service.integration.discovery.ServiceLivenessSession;
+import it.water.core.api.service.rest.FrameworkRestApi;
+import it.water.core.api.service.rest.FrameworkRestController;
+import it.water.core.api.service.rest.RestApi;
+import it.water.core.interceptors.annotations.Inject;
+import it.water.core.service.BaseServiceImpl;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
+import javax.ws.rs.Path;
 import java.io.File;
-import java.net.URL;
-import java.net.URLClassLoader;
-import java.nio.charset.StandardCharsets;
-import java.nio.file.Files;
-import java.nio.file.Path;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 
-class DescriptorDrivenServiceRegistrationLifecycleManagerImplTest {
+class RestApiServiceRegistrationLifecycleManagerImplTest {
 
     @Test
-    void activatesAndDeactivatesRegistrationsFromDescriptor() throws Exception {
-        Path descriptorDirectory = Files.createTempDirectory("water-descriptor-test");
-        Path metaInfDirectory = descriptorDirectory.resolve("META-INF");
-        Files.createDirectories(metaInfDirectory);
-        Files.writeString(metaInfDirectory.resolve("water-descriptor.json"), """
-                {
-                  "schemaVersion": "1.1",
-                  "moduleId": "it.water.test.service",
-                  "runtime": {
-                    "serviceRegistration": {
-                      "enabled": true,
-                      "serviceName": "descriptor-service",
-                      "root": "/water/descriptors",
-                      "serviceVersion": "3.0.0",
-                      "protocol": "http"
-                    }
-                  }
-                }
-                """, StandardCharsets.UTF_8);
+    void activatesAndDeactivatesRegistrationsFromBusinessRestApi() {
+        RestApiServiceRegistrationLifecycleManagerImpl manager = new RestApiServiceRegistrationLifecycleManagerImpl();
+        InMemoryComponentRegistry registry = createRegistry("http://127.0.0.1:8181/water");
+        RecordingRegistryClient discoveryClient =
+                (RecordingRegistryClient) registry.findComponent(ServiceDiscoveryRegistryClientInternal.class, null);
+        RecordingLivenessClient livenessClient =
+                (RecordingLivenessClient) registry.findComponent(ServiceLivenessClient.class, null);
 
-        try (URLClassLoader classLoader = new URLClassLoader(
-                new URL[]{descriptorDirectory.toUri().toURL()},
-                getClass().getClassLoader())) {
-            DescriptorDrivenServiceRegistrationLifecycleManagerImpl manager =
-                    new DescriptorDrivenServiceRegistrationLifecycleManagerImpl();
-            InMemoryComponentRegistry registry = new InMemoryComponentRegistry();
-            RecordingRegistryClient discoveryClient = new RecordingRegistryClient();
-            RecordingLivenessClient livenessClient = new RecordingLivenessClient();
-            MapApplicationProperties applicationProperties = new MapApplicationProperties();
-            applicationProperties.put(ServiceDiscoveryGlobalConstants.PROP_DISCOVERY_URL, "http://127.0.0.1:8181/water");
-            applicationProperties.put("org.osgi.service.http.port", "8381");
+        manager.activateRestApiRegistrations(registry, getClass().getClassLoader());
 
-            registry.register(ServiceDiscoveryGlobalOptions.class,
-                    new FixedGlobalOptions("http://127.0.0.1:8181/water", "127.0.0.1"));
-            registry.register(ServiceDiscoveryRegistryClientInternal.class, discoveryClient);
-            registry.register(ServiceLivenessClient.class, livenessClient);
+        Assertions.assertNotNull(discoveryClient.registeredInfo);
+        Assertions.assertEquals("company", discoveryClient.registeredInfo.getServiceId());
+        Assertions.assertEquals("/water/companies", discoveryClient.registeredInfo.getServiceRoot());
+        Assertions.assertEquals("8381", discoveryClient.registeredInfo.getServicePort());
+        Assertions.assertNotNull(livenessClient.lastRegistration);
+        Assertions.assertEquals("company", livenessClient.lastRegistration.getServiceName());
 
-            manager.activateDescriptorRegistrations(registry, applicationProperties, classLoader);
+        manager.deactivate();
 
-            Assertions.assertNotNull(discoveryClient.registeredInfo);
-            Assertions.assertEquals("descriptor-service", discoveryClient.registeredInfo.getServiceId());
-            Assertions.assertEquals("8381", discoveryClient.registeredInfo.getServicePort());
-            Assertions.assertNotNull(livenessClient.lastRegistration);
-            Assertions.assertEquals("descriptor-service", livenessClient.lastRegistration.getServiceName());
+        Assertions.assertEquals("company", discoveryClient.unregisteredServiceName);
+        Assertions.assertTrue(livenessClient.stopped);
+    }
 
-            manager.deactivate();
+    @Test
+    void derivesKebabCaseServiceNameFromRestApiClassName() {
+        RestApiServiceRegistrationLifecycleManagerImpl manager = new RestApiServiceRegistrationLifecycleManagerImpl();
 
-            Assertions.assertEquals("descriptor-service", discoveryClient.unregisteredServiceName);
-            Assertions.assertTrue(livenessClient.stopped);
-        }
+        Assertions.assertEquals("asset-category", manager.deriveServiceName(AssetCategoryRestApi.class));
+        Assertions.assertEquals("company", manager.deriveServiceName(CompanyRestApi.class));
+    }
+
+    @Test
+    void baseServicesExposeConventionBasedServiceName() {
+        Assertions.assertEquals("asset-category", new AssetCategoryServiceImpl().getServiceName());
+    }
+
+    @Test
+    void skipsRegistrationWhenDiscoveryUrlIsMissing() {
+        RestApiServiceRegistrationLifecycleManagerImpl manager = new RestApiServiceRegistrationLifecycleManagerImpl();
+        InMemoryComponentRegistry registry = createRegistry("");
+        RecordingRegistryClient discoveryClient =
+                (RecordingRegistryClient) registry.findComponent(ServiceDiscoveryRegistryClientInternal.class, null);
+
+        manager.activateRestApiRegistrations(registry, getClass().getClassLoader());
+
+        Assertions.assertNull(discoveryClient.registeredInfo);
+    }
+
+    @Test
+    void skipsTechnicalRoots() {
+        RestApiServiceRegistrationLifecycleManagerImpl manager = new RestApiServiceRegistrationLifecycleManagerImpl();
+
+        Assertions.assertFalse(manager.isBusinessRoot("/"));
+        Assertions.assertFalse(manager.isBusinessRoot("/api/serviceregistration"));
+        Assertions.assertFalse(manager.isBusinessRoot("/internal/serviceregistration"));
+        Assertions.assertFalse(manager.isBusinessRoot("/proxy"));
+        Assertions.assertFalse(manager.isBusinessRoot("/status"));
+        Assertions.assertTrue(manager.isBusinessRoot("/assetcategories"));
+    }
+
+    private InMemoryComponentRegistry createRegistry(String discoveryUrl) {
+        InMemoryComponentRegistry registry = new InMemoryComponentRegistry();
+        RecordingRegistryClient discoveryClient = new RecordingRegistryClient();
+        RecordingLivenessClient livenessClient = new RecordingLivenessClient();
+        MapApplicationProperties applicationProperties = new MapApplicationProperties();
+        applicationProperties.put(ServiceDiscoveryGlobalConstants.PROP_DISCOVERY_URL, discoveryUrl);
+        applicationProperties.put("org.osgi.service.http.port", "8381");
+
+        registry.register(ApplicationProperties.class, applicationProperties);
+        registry.register(ServiceDiscoveryGlobalOptions.class,
+                new FixedGlobalOptions(discoveryUrl, "127.0.0.1"));
+        registry.register(ServiceDiscoveryRegistryClientInternal.class, discoveryClient);
+        registry.register(ServiceLivenessClient.class, livenessClient);
+        registry.register(CompanyApi.class, new CompanyServiceImpl());
+        return registry;
     }
 
     private static final class RecordingRegistryClient implements ServiceDiscoveryRegistryClientInternal {
@@ -295,4 +307,40 @@ class DescriptorDrivenServiceRegistrationLifecycleManagerImplTest {
             throw new UnsupportedOperationException();
         }
     }
+}
+
+@FrameworkRestApi
+@Path("/companies")
+interface CompanyRestApi extends RestApi {
+}
+
+interface CompanyApi extends BaseApi {
+}
+
+@FrameworkRestController(referredRestApi = CompanyRestApi.class)
+class CompanyRestControllerImpl implements CompanyRestApi {
+    @Inject
+    private CompanyApi companyApi;
+}
+
+class CompanyServiceImpl extends BaseServiceImpl implements CompanyApi {
+    @Override
+    protected BaseSystemApi getSystemService() {
+        return null;
+    }
+}
+
+class AssetCategoryRestApi {
+}
+
+class AssetCategoryServiceImpl extends BaseServiceImpl {
+    @Override
+    protected BaseSystemApi getSystemService() {
+        return null;
+    }
+}
+
+@FrameworkRestApi
+@Path("/api/serviceregistration")
+interface ServiceRegistrationRestApi extends RestApi {
 }

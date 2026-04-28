@@ -19,32 +19,42 @@ package it.water.core.service.integration.discovery;
 import it.water.core.api.bundle.ApplicationProperties;
 import it.water.core.api.service.integration.discovery.ServiceRegistrationOptions;
 
-public class DescriptorBackedServiceRegistrationOptions implements ServiceRegistrationOptions {
+/**
+ * Runtime registration options derived from ApplicationProperties and the discovered REST root.
+ */
+public class RestApiServiceRegistrationOptions implements ServiceRegistrationOptions {
     private static final String GLOBAL_OSGI_PORT = "org.osgi.service.http.port";
     private static final String GLOBAL_SPRING_PORT = "server.port";
+    private static final String REST_ROOT_CONTEXT = "water.rest.root.context";
+    private static final String SPRING_CONTEXT_PATH = "server.servlet.context-path";
+    private static final String CXF_CONTEXT_PATH = "org.apache.cxf.servlet.context";
+    private static final String DEFAULT_REST_ROOT_CONTEXT = "/water";
 
-    private final WaterServiceRegistrationDescriptor descriptor;
+    private final String serviceName;
+    private final String root;
     private final ApplicationProperties applicationProperties;
 
-    public DescriptorBackedServiceRegistrationOptions(WaterServiceRegistrationDescriptor descriptor,
-                                                      ApplicationProperties applicationProperties) {
-        this.descriptor = descriptor;
+    public RestApiServiceRegistrationOptions(String serviceName,
+                                             String root,
+                                             ApplicationProperties applicationProperties) {
+        this.serviceName = serviceName;
+        this.root = root;
         this.applicationProperties = applicationProperties;
     }
 
     @Override
     public String getDiscoveryUrl() {
-        return getProperty(ServiceDiscoveryGlobalConstants.PROP_DISCOVERY_URL, "");
+        return "";
     }
 
     @Override
     public String getServiceName() {
-        return descriptor.getServiceName();
+        return serviceName;
     }
 
     @Override
     public String getServiceVersion() {
-        return descriptor.getServiceVersion();
+        return "1.0.0";
     }
 
     @Override
@@ -54,12 +64,17 @@ public class DescriptorBackedServiceRegistrationOptions implements ServiceRegist
 
     @Override
     public String getProtocol() {
-        return descriptor.getProtocol();
+        return "http";
     }
 
     @Override
     public String getRoot() {
-        return descriptor.getRoot();
+        String normalizedRoot = DiscoveryAddressUtils.normalizeRoot(root);
+        String context = resolveRestRootContext();
+        if (context.isBlank() || "/".equals(context) || normalizedRoot.startsWith(context + "/") || normalizedRoot.equals(context)) {
+            return normalizedRoot;
+        }
+        return context + normalizedRoot;
     }
 
     @Override
@@ -69,9 +84,9 @@ public class DescriptorBackedServiceRegistrationOptions implements ServiceRegist
 
     @Override
     public String getServicePort() {
-        String port = getProperty(GLOBAL_OSGI_PORT, "");
-        if (!port.isBlank()) {
-            return port;
+        String osgiPort = getProperty(GLOBAL_OSGI_PORT, "");
+        if (!osgiPort.isBlank()) {
+            return osgiPort;
         }
         return getProperty(GLOBAL_SPRING_PORT, "");
     }
@@ -86,5 +101,16 @@ public class DescriptorBackedServiceRegistrationOptions implements ServiceRegist
             return defaultValue;
         }
         return applicationProperties.getPropertyOrDefault(key, defaultValue);
+    }
+
+    private String resolveRestRootContext() {
+        String context = getProperty(REST_ROOT_CONTEXT, "");
+        if (context.isBlank()) {
+            context = getProperty(SPRING_CONTEXT_PATH, "");
+        }
+        if (context.isBlank()) {
+            context = getProperty(CXF_CONTEXT_PATH, "");
+        }
+        return DiscoveryAddressUtils.normalizeRoot(context.isBlank() ? DEFAULT_REST_ROOT_CONTEXT : context);
     }
 }

@@ -7,27 +7,20 @@ import org.junit.jupiter.api.Test;
 import java.io.File;
 import java.util.Properties;
 
-class DescriptorBackedServiceRegistrationOptionsTest {
+class RestApiServiceRegistrationOptionsTest {
 
     @Test
-    void resolvesStaticIdentityFromDescriptorAndRuntimePortFromProperties() {
-        WaterServiceRegistrationDescriptor descriptor = new WaterServiceRegistrationDescriptor(
-                "it.water.assetcategory.service",
-                "asset-category",
-                "/water/assetcategories",
-                "3.0.0",
-                "http");
+    void resolvesStaticIdentityFromRestApiAndRuntimePortFromProperties() {
         MapApplicationProperties applicationProperties = new MapApplicationProperties();
-        applicationProperties.put("water.discovery.url", "http://127.0.0.1:8181/water");
         applicationProperties.put("org.osgi.service.http.port", "8381");
 
-        DescriptorBackedServiceRegistrationOptions options =
-                new DescriptorBackedServiceRegistrationOptions(descriptor, applicationProperties);
+        RestApiServiceRegistrationOptions options =
+                new RestApiServiceRegistrationOptions("asset-category", "/assetcategories", applicationProperties);
 
-        Assertions.assertEquals("http://127.0.0.1:8181/water", options.getDiscoveryUrl());
+        Assertions.assertEquals("", options.getDiscoveryUrl());
         Assertions.assertEquals("asset-category", options.getServiceName());
         Assertions.assertEquals("/water/assetcategories", options.getRoot());
-        Assertions.assertEquals("3.0.0", options.getServiceVersion());
+        Assertions.assertEquals("1.0.0", options.getServiceVersion());
         Assertions.assertEquals("http", options.getProtocol());
         Assertions.assertEquals("8381", options.getServicePort());
         Assertions.assertEquals("", options.getAdvertisedEndpoint());
@@ -37,19 +30,15 @@ class DescriptorBackedServiceRegistrationOptionsTest {
 
     @Test
     void fallsBackToSpringPortWhenOsgiPortIsMissing() {
-        WaterServiceRegistrationDescriptor descriptor = new WaterServiceRegistrationDescriptor(
-                "it.water.assettag.service",
-                "asset-tag",
-                "/water/assettags",
-                "3.0.0",
-                "http");
         MapApplicationProperties applicationProperties = new MapApplicationProperties();
         applicationProperties.put("server.port", "9082");
+        applicationProperties.put("server.servlet.context-path", "/custom");
 
-        DescriptorBackedServiceRegistrationOptions options =
-                new DescriptorBackedServiceRegistrationOptions(descriptor, applicationProperties);
+        RestApiServiceRegistrationOptions options =
+                new RestApiServiceRegistrationOptions("asset-tag", "/assettags", applicationProperties);
 
         Assertions.assertEquals("9082", options.getServicePort());
+        Assertions.assertEquals("/custom/assettags", options.getRoot());
     }
 
     private static final class MapApplicationProperties implements ApplicationProperties {
