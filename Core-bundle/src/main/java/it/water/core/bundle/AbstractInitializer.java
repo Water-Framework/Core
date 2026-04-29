@@ -204,6 +204,7 @@ public abstract class AbstractInitializer<T, K> {
      * @return current class loader base on each runtime, default class loader is taken by the current instance.
      */
     protected ClassLoader getCurrentClassLoader() {
-        return this.getClass().getClassLoader();
+        ClassLoader tccl = Thread.currentThread().getContextClassLoader();
+        return tccl != null ? tccl : this.getClass().getClassLoader();
     }
 }
