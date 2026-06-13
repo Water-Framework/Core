@@ -310,7 +310,7 @@ class PasswordHashServiceImplTest implements Service {
         props.put("water.security.password.hash.iterations", "not-a-number");
         applicationProperties.loadProperties(props);
 
-        // Must not throw; must produce a valid PHC string using the default 210 000 iterations
+        // Must not throw; must produce a valid PHC string using the default iterations
         String phc = passwordHashService.hash("FallbackIter1!".toCharArray());
         Assertions.assertNotNull(phc);
         Assertions.assertTrue(phc.startsWith(PHC_PREFIX));
@@ -318,6 +318,151 @@ class PasswordHashServiceImplTest implements Service {
         // Restore
         Properties restore = new Properties();
         restore.put("water.security.password.hash.iterations", "210000");
+        applicationProperties.loadProperties(restore);
+    }
+
+    // -----------------------------------------------------------------------
+    // PBKDF2 600k — default iteration count raised from 210 000 to 600 000
+    // -----------------------------------------------------------------------
+
+    /**
+     * PBKDF2-600k-1: when no property override is set, hash() must embed 600 000 iterations.
+     * This test explicitly clears the property override so the hard-coded DEFAULT_ITERATIONS
+     * constant is used.  It is the only test that checks the actual default — all others use
+     * a custom low value to keep the suite fast.
+     *
+     * NOTE: this test is intentionally slow (600 000 PBKDF2 iterations ≈ 0.5–2 s on CI hardware).
+     * There is exactly one such test to satisfy the coverage requirement without bloating the suite.
+     */
+    @Test
+    @Order(20)
+    void hashDefaultIterationsIs600000() {
+        final int expectedDefaultIterations = 600_000;
+
+        // Clear any override so the implementation falls back to DEFAULT_ITERATIONS
+        Properties props = new Properties();
+        // Setting to empty string: the parser will fail and fall back to the constant default
+        props.put("water.security.password.hash.iterations", "invalid-so-fallback-fires");
+        applicationProperties.loadProperties(props);
+
+        String phc = passwordHashService.hash("Default600kTest1!".toCharArray());
+
+        Assertions.assertNotNull(phc, "hash() must not return null");
+        Assertions.assertTrue(phc.startsWith(PHC_PREFIX), "hash() must start with PHC prefix");
+
+        String[] parts = phc.split("\\$");
+        int storedIterations = Integer.parseInt(parts[2].substring(2)); // "i=<n>" → n
+        Assertions.assertEquals(expectedDefaultIterations, storedIterations,
+                "The default iteration count must be 600 000 (OWASP 2023 recommendation for PBKDF2-HMAC-SHA256)");
+
+        // Restore to low iteration count for remaining tests to stay fast
+        Properties restore = new Properties();
+        restore.put("water.security.password.hash.iterations", "1000");
+        applicationProperties.loadProperties(restore);
+    }
+
+    /**
+     * PBKDF2-600k-2: needsRehash() must return true for a hash produced at 210 000 iterations
+     * (the old default before H9) because 210 000 < 600 000.
+     *
+     * We craft the PHC string manually (real PBKDF2 computation would be too slow at 210k in tests)
+     * by embedding a dummy hash body — needsRehash() only reads the iteration segment.
+     */
+    @Test
+    @Order(21)
+    void needsRehashFor210kIterationsReturnsTrue() {
+        final int staleIterations = 210_000;
+
+        // Craft a syntactically valid PHC string with i=210000
+        byte[] salt = new byte[16];
+        new java.security.SecureRandom().nextBytes(salt);
+        byte[] dummyHash = new byte[32];
+        new java.security.SecureRandom().nextBytes(dummyHash);
+        String stalePhc = "$pbkdf2-sha256$i=" + staleIterations + "$"
+                + Base64.getEncoder().withoutPadding().encodeToString(salt) + "$"
+                + Base64.getEncoder().withoutPadding().encodeToString(dummyHash);
+
+        // Ensure the configured threshold is 600 000 so 210k < threshold
+        Properties props = new Properties();
+        props.put("water.security.password.hash.iterations", "600000");
+        applicationProperties.loadProperties(props);
+
+        Assertions.assertTrue(passwordHashService.needsRehash(stalePhc),
+                "needsRehash() must return true for a hash with 210 000 iterations when the current default is 600 000");
+
+        // Restore to low iteration count
+        Properties restore = new Properties();
+        restore.put("water.security.password.hash.iterations", "1000");
+        applicationProperties.loadProperties(restore);
+    }
+
+    /**
+     * PBKDF2-600k-3: needsRehash() must return false for a hash produced at exactly 600 000
+     * iterations when the configured threshold is also 600 000.
+     */
+    @Test
+    @Order(22)
+    void needsRehashFor600kIterationsReturnsFalse() {
+        final int currentIterations = 600_000;
+
+        // Craft a PHC string with i=600000
+        byte[] salt = new byte[16];
+        new java.security.SecureRandom().nextBytes(salt);
+        byte[] dummyHash = new byte[32];
+        new java.security.SecureRandom().nextBytes(dummyHash);
+        String currentPhc = "$pbkdf2-sha256$i=" + currentIterations + "$"
+                + Base64.getEncoder().withoutPadding().encodeToString(salt) + "$"
+                + Base64.getEncoder().withoutPadding().encodeToString(dummyHash);
+
+        // Configure threshold to 600 000 so 600k == threshold → no rehash needed
+        Properties props = new Properties();
+        props.put("water.security.password.hash.iterations", String.valueOf(currentIterations));
+        applicationProperties.loadProperties(props);
+
+        Assertions.assertFalse(passwordHashService.needsRehash(currentPhc),
+                "needsRehash() must return false for a hash whose iterations equal the current configured value (600 000)");
+
+        // Restore to low iteration count
+        Properties restore = new Properties();
+        restore.put("water.security.password.hash.iterations", "1000");
+        applicationProperties.loadProperties(restore);
+    }
+
+    /**
+     * PBKDF2-600k-4: matches() remains correct for hashes produced at 600 000 iterations.
+     * Uses a low custom iteration count so the test is fast; the important property being
+     * tested is that the matches() logic reads the iteration count from the PHC string
+     * (it is self-describing) and computes correctly regardless of the current default.
+     */
+    @Test
+    @Order(23)
+    void matchesCorrectPasswordFor600kIterationsReturnsTrue() {
+        // Use a moderate number of iterations to keep the test fast while still
+        // exercising the "read iterations from PHC" path
+        final int testIterations = 2000;
+        Properties props = new Properties();
+        props.put("water.security.password.hash.iterations", String.valueOf(testIterations));
+        applicationProperties.loadProperties(props);
+
+        char[] pwd = "Pbkdf2600kMatch1!".toCharArray();
+        String phc = passwordHashService.hash(pwd);
+
+        String[] parts = phc.split("\\$");
+        int embeddedIterations = Integer.parseInt(parts[2].substring(2));
+        Assertions.assertEquals(testIterations, embeddedIterations,
+                "PHC string must embed the configured iteration count");
+
+        // Correct password must match
+        Assertions.assertTrue(passwordHashService.matches(pwd, phc),
+                "matches() must return true for the correct password against a fresh PHC hash");
+
+        // Wrong password must not match
+        Assertions.assertFalse(passwordHashService.matches("WrongPassword99!".toCharArray(), phc),
+                "matches() must return false for an incorrect password");
+
+        // Restore
+        Properties restore = new Properties();
+        restore.put("water.security.password.hash.iterations", "1000");
         applicationProperties.loadProperties(restore);
     }
 }

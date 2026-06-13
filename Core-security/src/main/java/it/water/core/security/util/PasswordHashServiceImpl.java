@@ -49,7 +49,8 @@ public class PasswordHashServiceImpl implements PasswordHashService {
     private static final String PBKDF2_ALGORITHM = "PBKDF2WithHmacSHA256";
     private static final int SALT_BYTES = 16;
     private static final int KEY_BITS = 256;
-    private static final int DEFAULT_ITERATIONS = 210000;
+    //OWASP 2023 recommendation for PBKDF2-HMAC-SHA256
+    private static final int DEFAULT_ITERATIONS = 600000;
 
     //H8 - password hashing (PHC / PBKDF2) cost parameter
     private static final String PASSWORD_HASH_ITERATIONS = "water.security.password.hash.iterations";
