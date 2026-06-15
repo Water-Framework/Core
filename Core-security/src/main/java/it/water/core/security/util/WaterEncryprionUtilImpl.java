@@ -691,6 +691,26 @@ public class WaterEncryprionUtilImpl implements EncryptionUtil {
     public byte[] generate16BytesSalt() {
         return generateSalt(16);
     }
+
+    /**
+     * Generates a cryptographically secure random password using {@link SecureRandom}
+     * over a wide alphabet (upper/lower case letters, digits and a few symbols).
+     *
+     * @param length exact number of characters of the generated password
+     * @return the generated password
+     */
+    @Override
+    public String generateRandomPassword(int length) {
+        if (length <= 0)
+            throw new IllegalArgumentException("Password length must be greater than 0");
+        final String alphabet = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789!@#$%^&*()-_";
+        SecureRandom random = new SecureRandom();
+        StringBuilder sb = new StringBuilder(length);
+        for (int i = 0; i < length; i++) {
+            sb.append(alphabet.charAt(random.nextInt(alphabet.length())));
+        }
+        return sb.toString();
+    }
 }
 
 

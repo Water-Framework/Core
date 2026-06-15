@@ -288,4 +288,13 @@ public interface EncryptionUtil extends Service {
      * @return
      */
     byte[] generate16BytesSalt();
+
+    /**
+     * Generates a cryptographically secure random password of the requested length
+     * over a wide alphabet (upper/lower case letters, digits and a few symbols).
+     *
+     * @param length exact number of characters of the generated password
+     * @return the generated password
+     */
+    String generateRandomPassword(int length);
 }
