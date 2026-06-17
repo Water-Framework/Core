@@ -127,11 +127,12 @@ public class WaterEncryprionUtilImpl implements EncryptionUtil {
      */
     public KeyPair generateSSLKeyPairValue(int keySize) {
         try {
-            SecureRandom randomGenerator = SecureRandom.getInstance("SHA1PRNG", "SUN");
+            //#41 - use the platform default CSPRNG instead of forcing the legacy SHA1PRNG/SUN provider
+            SecureRandom randomGenerator = new SecureRandom();
             final KeyPairGenerator rsaKeyPairGenerator = KeyPairGenerator.getInstance("RSA");
             rsaKeyPairGenerator.initialize(keySize, randomGenerator);
             return rsaKeyPairGenerator.generateKeyPair();
-        } catch (NoSuchAlgorithmException | NoSuchProviderException e) {
+        } catch (NoSuchAlgorithmException e) {
             log.error(e.getMessage(), e);
         }
         return null;
@@ -169,7 +170,7 @@ public class WaterEncryprionUtilImpl implements EncryptionUtil {
             X509v3CertificateBuilder certificateBuilder = new JcaX509v3CertificateBuilder((X509Certificate) caCert, serialNumber, issuedDate, expiryDate, jcaRequest.getSubject(), jcaRequest.getPublicKey());
             JcaX509ExtensionUtils extUtils = new JcaX509ExtensionUtils();
             certificateBuilder.addExtension(Extension.authorityKeyIdentifier, false, extUtils.createAuthorityKeyIdentifier(caCert.getPublicKey())).addExtension(Extension.subjectKeyIdentifier, false, extUtils.createSubjectKeyIdentifier(jcaRequest.getPublicKey())).addExtension(Extension.basicConstraints, true, new BasicConstraints(0));
-            ContentSigner signer = new JcaContentSignerBuilder("SHA1withRSA").setProvider("BC").build(privateKey);
+            ContentSigner signer = new JcaContentSignerBuilder(SHA_WITH_RSA_ENC_ALGORITHM).setProvider("BC").build(privateKey);
             X509Certificate signedCert = new JcaX509CertificateConverter().setProvider("BC").getCertificate(certificateBuilder.build(signer));
             return new X500PrivateCredential(signedCert, keyPair.getPrivate());
         } catch (Exception e) {
@@ -321,7 +322,10 @@ public class WaterEncryprionUtilImpl implements EncryptionUtil {
      * @throws NoSuchPaddingException
      * @throws NoSuchAlgorithmException
      * @throws NoSuchProviderException
+     * @deprecated Exposes RSA in ECB mode (and PKCS#1 v1.5 padding-oracle surface).
+     * Prefer the OAEP-SHA256 default {@link #getCipherRSAOAEPPAdding()}. Scheduled for removal.
      */
+    @Deprecated
     public Cipher getCipherRSAECB(String padding) throws NoSuchPaddingException, NoSuchAlgorithmException, NoSuchProviderException {
 
         if (padding == null) {
@@ -337,7 +341,10 @@ public class WaterEncryprionUtilImpl implements EncryptionUtil {
      * @throws NoSuchPaddingException
      * @throws NoSuchAlgorithmException
      * @throws NoSuchProviderException
+     * @deprecated Uses RSA PKCS#1 v1.5 padding, vulnerable to Bleichenbacher padding-oracle
+     * attacks. Prefer the OAEP-SHA256 default {@link #getCipherRSAOAEPPAdding()}. Scheduled for removal.
      */
+    @Deprecated
     public Cipher getCipherRSAPKCS1Padding(boolean ecb) {
         try {
             if (ecb) return getCipherRSAECB("PKCS1PADDING");

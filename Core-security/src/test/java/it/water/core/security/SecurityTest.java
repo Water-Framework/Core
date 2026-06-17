@@ -360,6 +360,61 @@ class SecurityTest implements Service {
     }
 
     /**
+     * Fix #23 regression: createServerClientX509Cert must use SHA256withRSA, not SHA1withRSA.
+     * The test generates a real server/client X.509 certificate via the EncryptionUtil API and
+     * asserts that getSigAlgName() reports a SHA-256-based algorithm.  The assertion is case-
+     * insensitive so that BouncyCastle OID-name variations (e.g. "SHA256WITHRSA") are accepted,
+     * but it will FAIL if the implementation ever reverts to SHA1.
+     */
+    @Test
+    void testCreateServerClientX509Cert_signingAlgorithm_mustBeSha256() throws PEMException {
+        final String EXPECTED_ALGORITHM_FRAGMENT = "SHA256";
+        EncryptionUtil waterEncryptionUtil = initializer.getComponentRegistry().findComponent(EncryptionUtil.class, null);
+        KeyPair clientKeyPair = waterEncryptionUtil.generateSSLKeyPairValue(1024);
+        X500PrivateCredential credential = waterEncryptionUtil.createServerClientX509Cert(
+                "test-client", 365, clientKeyPair, waterEncryptionUtil.getServerRootCert());
+        Assertions.assertNotNull(credential, "createServerClientX509Cert must return a non-null credential");
+        Assertions.assertNotNull(credential.getCertificate(), "Signed X.509 certificate must not be null");
+        String sigAlgName = credential.getCertificate().getSigAlgName();
+        Assertions.assertTrue(
+                sigAlgName.toUpperCase().contains(EXPECTED_ALGORITHM_FRAGMENT),
+                "Certificate signature algorithm must be SHA-256-based but was: " + sigAlgName);
+    }
+
+    /**
+     * Fix #41 smoke test: generateSSLKeyPairValue() must produce a valid, non-null RSA KeyPair
+     * after the removal of the legacy SHA1PRNG/SUN provider.
+     *
+     * The previous implementation used {@code SecureRandom.getInstance("SHA1PRNG","SUN")}, which
+     * is provider-specific, deprecated on non-Oracle JDKs, and absent from some distributions.
+     * The fix uses {@code new SecureRandom()} (platform default CSPRNG).  This test asserts:
+     * <ol>
+     *   <li>The returned KeyPair is non-null.</li>
+     *   <li>Both the public key and the private key are non-null.</li>
+     *   <li>The key algorithm is RSA (confirms the generator was not silently swapped).</li>
+     * </ol>
+     */
+    @Test
+    void fix41_generateSSLKeyPairValue_usesDefaultCsprng_returnsValidRsaKeyPair() {
+        final String EXPECTED_KEY_ALGORITHM = "RSA";
+        EncryptionUtil waterEncryptionUtil =
+                initializer.getComponentRegistry().findComponent(EncryptionUtil.class, null);
+
+        KeyPair keyPair = waterEncryptionUtil.generateSSLKeyPairValue(1024);
+
+        Assertions.assertNotNull(keyPair,
+                "#41: generateSSLKeyPairValue() must not return null");
+        Assertions.assertNotNull(keyPair.getPublic(),
+                "#41: generated KeyPair must contain a non-null public key");
+        Assertions.assertNotNull(keyPair.getPrivate(),
+                "#41: generated KeyPair must contain a non-null private key");
+        Assertions.assertEquals(EXPECTED_KEY_ALGORITHM, keyPair.getPublic().getAlgorithm(),
+                "#41: public key algorithm must be RSA");
+        Assertions.assertEquals(EXPECTED_KEY_ALGORITHM, keyPair.getPrivate().getAlgorithm(),
+                "#41: private key algorithm must be RSA");
+    }
+
+    /**
      * Testing other encryption algorithms
      *
      * @throws NoSuchPaddingException
@@ -367,6 +422,7 @@ class SecurityTest implements Service {
      * @throws NoSuchProviderException
      */
     @Test
+    @SuppressWarnings("deprecation") // intentionally exercises the deprecated RSA ECB / PKCS#1 helpers (#25)
     void testOtherAlgorithms() throws NoSuchPaddingException, NoSuchAlgorithmException, NoSuchProviderException {
         EncryptionUtil waterEncryptionUtil = initializer.getComponentRegistry().findComponent(EncryptionUtil.class, null);
         Assertions.assertNotNull(waterEncryptionUtil.getCipherRSAOAEPPAdding());

@@ -120,13 +120,21 @@ public interface EncryptionUtil extends Service {
     /**
      * @param padding
      * @return
+     * @deprecated Exposes RSA in ECB mode and, when called with PKCS#1 v1.5 padding,
+     * the classic Bleichenbacher padding-oracle attack surface. Prefer the OAEP-SHA256
+     * default ({@link #getCipherRSAOAEPPAdding()}). Scheduled for removal.
      */
+    @Deprecated
     Cipher getCipherRSAECB(String padding) throws NoSuchPaddingException, NoSuchAlgorithmException, NoSuchProviderException;
 
     /**
      * @param ecb
      * @return
+     * @deprecated Uses RSA PKCS#1 v1.5 padding, which is vulnerable to Bleichenbacher
+     * padding-oracle attacks. Prefer the OAEP-SHA256 default ({@link #getCipherRSAOAEPPAdding()}).
+     * Scheduled for removal.
      */
+    @Deprecated
     Cipher getCipherRSAPKCS1Padding(boolean ecb);
 
     /**
