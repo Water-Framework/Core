@@ -334,6 +334,10 @@ public abstract class ServiceRegistrationLifecycleSupport {
                 return EndpointValidationOutcome.REACHABLE;
             }
             return EndpointValidationOutcome.NOT_READY_OR_UNREACHABLE;
+        } catch (InterruptedException ie) {
+            Thread.currentThread().interrupt();
+            log.debug("Endpoint reachability check interrupted for '{}'", endpoint);
+            return EndpointValidationOutcome.NOT_READY_OR_UNREACHABLE;
         } catch (Exception e) {
             log.debug("Endpoint reachability check skipped for '{}': {}", endpoint, e.getMessage());
             return EndpointValidationOutcome.NOT_READY_OR_UNREACHABLE;

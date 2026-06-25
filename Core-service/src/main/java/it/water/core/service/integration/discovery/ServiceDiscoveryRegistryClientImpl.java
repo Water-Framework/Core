@@ -107,6 +107,10 @@ public class ServiceDiscoveryRegistryClientImpl implements ServiceDiscoveryRegis
                 }
                 log.warn("Registration attempt {}/{} failed: HTTP {} — {}",
                         attempt, maxAttempts, response.statusCode(), response.body());
+            } catch (InterruptedException ie) {
+                Thread.currentThread().interrupt();
+                log.warn("Registration attempt {}/{} interrupted", attempt, maxAttempts);
+                return;
             } catch (Exception e) {
                 log.warn("Registration attempt {}/{} failed: {}", attempt, maxAttempts, e.getMessage());
             }
@@ -140,6 +144,9 @@ public class ServiceDiscoveryRegistryClientImpl implements ServiceDiscoveryRegis
             } else {
                 log.warn("Unregister returned HTTP {}: {}", response.statusCode(), response.body());
             }
+        } catch (InterruptedException ie) {
+            Thread.currentThread().interrupt();
+            log.warn("Unregister interrupted for service '{}' instance '{}'", serviceName, instanceId);
         } catch (Exception e) {
             log.warn("Failed to unregister service '{}' instance '{}': {}", serviceName, instanceId, e.getMessage());
         }
@@ -164,6 +171,9 @@ public class ServiceDiscoveryRegistryClientImpl implements ServiceDiscoveryRegis
             }
             log.warn("Heartbeat returned HTTP {} for service '{}' instance '{}': {}",
                     response.statusCode(), serviceName, instanceId, response.body());
+        } catch (InterruptedException ie) {
+            Thread.currentThread().interrupt();
+            log.warn("Heartbeat interrupted for service '{}' instance '{}'", serviceName, instanceId);
         } catch (Exception e) {
             log.warn("Heartbeat failed for service '{}' instance '{}': {}", serviceName, instanceId, e.getMessage());
         }
@@ -184,6 +194,9 @@ public class ServiceDiscoveryRegistryClientImpl implements ServiceDiscoveryRegis
             if (response.statusCode() == 200) {
                 return parseServiceInfo(response.body());
             }
+        } catch (InterruptedException ie) {
+            Thread.currentThread().interrupt();
+            log.warn("getServiceInfo interrupted for id '{}'", id);
         } catch (Exception e) {
             log.warn("Failed to get service info for id '{}': {}", id, e.getMessage());
         }

@@ -24,6 +24,7 @@ import it.water.core.api.service.integration.discovery.RestApiServiceRegistratio
 import it.water.core.api.service.rest.FrameworkRestApi;
 import it.water.core.api.service.rest.FrameworkRestController;
 import it.water.core.interceptors.annotations.FrameworkComponent;
+import it.water.core.interceptors.annotations.Inject;
 import org.atteo.classindex.ClassIndex;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -212,12 +213,7 @@ public class RestApiServiceRegistrationLifecycleManagerImpl implements RestApiSe
     }
 
     private boolean isInjectField(Field field) {
-        for (Annotation annotation : field.getDeclaredAnnotations()) {
-            if ("it.water.core.interceptors.annotations.Inject".equals(annotation.annotationType().getName())) {
-                return true;
-            }
-        }
-        return false;
+        return field.isAnnotationPresent(Inject.class);
     }
 
     private <T> T findComponentQuietly(ComponentRegistry componentRegistry, Class<T> componentClass) {
