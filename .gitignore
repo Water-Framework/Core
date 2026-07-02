@@ -15,3 +15,6 @@ gradlew.bat
 gradle
 .gradle
 .idea
+/Core-service/src/test/java/it/water/core/service/integration/discovery/.claude/agent-memory/water-test-engineer/core_service_discovery_tests.md
+/.claude/agent-memory/water-test-engineer/MEMORY.md
+/Core-service/src/test/java/it/water/core/service/integration/discovery/.claude/agent-memory/water-test-engineer/MEMORY.md
