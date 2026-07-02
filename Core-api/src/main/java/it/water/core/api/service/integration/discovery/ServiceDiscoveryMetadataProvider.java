@@ -40,9 +40,13 @@ public interface ServiceDiscoveryMetadataProvider extends Service {
         value = removeSuffix(value, "Service");
         value = removeSuffix(value, "Impl");
         value = removeSuffix(value, "Api");
+        // Insert a hyphen at camelCase and acronym boundaries using zero-width
+        // look-arounds. These avoid the overlapping greedy quantifier of
+        // "([A-Z]+)([A-Z][a-z])", which is flagged by Sonar (S5852) as vulnerable
+        // to polynomial backtracking (ReDoS).
         return value
-                .replaceAll("([a-z0-9])([A-Z])", "$1-$2")
-                .replaceAll("([A-Z]+)([A-Z][a-z])", "$1-$2")
+                .replaceAll("(?<=[a-z0-9])(?=[A-Z])", "-")
+                .replaceAll("(?<=[A-Z])(?=[A-Z][a-z])", "-")
                 .toLowerCase(Locale.ROOT);
     }
 

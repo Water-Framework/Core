@@ -124,7 +124,7 @@ public interface EncryptionUtil extends Service {
      * the classic Bleichenbacher padding-oracle attack surface. Prefer the OAEP-SHA256
      * default ({@link #getCipherRSAOAEPPAdding()}). Scheduled for removal.
      */
-    @Deprecated
+    @Deprecated(since = "3.0.0", forRemoval = true)
     Cipher getCipherRSAECB(String padding) throws NoSuchPaddingException, NoSuchAlgorithmException, NoSuchProviderException;
 
     /**
@@ -134,7 +134,7 @@ public interface EncryptionUtil extends Service {
      * padding-oracle attacks. Prefer the OAEP-SHA256 default ({@link #getCipherRSAOAEPPAdding()}).
      * Scheduled for removal.
      */
-    @Deprecated
+    @Deprecated(since = "3.0.0", forRemoval = true)
     Cipher getCipherRSAPKCS1Padding(boolean ecb);
 
     /**

@@ -325,7 +325,7 @@ public class WaterEncryprionUtilImpl implements EncryptionUtil {
      * @deprecated Exposes RSA in ECB mode (and PKCS#1 v1.5 padding-oracle surface).
      * Prefer the OAEP-SHA256 default {@link #getCipherRSAOAEPPAdding()}. Scheduled for removal.
      */
-    @Deprecated
+    @Deprecated(since = "3.0.0", forRemoval = true)
     public Cipher getCipherRSAECB(String padding) throws NoSuchPaddingException, NoSuchAlgorithmException, NoSuchProviderException {
 
         if (padding == null) {
@@ -344,7 +344,7 @@ public class WaterEncryprionUtilImpl implements EncryptionUtil {
      * @deprecated Uses RSA PKCS#1 v1.5 padding, vulnerable to Bleichenbacher padding-oracle
      * attacks. Prefer the OAEP-SHA256 default {@link #getCipherRSAOAEPPAdding()}. Scheduled for removal.
      */
-    @Deprecated
+    @Deprecated(since = "3.0.0", forRemoval = true)
     public Cipher getCipherRSAPKCS1Padding(boolean ecb) {
         try {
             if (ecb) return getCipherRSAECB("PKCS1PADDING");

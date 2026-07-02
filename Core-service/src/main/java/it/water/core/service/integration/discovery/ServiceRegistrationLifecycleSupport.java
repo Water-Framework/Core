@@ -86,11 +86,8 @@ public abstract class ServiceRegistrationLifecycleSupport {
             return;
         }
 
-        String discoveryUrl = defaultString(options.getDiscoveryUrl());
-        if (discoveryUrl.isBlank() && globalOptions != null) {
-            discoveryUrl = defaultString(globalOptions.getDiscoveryUrl());
-        }
-        if (discoveryUrl.isBlank()) {
+        String resolvedDiscoveryUrl = resolveDiscoveryUrl(options, globalOptions);
+        if (resolvedDiscoveryUrl.isBlank()) {
             log.debug("Service registration disabled: discovery URL not configured (module nor global fallback)");
             return;
         }
@@ -138,7 +135,7 @@ public abstract class ServiceRegistrationLifecycleSupport {
 
         synchronized (lifecycleMonitor) {
             this.client = effectiveClient;
-            this.discoveryUrl = discoveryUrl;
+            this.discoveryUrl = resolvedDiscoveryUrl;
             this.lastRegisteredServiceInfo = serviceInfo;
             this.livenessClient = livenessClient;
             this.registeredServiceName = serviceName;
@@ -159,6 +156,14 @@ public abstract class ServiceRegistrationLifecycleSupport {
         if (!attemptRegistrationOnce()) {
             scheduleRetry(resolvedRetryInitialDelay);
         }
+    }
+
+    private String resolveDiscoveryUrl(ServiceRegistrationOptions options, ServiceDiscoveryGlobalOptions globalOptions) {
+        String url = defaultString(options.getDiscoveryUrl());
+        if (url.isBlank() && globalOptions != null) {
+            url = defaultString(globalOptions.getDiscoveryUrl());
+        }
+        return url;
     }
 
     protected void bootstrapRegister(ComponentRegistry componentRegistry,
@@ -223,16 +228,16 @@ public abstract class ServiceRegistrationLifecycleSupport {
         ServiceDiscoveryGlobalOptions globalOptions = findComponentQuietly(componentRegistry, ServiceDiscoveryGlobalOptions.class);
         ServiceDiscoveryRegistryClientInternal discoveryClient = findComponentQuietly(componentRegistry, ServiceDiscoveryRegistryClientInternal.class);
         ClusterNodeOptions clusterNodeOptions = findComponentQuietly(componentRegistry, ClusterNodeOptions.class);
-        ServiceLivenessClient livenessClient = findComponentQuietly(componentRegistry, ServiceLivenessClient.class);
+        ServiceLivenessClient resolvedLivenessClient = findComponentQuietly(componentRegistry, ServiceLivenessClient.class);
 
-        if (globalOptions == null || discoveryClient == null || livenessClient == null) {
+        if (globalOptions == null || discoveryClient == null || resolvedLivenessClient == null) {
             log.debug("Service registration bootstrap still waiting for dependencies: globalOptions={}, client={}, livenessClient={}",
-                    globalOptions != null, discoveryClient != null, livenessClient != null);
+                    globalOptions != null, discoveryClient != null, resolvedLivenessClient != null);
             return false;
         }
 
         cancelBootstrapRegistrationTaskLocked();
-        doRegister(discoveryClient, options, globalOptions, clusterNodeOptions, livenessClient);
+        doRegister(discoveryClient, options, globalOptions, clusterNodeOptions, resolvedLivenessClient);
         return true;
     }
 
@@ -307,7 +312,7 @@ public abstract class ServiceRegistrationLifecycleSupport {
 
     private EndpointValidationOutcome validateEndpointReachability(DiscoverableServiceInfoImpl serviceInfo) {
         String endpoint = resolveEndpoint(serviceInfo);
-        if (endpoint == null || endpoint.isBlank()) {
+        if (endpoint.isBlank()) {
             return EndpointValidationOutcome.REACHABLE;
         }
         try {
@@ -384,7 +389,7 @@ public abstract class ServiceRegistrationLifecycleSupport {
             }
         }
         String endpoint = resolveEndpoint(serviceInfo);
-        if (endpoint != null && !endpoint.isBlank()) {
+        if (!endpoint.isBlank()) {
             log.warn("Registered endpoint '{}' for service '{}' is not reachable after {} attempt(s)",
                     endpoint, serviceInfo.getServiceId(), ENDPOINT_CHECK_MAX_ATTEMPTS);
         }

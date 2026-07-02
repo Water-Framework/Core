@@ -91,9 +91,10 @@ public class DiscoverableServiceInfoImpl implements DiscoverableServiceInfo {
 
     @Override
     public String toString() {
+        String host = serviceHost != null && !serviceHost.isBlank() ? serviceHost : "host";
         String endpoint = serviceEndpoint != null && !serviceEndpoint.isBlank()
                 ? serviceEndpoint
-                : serviceProtocol + "://" + (serviceHost != null && !serviceHost.isBlank() ? serviceHost : "host") + ":" + servicePort + serviceRoot;
+                : serviceProtocol + "://" + host + ":" + servicePort + serviceRoot;
         return "DiscoverableServiceInfo{" +
                 "serviceId='" + serviceId + '\'' +
                 ", instanceId='" + serviceInstanceId + '\'' +

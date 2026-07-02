@@ -191,25 +191,29 @@ public class RestApiServiceRegistrationLifecycleManagerImpl implements RestApiSe
             return "";
         }
         for (Field field : controllerClass.getDeclaredFields()) {
-            if (!isInjectField(field) || ComponentRegistry.class.isAssignableFrom(field.getType())) {
-                continue;
-            }
-            Object component = findComponentQuietly(componentRegistry, field.getType());
-            if (component == null) {
-                continue;
-            }
-            if (component instanceof ServiceDiscoveryMetadataProvider) {
-                String serviceName = ((ServiceDiscoveryMetadataProvider) component).getServiceName();
-                if (serviceName != null && !serviceName.isBlank()) {
-                    return serviceName;
-                }
-            }
-            String serviceNameFromInjectedApi = ServiceDiscoveryMetadataProvider.deriveServiceName(field.getType().getSimpleName());
-            if (!serviceNameFromInjectedApi.isBlank()) {
-                return serviceNameFromInjectedApi;
+            String serviceName = resolveServiceNameFromField(componentRegistry, field);
+            if (!serviceName.isBlank()) {
+                return serviceName;
             }
         }
         return "";
+    }
+
+    private String resolveServiceNameFromField(ComponentRegistry componentRegistry, Field field) {
+        if (!isInjectField(field) || ComponentRegistry.class.isAssignableFrom(field.getType())) {
+            return "";
+        }
+        Object component = findComponentQuietly(componentRegistry, field.getType());
+        if (component == null) {
+            return "";
+        }
+        if (component instanceof ServiceDiscoveryMetadataProvider provider) {
+            String serviceName = provider.getServiceName();
+            if (serviceName != null && !serviceName.isBlank()) {
+                return serviceName;
+            }
+        }
+        return ServiceDiscoveryMetadataProvider.deriveServiceName(field.getType().getSimpleName());
     }
 
     private boolean isInjectField(Field field) {

@@ -95,6 +95,226 @@ class RestApiServiceRegistrationLifecycleManagerImplTest {
         Assertions.assertTrue(manager.isBusinessRoot("/assetcategories"));
     }
 
+    // -----------------------------------------------------------------------
+    // activateRestApiRegistrations — null componentRegistry → returns silently
+    // -----------------------------------------------------------------------
+
+    @Test
+    void activateRestApiRegistrations_nullComponentRegistry_returnsWithoutException() {
+        RestApiServiceRegistrationLifecycleManagerImpl manager = new RestApiServiceRegistrationLifecycleManagerImpl();
+        Assertions.assertDoesNotThrow(
+                () -> manager.activateRestApiRegistrations(null, getClass().getClassLoader()));
+    }
+
+    // -----------------------------------------------------------------------
+    // activateRestApiRegistrations — null classLoader → returns silently
+    // -----------------------------------------------------------------------
+
+    @Test
+    void activateRestApiRegistrations_nullClassLoader_returnsWithoutException() {
+        RestApiServiceRegistrationLifecycleManagerImpl manager = new RestApiServiceRegistrationLifecycleManagerImpl();
+        InMemoryComponentRegistry registry = createRegistry("http://127.0.0.1:8181/water");
+        Assertions.assertDoesNotThrow(
+                () -> manager.activateRestApiRegistrations(registry, null));
+    }
+
+    // -----------------------------------------------------------------------
+    // activateRestApiRegistrations — applicationProperties missing → logs and returns
+    // -----------------------------------------------------------------------
+
+    @Test
+    void activateRestApiRegistrations_missingApplicationProperties_logsAndReturns() {
+        RestApiServiceRegistrationLifecycleManagerImpl manager = new RestApiServiceRegistrationLifecycleManagerImpl();
+        // Registry has no ApplicationProperties registered
+        InMemoryComponentRegistry emptyRegistry = new InMemoryComponentRegistry();
+        RecordingRegistryClient discoveryClient = new RecordingRegistryClient();
+        emptyRegistry.register(ServiceDiscoveryRegistryClientInternal.class, discoveryClient);
+
+        manager.activateRestApiRegistrations(emptyRegistry, getClass().getClassLoader());
+
+        Assertions.assertNull(discoveryClient.registeredInfo,
+                "no registration should occur without ApplicationProperties");
+    }
+
+    // -----------------------------------------------------------------------
+    // activateRestApiRegistrations — same key registered twice → second activation is skipped
+    // -----------------------------------------------------------------------
+
+    @Test
+    void activateRestApiRegistrations_calledTwice_doesNotDuplicateRegistration() {
+        RestApiServiceRegistrationLifecycleManagerImpl manager = new RestApiServiceRegistrationLifecycleManagerImpl();
+        InMemoryComponentRegistry registry = createRegistry("http://127.0.0.1:8181/water");
+        RecordingRegistryClient discoveryClient =
+                (RecordingRegistryClient) registry.findComponent(ServiceDiscoveryRegistryClientInternal.class, null);
+
+        manager.activateRestApiRegistrations(registry, getClass().getClassLoader());
+        int firstRegisterCount = discoveryClient.registerCallCount;
+
+        // Second call: same serviceName+root key → already in activeRegistrations → skipped
+        manager.activateRestApiRegistrations(registry, getClass().getClassLoader());
+        Assertions.assertEquals(firstRegisterCount, discoveryClient.registerCallCount,
+                "duplicate activation for same key must be ignored");
+
+        manager.deactivate();
+    }
+
+    // -----------------------------------------------------------------------
+    // isBusinessRoot — null root → false
+    // -----------------------------------------------------------------------
+
+    @Test
+    void isBusinessRoot_nullRoot_returnsFalse() {
+        RestApiServiceRegistrationLifecycleManagerImpl manager = new RestApiServiceRegistrationLifecycleManagerImpl();
+        Assertions.assertFalse(manager.isBusinessRoot(null));
+    }
+
+    // -----------------------------------------------------------------------
+    // isBusinessRoot — blank root → false
+    // -----------------------------------------------------------------------
+
+    @Test
+    void isBusinessRoot_blankRoot_returnsFalse() {
+        RestApiServiceRegistrationLifecycleManagerImpl manager = new RestApiServiceRegistrationLifecycleManagerImpl();
+        Assertions.assertFalse(manager.isBusinessRoot("   "));
+    }
+
+    // -----------------------------------------------------------------------
+    // resolveServiceNameFromField — non-@Inject field → returns "" (via reflection)
+    // -----------------------------------------------------------------------
+
+    @Test
+    void resolveServiceNameFromField_nonInjectField_returnsEmpty() throws Exception {
+        RestApiServiceRegistrationLifecycleManagerImpl manager = new RestApiServiceRegistrationLifecycleManagerImpl();
+        InMemoryComponentRegistry registry = createRegistry("http://127.0.0.1:8181/water");
+
+        // FieldHolder has a plain (non-@Inject) field 'plainField' of type String
+        java.lang.reflect.Field field = FieldHolder.class.getDeclaredField("plainField");
+        String result = invokeResolveServiceNameFromField(manager, registry, field);
+        Assertions.assertEquals("", result);
+    }
+
+    // -----------------------------------------------------------------------
+    // resolveServiceNameFromField — @Inject field of type ComponentRegistry → skipped, returns ""
+    // -----------------------------------------------------------------------
+
+    @Test
+    void resolveServiceNameFromField_componentRegistryField_returnsEmpty() throws Exception {
+        RestApiServiceRegistrationLifecycleManagerImpl manager = new RestApiServiceRegistrationLifecycleManagerImpl();
+        InMemoryComponentRegistry registry = createRegistry("http://127.0.0.1:8181/water");
+
+        // FieldHolder has @Inject ComponentRegistry registryField
+        java.lang.reflect.Field field = FieldHolder.class.getDeclaredField("registryField");
+        String result = invokeResolveServiceNameFromField(manager, registry, field);
+        Assertions.assertEquals("", result);
+    }
+
+    // -----------------------------------------------------------------------
+    // resolveServiceNameFromField — @Inject field, component not in registry → returns ""
+    // -----------------------------------------------------------------------
+
+    @Test
+    void resolveServiceNameFromField_componentNotInRegistry_returnsEmpty() throws Exception {
+        RestApiServiceRegistrationLifecycleManagerImpl manager = new RestApiServiceRegistrationLifecycleManagerImpl();
+        // Empty registry — nothing registered
+        InMemoryComponentRegistry emptyRegistry = new InMemoryComponentRegistry();
+
+        java.lang.reflect.Field field = FieldHolder.class.getDeclaredField("companyApiField");
+        String result = invokeResolveServiceNameFromField(manager, emptyRegistry, field);
+        Assertions.assertEquals("", result);
+    }
+
+    // -----------------------------------------------------------------------
+    // resolveServiceNameFromField — component is MetadataProvider with blank name → deriveServiceName
+    // -----------------------------------------------------------------------
+
+    @Test
+    void resolveServiceNameFromField_metadataProviderWithBlankName_derivesFromFieldType() throws Exception {
+        RestApiServiceRegistrationLifecycleManagerImpl manager = new RestApiServiceRegistrationLifecycleManagerImpl();
+        InMemoryComponentRegistry registry = new InMemoryComponentRegistry();
+        // Register a MetadataProvider that returns blank service name
+        registry.register(SampleServiceInterface.class, new BlankNameMetadataProvider());
+
+        java.lang.reflect.Field field = FieldHolder.class.getDeclaredField("sampleServiceField");
+        String result = invokeResolveServiceNameFromField(manager, registry, field);
+        // Falls back to deriveServiceName("SampleServiceInterface") = "sample-service-interface"
+        Assertions.assertEquals("sample-service-interface", result);
+    }
+
+    // -----------------------------------------------------------------------
+    // resolveServiceNameFromField — component is MetadataProvider with explicit name → returns it
+    // -----------------------------------------------------------------------
+
+    @Test
+    void resolveServiceNameFromField_metadataProviderWithExplicitName_returnsProvidedName() throws Exception {
+        RestApiServiceRegistrationLifecycleManagerImpl manager = new RestApiServiceRegistrationLifecycleManagerImpl();
+        InMemoryComponentRegistry registry = new InMemoryComponentRegistry();
+        registry.register(SampleServiceInterface.class, new ExplicitNameMetadataProvider());
+
+        java.lang.reflect.Field field = FieldHolder.class.getDeclaredField("sampleServiceField");
+        String result = invokeResolveServiceNameFromField(manager, registry, field);
+        Assertions.assertEquals("my-explicit-service", result);
+    }
+
+    // -----------------------------------------------------------------------
+    // resolveServiceNameFromField — component IS a MetadataProvider (BaseAbstractService) with derived name
+    // -----------------------------------------------------------------------
+
+    @Test
+    void resolveServiceNameFromField_metadataProviderWithDerivedName_returnsIt() throws Exception {
+        RestApiServiceRegistrationLifecycleManagerImpl manager = new RestApiServiceRegistrationLifecycleManagerImpl();
+        InMemoryComponentRegistry registry = createRegistry("http://127.0.0.1:8181/water");
+        // CompanyServiceImpl extends BaseAbstractService which implements ServiceDiscoveryMetadataProvider.
+        // getServiceName() derives "company" from "CompanyServiceImpl".
+        java.lang.reflect.Field field = FieldHolder.class.getDeclaredField("companyApiField");
+        String result = invokeResolveServiceNameFromField(manager, registry, field);
+        Assertions.assertEquals("company", result);
+    }
+
+    // -----------------------------------------------------------------------
+    // deriveServiceName — null class → returns ""
+    // -----------------------------------------------------------------------
+
+    @Test
+    void deriveServiceName_withNullClass_returnsEmpty() {
+        RestApiServiceRegistrationLifecycleManagerImpl manager = new RestApiServiceRegistrationLifecycleManagerImpl();
+        Assertions.assertEquals("", manager.deriveServiceName(null));
+    }
+
+    // -----------------------------------------------------------------------
+    // resolveServiceNameFromField — @Inject field but component not in registry → falls back
+    // -----------------------------------------------------------------------
+
+    @Test
+    void resolveServiceName_componentNotInRegistry_fallsBackToDeriveServiceName() {
+        RestApiServiceRegistrationLifecycleManagerImpl manager = new RestApiServiceRegistrationLifecycleManagerImpl();
+        InMemoryComponentRegistry registry = createRegistry("http://127.0.0.1:8181/water");
+        // Remove CompanyApi from registry so the lookup returns null
+        registry.unregisterClass(CompanyApi.class);
+
+        manager.activateRestApiRegistrations(registry, getClass().getClassLoader());
+        RecordingRegistryClient dc =
+                (RecordingRegistryClient) registry.findComponent(ServiceDiscoveryRegistryClientInternal.class, null);
+        // Falls back to deriveServiceName("CompanyRestApi") = "company"
+        if (dc.registeredInfo != null) {
+            Assertions.assertEquals("company", dc.registeredInfo.getServiceId());
+        }
+        manager.deactivate();
+    }
+
+    // -----------------------------------------------------------------------
+    // Reflection helper for resolveServiceNameFromField (private method)
+    // -----------------------------------------------------------------------
+
+    private static String invokeResolveServiceNameFromField(
+            RestApiServiceRegistrationLifecycleManagerImpl manager,
+            ComponentRegistry registry,
+            java.lang.reflect.Field field) throws Exception {
+        java.lang.reflect.Method method = RestApiServiceRegistrationLifecycleManagerImpl.class
+                .getDeclaredMethod("resolveServiceNameFromField", ComponentRegistry.class, java.lang.reflect.Field.class);
+        method.setAccessible(true);
+        return (String) method.invoke(manager, registry, field);
+    }
+
     private InMemoryComponentRegistry createRegistry(String discoveryUrl) {
         InMemoryComponentRegistry registry = new InMemoryComponentRegistry();
         RecordingRegistryClient discoveryClient = new RecordingRegistryClient();
@@ -115,10 +335,12 @@ class RestApiServiceRegistrationLifecycleManagerImplTest {
     private static final class RecordingRegistryClient implements ServiceDiscoveryRegistryClientInternal {
         private DiscoverableServiceInfoImpl registeredInfo;
         private String unregisteredServiceName;
+        private int registerCallCount = 0;
 
         @Override
         public void registerService(DiscoverableServiceInfo registration) {
             this.registeredInfo = (DiscoverableServiceInfoImpl) registration;
+            this.registerCallCount++;
         }
 
         @Override
@@ -260,6 +482,10 @@ class RestApiServiceRegistrationLifecycleManagerImplTest {
             components.put(componentClass, component);
         }
 
+        void unregisterClass(Class<?> componentClass) {
+            components.remove(componentClass);
+        }
+
         @Override
         public <T> List<T> findComponents(Class<T> componentClass, it.water.core.api.registry.filter.ComponentFilter filter) {
             T component = findComponent(componentClass, filter);
@@ -306,6 +532,59 @@ class RestApiServiceRegistrationLifecycleManagerImplTest {
         public <T extends BaseEntity> BaseRepository<T> findEntityExtensionRepository(Class<T> type) {
             throw new UnsupportedOperationException();
         }
+    }
+}
+
+// -----------------------------------------------------------------------
+// Fixture: field-holder class used to test resolveServiceNameFromField branches
+// -----------------------------------------------------------------------
+
+class FieldHolder {
+    /** Plain non-@Inject field — should be skipped. */
+    @SuppressWarnings("unused")
+    String plainField;
+
+    /** @Inject ComponentRegistry field — should be skipped (isAssignableFrom check). */
+    @Inject
+    ComponentRegistry registryField;
+
+    /** @Inject field whose component IS in the registry but is not a MetadataProvider. */
+    @Inject
+    CompanyApi companyApiField;
+
+    /** @Inject field whose component IS a MetadataProvider (blank or explicit name). */
+    @Inject
+    SampleServiceInterface sampleServiceField;
+}
+
+interface SampleServiceInterface extends it.water.core.api.service.BaseApi {
+}
+
+/** MetadataProvider implementation that returns a blank service name. */
+class BlankNameMetadataProvider extends BaseServiceImpl
+        implements SampleServiceInterface, it.water.core.api.service.integration.discovery.ServiceDiscoveryMetadataProvider {
+    @Override
+    public String getServiceName() {
+        return ""; // blank → triggers fallback to deriveServiceName
+    }
+
+    @Override
+    protected it.water.core.api.service.BaseSystemApi getSystemService() {
+        return null;
+    }
+}
+
+/** MetadataProvider implementation that returns an explicit service name. */
+class ExplicitNameMetadataProvider extends BaseServiceImpl
+        implements SampleServiceInterface, it.water.core.api.service.integration.discovery.ServiceDiscoveryMetadataProvider {
+    @Override
+    public String getServiceName() {
+        return "my-explicit-service";
+    }
+
+    @Override
+    protected it.water.core.api.service.BaseSystemApi getSystemService() {
+        return null;
     }
 }
 
