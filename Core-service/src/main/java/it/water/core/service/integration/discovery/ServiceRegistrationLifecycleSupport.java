@@ -86,10 +86,7 @@ public abstract class ServiceRegistrationLifecycleSupport {
             return;
         }
 
-        String resolvedDiscoveryUrl = defaultString(options.getDiscoveryUrl());
-        if (resolvedDiscoveryUrl.isBlank() && globalOptions != null) {
-            resolvedDiscoveryUrl = defaultString(globalOptions.getDiscoveryUrl());
-        }
+        String resolvedDiscoveryUrl = resolveDiscoveryUrl(options, globalOptions);
         if (resolvedDiscoveryUrl.isBlank()) {
             log.debug("Service registration disabled: discovery URL not configured (module nor global fallback)");
             return;
@@ -159,6 +156,14 @@ public abstract class ServiceRegistrationLifecycleSupport {
         if (!attemptRegistrationOnce()) {
             scheduleRetry(resolvedRetryInitialDelay);
         }
+    }
+
+    private String resolveDiscoveryUrl(ServiceRegistrationOptions options, ServiceDiscoveryGlobalOptions globalOptions) {
+        String url = defaultString(options.getDiscoveryUrl());
+        if (url.isBlank() && globalOptions != null) {
+            url = defaultString(globalOptions.getDiscoveryUrl());
+        }
+        return url;
     }
 
     protected void bootstrapRegister(ComponentRegistry componentRegistry,

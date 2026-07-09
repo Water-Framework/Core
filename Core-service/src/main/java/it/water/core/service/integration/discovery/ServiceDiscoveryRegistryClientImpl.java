@@ -54,6 +54,9 @@ public class ServiceDiscoveryRegistryClientImpl implements ServiceDiscoveryRegis
     private static final int DEFAULT_MAX_ATTEMPTS = 3;
     private static final long[] DEFAULT_RETRY_BACKOFF_MS = {2000L, 4000L, 8000L};
     private static final long DEFAULT_HTTP_TIMEOUT_SECONDS = 10L;
+    // Fixed ServiceDiscovery REST contract paths: the client must call exactly these
+    // endpoints, so they are intentionally not deployment-configurable (S1075 suppressed).
+    @SuppressWarnings("java:S1075")
     private static final String INTERNAL_API_PATH = "/internal/serviceregistration";
     private static final String REGISTER_API_PATH = INTERNAL_API_PATH + "/register";
     private static final String PUBLIC_API_PATH = "/serviceregistration";
@@ -334,6 +337,7 @@ public class ServiceDiscoveryRegistryClientImpl implements ServiceDiscoveryRegis
             String instanceId = rootNode.path("instanceId").asText("");
             String serviceHost = DiscoveryAddressUtils.extractHostFromEndpoint(endpoint);
             String servicePort = DiscoveryAddressUtils.extractPortFromEndpoint(endpoint);
+
             String serviceRoot = DiscoveryAddressUtils.extractRootFromEndpoint(endpoint, WATER_ROOT);
             return new DiscoverableServiceInfoImpl(protocol, servicePort, serviceName, instanceId, serviceRoot,
                     serviceVersion, serviceHost, endpoint);

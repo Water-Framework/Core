@@ -19,83 +19,313 @@ package it.water.core.service.integration.discovery;
 import it.water.core.api.bundle.ApplicationProperties;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
-import org.mockito.Mockito;
+import java.io.File;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Properties;
 
 class DefaultServiceDiscoveryGlobalOptionsImplTest {
 
-    @Test
-    void returnsFrameworkDefaultsWhenApplicationPropertiesAreMissing() {
-        DefaultServiceDiscoveryGlobalOptionsImpl options = new DefaultServiceDiscoveryGlobalOptionsImpl();
+    // ---------- minimal ApplicationProperties backed by a HashMap ----------
 
-        Assertions.assertEquals("", options.getDiscoveryUrl());
-        Assertions.assertEquals("", options.getDefaultHost());
-        Assertions.assertEquals(25L, options.getHeartbeatIntervalSeconds());
-        Assertions.assertEquals(30L, options.getRegistrationRetryInitialDelaySeconds());
-        Assertions.assertEquals(300L, options.getRegistrationRetryMaxDelaySeconds());
-        Assertions.assertEquals(10L, options.getHttpTimeoutSeconds());
-        Assertions.assertEquals(3, options.getRegistrationMaxAttempts());
-        Assertions.assertArrayEquals(new long[]{2000L, 4000L, 8000L}, options.getRegistrationRetryBackoffMs());
+    private static final class MapApplicationProperties implements ApplicationProperties {
+        private final Map<String, String> props;
+
+        MapApplicationProperties(Map<String, String> props) {
+            this.props = props;
+        }
+
+        @Override
+        public void setup() {
+        }
+
+        @Override
+        public Object getProperty(String key) {
+            return props.get(key);
+        }
+
+        @Override
+        public boolean containsKey(String key) {
+            return props.containsKey(key);
+        }
+
+        @Override
+        public void loadProperties(File file) {
+        }
+
+        @Override
+        public void loadProperties(Properties p) {
+        }
+
+        @Override
+        public void unloadProperties(File file) {
+        }
+
+        @Override
+        public void unloadProperties(Properties p) {
+        }
+    }
+
+    private static DefaultServiceDiscoveryGlobalOptionsImpl buildWith(Map<String, String> props) {
+        DefaultServiceDiscoveryGlobalOptionsImpl opts = new DefaultServiceDiscoveryGlobalOptionsImpl();
+        opts.setApplicationProperties(new MapApplicationProperties(props));
+        return opts;
+    }
+
+    private static DefaultServiceDiscoveryGlobalOptionsImpl buildEmpty() {
+        return buildWith(new HashMap<>());
+    }
+
+    private static DefaultServiceDiscoveryGlobalOptionsImpl buildNoProps() {
+        DefaultServiceDiscoveryGlobalOptionsImpl opts = new DefaultServiceDiscoveryGlobalOptionsImpl();
+        // no ApplicationProperties injected → all return defaults
+        return opts;
+    }
+
+    // -----------------------------------------------------------------------
+    // getDiscoveryUrl
+    // -----------------------------------------------------------------------
+
+    @Test
+    void getDiscoveryUrl_returnsConfiguredValue() {
+        Map<String, String> p = new HashMap<>();
+        p.put(ServiceDiscoveryGlobalConstants.PROP_DISCOVERY_URL, "http://discovery.example.com");
+        Assertions.assertEquals("http://discovery.example.com", buildWith(p).getDiscoveryUrl());
     }
 
     @Test
-    void readsAndNormalizesConfiguredProperties() {
-        DefaultServiceDiscoveryGlobalOptionsImpl options = new DefaultServiceDiscoveryGlobalOptionsImpl();
-        ApplicationProperties properties = Mockito.mock(ApplicationProperties.class);
-        Mockito.when(properties.getPropertyOrDefault(ServiceDiscoveryGlobalConstants.PROP_DISCOVERY_URL, ""))
-                .thenReturn(" http://localhost:8181/water ");
-        Mockito.when(properties.getPropertyOrDefault(ServiceDiscoveryGlobalConstants.PROP_DEFAULT_HOST, ""))
-                .thenReturn(" service-host ");
-        Mockito.when(properties.getPropertyOrDefault(ServiceDiscoveryGlobalConstants.PROP_HEARTBEAT_INTERVAL_SECONDS, 25L))
-                .thenReturn(11L);
-        Mockito.when(properties.getPropertyOrDefault(ServiceDiscoveryGlobalConstants.PROP_REGISTRATION_RETRY_INITIAL_DELAY_SECONDS, 30L))
-                .thenReturn(12L);
-        Mockito.when(properties.getPropertyOrDefault(ServiceDiscoveryGlobalConstants.PROP_REGISTRATION_RETRY_MAX_DELAY_SECONDS, 300L))
-                .thenReturn(90L);
-        Mockito.when(properties.getPropertyOrDefault(ServiceDiscoveryGlobalConstants.PROP_HTTP_TIMEOUT_SECONDS, 10L))
-                .thenReturn(7L);
-        Mockito.when(properties.getPropertyOrDefault(ServiceDiscoveryGlobalConstants.PROP_REGISTRATION_MAX_ATTEMPTS, 3L))
-                .thenReturn(5L);
-        Mockito.when(properties.getPropertyOrDefault(ServiceDiscoveryGlobalConstants.PROP_REGISTRATION_RETRY_BACKOFF_MS, ""))
-                .thenReturn("100, 200,300");
-        options.setApplicationProperties(properties);
-
-        Assertions.assertEquals("http://localhost:8181/water", options.getDiscoveryUrl());
-        Assertions.assertEquals("service-host", options.getDefaultHost());
-        Assertions.assertEquals(11L, options.getHeartbeatIntervalSeconds());
-        Assertions.assertEquals(12L, options.getRegistrationRetryInitialDelaySeconds());
-        Assertions.assertEquals(90L, options.getRegistrationRetryMaxDelaySeconds());
-        Assertions.assertEquals(7L, options.getHttpTimeoutSeconds());
-        Assertions.assertEquals(5, options.getRegistrationMaxAttempts());
-        Assertions.assertArrayEquals(new long[]{100L, 200L, 300L}, options.getRegistrationRetryBackoffMs());
+    void getDiscoveryUrl_returnsEmptyWhenNotConfigured() {
+        Assertions.assertEquals("", buildEmpty().getDiscoveryUrl());
     }
 
     @Test
-    void fallsBackToDefaultsForInvalidRegistrationAttemptsAndBackoff() {
-        DefaultServiceDiscoveryGlobalOptionsImpl options = new DefaultServiceDiscoveryGlobalOptionsImpl();
-        ApplicationProperties properties = Mockito.mock(ApplicationProperties.class);
-        Mockito.when(properties.getPropertyOrDefault(ServiceDiscoveryGlobalConstants.PROP_REGISTRATION_MAX_ATTEMPTS, 3L))
-                .thenReturn(0L);
-        Mockito.when(properties.getPropertyOrDefault(ServiceDiscoveryGlobalConstants.PROP_REGISTRATION_RETRY_BACKOFF_MS, ""))
-                .thenReturn("-1, 200");
-        options.setApplicationProperties(properties);
+    void getDiscoveryUrl_returnsEmptyWhenNoApplicationProperties() {
+        Assertions.assertEquals("", buildNoProps().getDiscoveryUrl());
+    }
 
-        Assertions.assertEquals(3, options.getRegistrationMaxAttempts());
-        Assertions.assertArrayEquals(new long[]{2000L, 4000L, 8000L}, options.getRegistrationRetryBackoffMs());
+    // -----------------------------------------------------------------------
+    // getDefaultHost
+    // -----------------------------------------------------------------------
 
-        Mockito.when(properties.getPropertyOrDefault(ServiceDiscoveryGlobalConstants.PROP_REGISTRATION_RETRY_BACKOFF_MS, ""))
-                .thenReturn("100,not-a-number");
-
-        Assertions.assertArrayEquals(new long[]{2000L, 4000L, 8000L}, options.getRegistrationRetryBackoffMs());
+    @Test
+    void getDefaultHost_returnsConfiguredValue() {
+        Map<String, String> p = new HashMap<>();
+        p.put(ServiceDiscoveryGlobalConstants.PROP_DEFAULT_HOST, "myhost.internal");
+        Assertions.assertEquals("myhost.internal", buildWith(p).getDefaultHost());
     }
 
     @Test
-    void returnsEmptyStringWhenConfiguredStringPropertyIsNull() {
-        DefaultServiceDiscoveryGlobalOptionsImpl options = new DefaultServiceDiscoveryGlobalOptionsImpl();
-        ApplicationProperties properties = Mockito.mock(ApplicationProperties.class);
-        Mockito.when(properties.getPropertyOrDefault(ServiceDiscoveryGlobalConstants.PROP_DISCOVERY_URL, ""))
-                .thenReturn(null);
-        options.setApplicationProperties(properties);
+    void getDefaultHost_returnsEmptyWhenNotConfigured() {
+        Assertions.assertEquals("", buildEmpty().getDefaultHost());
+    }
 
-        Assertions.assertEquals("", options.getDiscoveryUrl());
+    @Test
+    void getDefaultHost_returnsEmptyWhenNoApplicationProperties() {
+        Assertions.assertEquals("", buildNoProps().getDefaultHost());
+    }
+
+    // -----------------------------------------------------------------------
+    // getHeartbeatIntervalSeconds
+    // -----------------------------------------------------------------------
+
+    @Test
+    void getHeartbeatIntervalSeconds_returnsDefault25WhenNotConfigured() {
+        Assertions.assertEquals(25L, buildEmpty().getHeartbeatIntervalSeconds());
+    }
+
+    @Test
+    void getHeartbeatIntervalSeconds_returnsConfiguredValue() {
+        Map<String, String> p = new HashMap<>();
+        p.put(ServiceDiscoveryGlobalConstants.PROP_HEARTBEAT_INTERVAL_SECONDS, "60");
+        // getLongProperty delegates to ApplicationProperties.getPropertyOrDefault(key, long)
+        // which calls getProperty and parses to long
+        DefaultServiceDiscoveryGlobalOptionsImpl opts = new DefaultServiceDiscoveryGlobalOptionsImpl();
+        opts.setApplicationProperties(new ApplicationProperties() {
+            @Override public void setup() {}
+            @Override public Object getProperty(String key) { return "60"; }
+            @Override public boolean containsKey(String key) { return true; }
+            @Override public void loadProperties(File file) {}
+            @Override public void loadProperties(Properties pr) {}
+            @Override public void unloadProperties(File file) {}
+            @Override public void unloadProperties(Properties pr) {}
+        });
+        Assertions.assertEquals(60L, opts.getHeartbeatIntervalSeconds());
+    }
+
+    @Test
+    void getHeartbeatIntervalSeconds_returnsDefaultWhenNoApplicationProperties() {
+        Assertions.assertEquals(25L, buildNoProps().getHeartbeatIntervalSeconds());
+    }
+
+    // -----------------------------------------------------------------------
+    // getRegistrationRetryInitialDelaySeconds
+    // -----------------------------------------------------------------------
+
+    @Test
+    void getRegistrationRetryInitialDelaySeconds_returnsDefault30WhenNotConfigured() {
+        Assertions.assertEquals(30L, buildEmpty().getRegistrationRetryInitialDelaySeconds());
+    }
+
+    @Test
+    void getRegistrationRetryInitialDelaySeconds_returnsDefaultWhenNoApplicationProperties() {
+        Assertions.assertEquals(30L, buildNoProps().getRegistrationRetryInitialDelaySeconds());
+    }
+
+    // -----------------------------------------------------------------------
+    // getRegistrationRetryMaxDelaySeconds
+    // -----------------------------------------------------------------------
+
+    @Test
+    void getRegistrationRetryMaxDelaySeconds_returnsDefault300WhenNotConfigured() {
+        Assertions.assertEquals(300L, buildEmpty().getRegistrationRetryMaxDelaySeconds());
+    }
+
+    @Test
+    void getRegistrationRetryMaxDelaySeconds_returnsDefaultWhenNoApplicationProperties() {
+        Assertions.assertEquals(300L, buildNoProps().getRegistrationRetryMaxDelaySeconds());
+    }
+
+    // -----------------------------------------------------------------------
+    // getHttpTimeoutSeconds
+    // -----------------------------------------------------------------------
+
+    @Test
+    void getHttpTimeoutSeconds_returnsDefault10WhenNotConfigured() {
+        Assertions.assertEquals(10L, buildEmpty().getHttpTimeoutSeconds());
+    }
+
+    @Test
+    void getHttpTimeoutSeconds_returnsDefaultWhenNoApplicationProperties() {
+        Assertions.assertEquals(10L, buildNoProps().getHttpTimeoutSeconds());
+    }
+
+    // -----------------------------------------------------------------------
+    // getRegistrationMaxAttempts
+    // -----------------------------------------------------------------------
+
+    @Test
+    void getRegistrationMaxAttempts_returnsDefault3WhenNotConfigured() {
+        Assertions.assertEquals(3, buildEmpty().getRegistrationMaxAttempts());
+    }
+
+    @Test
+    void getRegistrationMaxAttempts_returnsDefaultWhenNoApplicationProperties() {
+        Assertions.assertEquals(3, buildNoProps().getRegistrationMaxAttempts());
+    }
+
+    @Test
+    void getRegistrationMaxAttempts_returnsDefault3WhenValueIsZero() {
+        // A stored value of 0 is invalid (<1) → must fall back to default 3
+        DefaultServiceDiscoveryGlobalOptionsImpl opts = new DefaultServiceDiscoveryGlobalOptionsImpl();
+        opts.setApplicationProperties(new ApplicationProperties() {
+            @Override public void setup() {}
+            @Override public Object getProperty(String key) { return "0"; }
+            @Override public boolean containsKey(String key) { return true; }
+            @Override public void loadProperties(File file) {}
+            @Override public void loadProperties(Properties pr) {}
+            @Override public void unloadProperties(File file) {}
+            @Override public void unloadProperties(Properties pr) {}
+        });
+        Assertions.assertEquals(3, opts.getRegistrationMaxAttempts());
+    }
+
+    @Test
+    void getRegistrationMaxAttempts_returnsDefault3WhenValueExceedsIntMax() {
+        // value > Integer.MAX_VALUE → must fall back to default 3
+        long tooBig = (long) Integer.MAX_VALUE + 1L;
+        DefaultServiceDiscoveryGlobalOptionsImpl opts = new DefaultServiceDiscoveryGlobalOptionsImpl();
+        opts.setApplicationProperties(new ApplicationProperties() {
+            @Override public void setup() {}
+            @Override public Object getProperty(String key) { return String.valueOf(tooBig); }
+            @Override public boolean containsKey(String key) { return true; }
+            @Override public void loadProperties(File file) {}
+            @Override public void loadProperties(Properties pr) {}
+            @Override public void unloadProperties(File file) {}
+            @Override public void unloadProperties(Properties pr) {}
+        });
+        Assertions.assertEquals(3, opts.getRegistrationMaxAttempts());
+    }
+
+    @Test
+    void getRegistrationMaxAttempts_returnsValidPositiveValue() {
+        DefaultServiceDiscoveryGlobalOptionsImpl opts = new DefaultServiceDiscoveryGlobalOptionsImpl();
+        opts.setApplicationProperties(new ApplicationProperties() {
+            @Override public void setup() {}
+            @Override public Object getProperty(String key) { return "5"; }
+            @Override public boolean containsKey(String key) { return true; }
+            @Override public void loadProperties(File file) {}
+            @Override public void loadProperties(Properties pr) {}
+            @Override public void unloadProperties(File file) {}
+            @Override public void unloadProperties(Properties pr) {}
+        });
+        Assertions.assertEquals(5, opts.getRegistrationMaxAttempts());
+    }
+
+    // -----------------------------------------------------------------------
+    // getRegistrationRetryBackoffMs
+    // -----------------------------------------------------------------------
+
+    @Test
+    void getRegistrationRetryBackoffMs_returnsDefaultWhenNotConfigured() {
+        long[] result = buildEmpty().getRegistrationRetryBackoffMs();
+        Assertions.assertArrayEquals(new long[]{2000L, 4000L, 8000L}, result);
+    }
+
+    @Test
+    void getRegistrationRetryBackoffMs_returnsDefaultWhenNoApplicationProperties() {
+        long[] result = buildNoProps().getRegistrationRetryBackoffMs();
+        Assertions.assertArrayEquals(new long[]{2000L, 4000L, 8000L}, result);
+    }
+
+    @Test
+    void getRegistrationRetryBackoffMs_parsesCommaSeparatedValues() {
+        Map<String, String> p = new HashMap<>();
+        p.put(ServiceDiscoveryGlobalConstants.PROP_REGISTRATION_RETRY_BACKOFF_MS, "500,1000,2000");
+        long[] result = buildWith(p).getRegistrationRetryBackoffMs();
+        Assertions.assertArrayEquals(new long[]{500L, 1000L, 2000L}, result);
+    }
+
+    @Test
+    void getRegistrationRetryBackoffMs_returnsDefaultOnNonNumericValue() {
+        Map<String, String> p = new HashMap<>();
+        p.put(ServiceDiscoveryGlobalConstants.PROP_REGISTRATION_RETRY_BACKOFF_MS, "500,bad,2000");
+        long[] result = buildWith(p).getRegistrationRetryBackoffMs();
+        Assertions.assertArrayEquals(new long[]{2000L, 4000L, 8000L}, result);
+    }
+
+    @Test
+    void getRegistrationRetryBackoffMs_returnsDefaultOnNegativeValue() {
+        Map<String, String> p = new HashMap<>();
+        p.put(ServiceDiscoveryGlobalConstants.PROP_REGISTRATION_RETRY_BACKOFF_MS, "500,-100,2000");
+        long[] result = buildWith(p).getRegistrationRetryBackoffMs();
+        Assertions.assertArrayEquals(new long[]{2000L, 4000L, 8000L}, result);
+    }
+
+    @Test
+    void getRegistrationRetryBackoffMs_returnsDefaultWhenBlankAfterTrim() {
+        Map<String, String> p = new HashMap<>();
+        p.put(ServiceDiscoveryGlobalConstants.PROP_REGISTRATION_RETRY_BACKOFF_MS, "   ");
+        long[] result = buildWith(p).getRegistrationRetryBackoffMs();
+        Assertions.assertArrayEquals(new long[]{2000L, 4000L, 8000L}, result);
+    }
+
+    @Test
+    void getRegistrationRetryBackoffMs_parsesSingleValue() {
+        Map<String, String> p = new HashMap<>();
+        p.put(ServiceDiscoveryGlobalConstants.PROP_REGISTRATION_RETRY_BACKOFF_MS, "1000");
+        long[] result = buildWith(p).getRegistrationRetryBackoffMs();
+        Assertions.assertArrayEquals(new long[]{1000L}, result);
+    }
+
+    // -----------------------------------------------------------------------
+    // getStringProperty: null value returned from ApplicationProperties → ""
+    // -----------------------------------------------------------------------
+
+    @Test
+    void getDiscoveryUrl_trimsWhitespaceFromConfiguredValue() {
+        Map<String, String> p = new HashMap<>();
+        p.put(ServiceDiscoveryGlobalConstants.PROP_DISCOVERY_URL, "  http://trimmed.example.com  ");
+        Assertions.assertEquals("http://trimmed.example.com", buildWith(p).getDiscoveryUrl());
+
     }
 }

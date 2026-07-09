@@ -20,18 +20,20 @@ import it.water.core.api.bundle.ApplicationProperties;
 import it.water.core.api.interceptors.OnDeactivate;
 import it.water.core.api.registry.ComponentRegistry;
 import it.water.core.api.service.integration.discovery.RestApiServiceRegistrationLifecycleManager;
+import it.water.core.api.service.integration.discovery.ServiceDiscoveryMetadataProvider;
 import it.water.core.api.service.rest.FrameworkRestApi;
 import it.water.core.api.service.rest.FrameworkRestController;
 import it.water.core.interceptors.annotations.FrameworkComponent;
+import it.water.core.interceptors.annotations.Inject;
 import org.atteo.classindex.ClassIndex;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.lang.annotation.Annotation;
+import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
-import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
 
@@ -71,7 +73,7 @@ public class RestApiServiceRegistrationLifecycleManagerImpl implements RestApiSe
             if (!isBusinessRoot(root)) {
                 return;
             }
-            String serviceName = deriveRestServiceName(restApiClass);
+            String serviceName = resolveServiceName(componentRegistry, restApiClass, controllerClass);
             if (serviceName.isBlank()) {
                 return;
             }
@@ -94,11 +96,11 @@ public class RestApiServiceRegistrationLifecycleManagerImpl implements RestApiSe
         activeRegistrations.clear();
     }
 
-    String deriveRestServiceName(Class<?> restApiClass) {
+    String deriveServiceName(Class<?> restApiClass) {
         if (restApiClass == null) {
             return "";
         }
-        return restApiClass.getSimpleName().toLowerCase(Locale.ROOT);
+        return ServiceDiscoveryMetadataProvider.deriveServiceName(restApiClass.getSimpleName());
     }
 
     boolean isBusinessRoot(String root) {
@@ -107,9 +109,8 @@ public class RestApiServiceRegistrationLifecycleManagerImpl implements RestApiSe
         }
         String normalizedRoot = DiscoveryAddressUtils.normalizeRoot(root);
         return !"/".equals(normalizedRoot)
+                && !normalizedRoot.startsWith("/api")
                 && !normalizedRoot.startsWith("/internal")
-                && !normalizedRoot.startsWith("/serviceregistration")
-                && !normalizedRoot.startsWith("/gateway")
                 && !normalizedRoot.startsWith("/proxy")
                 && !normalizedRoot.startsWith("/status");
     }
@@ -175,6 +176,48 @@ public class RestApiServiceRegistrationLifecycleManagerImpl implements RestApiSe
         log.debug("Skipping {} because @FrameworkRestController is not available at runtime",
                 controllerClass.getName());
         return null;
+    }
+
+    private String resolveServiceName(ComponentRegistry componentRegistry, Class<?> restApiClass, Class<?> controllerClass) {
+        String providedServiceName = resolveServiceNameFromController(componentRegistry, controllerClass);
+        if (!providedServiceName.isBlank()) {
+            return providedServiceName;
+        }
+        return deriveServiceName(restApiClass);
+    }
+
+    private String resolveServiceNameFromController(ComponentRegistry componentRegistry, Class<?> controllerClass) {
+        if (componentRegistry == null || controllerClass == null) {
+            return "";
+        }
+        for (Field field : controllerClass.getDeclaredFields()) {
+            String serviceName = resolveServiceNameFromField(componentRegistry, field);
+            if (!serviceName.isBlank()) {
+                return serviceName;
+            }
+        }
+        return "";
+    }
+
+    private String resolveServiceNameFromField(ComponentRegistry componentRegistry, Field field) {
+        if (!isInjectField(field) || ComponentRegistry.class.isAssignableFrom(field.getType())) {
+            return "";
+        }
+        Object component = findComponentQuietly(componentRegistry, field.getType());
+        if (component == null) {
+            return "";
+        }
+        if (component instanceof ServiceDiscoveryMetadataProvider provider) {
+            String serviceName = provider.getServiceName();
+            if (serviceName != null && !serviceName.isBlank()) {
+                return serviceName;
+            }
+        }
+        return ServiceDiscoveryMetadataProvider.deriveServiceName(field.getType().getSimpleName());
+    }
+
+    private boolean isInjectField(Field field) {
+        return field.isAnnotationPresent(Inject.class);
     }
 
     private <T> T findComponentQuietly(ComponentRegistry componentRegistry, Class<T> componentClass) {

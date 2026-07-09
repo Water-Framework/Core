@@ -49,7 +49,12 @@ public class PasswordHashServiceImpl implements PasswordHashService {
     private static final String PBKDF2_ALGORITHM = "PBKDF2WithHmacSHA256";
     private static final int SALT_BYTES = 16;
     private static final int KEY_BITS = 256;
-    private static final int DEFAULT_ITERATIONS = 210000;
+    //OWASP 2023 recommendation for PBKDF2-HMAC-SHA256
+    private static final int DEFAULT_ITERATIONS = 600000;
+    //#39 - iteration bounds. MIN guards against a too-weak configured/stored cost,
+    //MAX guards against a DoS where an absurd iteration count would stall the hashing thread.
+    private static final int MIN_ITERATIONS = 10000;
+    private static final int MAX_ITERATIONS = 5000000;
 
     //H8 - password hashing (PHC / PBKDF2) cost parameter
     private static final String PASSWORD_HASH_ITERATIONS = "water.security.password.hash.iterations";
@@ -71,11 +76,26 @@ public class PasswordHashServiceImpl implements PasswordHashService {
         if (raw == null)
             return DEFAULT_ITERATIONS;
         try {
-            return Integer.parseInt(raw.toString().trim());
+            //#39 - clamp the configured cost into [MIN,MAX] for the new-hash path:
+            //the property currently accepts values as low as 1, which would produce trivially weak hashes,
+            //and arbitrarily large values that could be abused to stall hashing.
+            return clampIterations(Integer.parseInt(raw.toString().trim()));
         } catch (NumberFormatException e) {
             log.warn("Invalid value for {} ('{}'), falling back to default {}", PASSWORD_HASH_ITERATIONS, raw, DEFAULT_ITERATIONS);
             return DEFAULT_ITERATIONS;
         }
+    }
+
+    private int clampIterations(int iterations) {
+        if (iterations < MIN_ITERATIONS) {
+            log.warn("Configured password hash iterations {} below minimum {}, clamping", iterations, MIN_ITERATIONS);
+            return MIN_ITERATIONS;
+        }
+        if (iterations > MAX_ITERATIONS) {
+            log.warn("Configured password hash iterations {} above maximum {}, clamping", iterations, MAX_ITERATIONS);
+            return MAX_ITERATIONS;
+        }
+        return iterations;
     }
 
     @Override
@@ -128,7 +148,22 @@ public class PasswordHashServiceImpl implements PasswordHashService {
         try {
             String[] parts = storedPhcHash.split("\\$");
             // ["", "pbkdf2-sha256", "i=<n>", base64Salt, base64Hash]
+            //#39 - fail-closed if the algorithm id does not match our PHC id: never parse a
+            //foreign algorithm (e.g. argon2id, scrypt) as PBKDF2-SHA256 and silently accept it.
+            if (parts.length < 5 || !PHC_ID.equals(parts[1])) {
+                log.warn("Unexpected PHC algorithm id, rejecting authentication");
+                return false;
+            }
             int iterations = parseIterations(parts[2]);
+            //#39 - VERIFY path: we must reproduce the digest with the hash's OWN stored iteration count,
+            //so we cannot clamp it (clamping would mismatch a legitimate legacy hash). Instead we
+            //fail-closed if the stored count is out of [MIN,MAX]: this blocks the DoS from an absurd
+            //poisoned count (e.g. i=2_000_000_000) while never breaking a real in-range legacy hash.
+            if (iterations < MIN_ITERATIONS || iterations > MAX_ITERATIONS) {
+                log.warn("Stored PHC iteration count {} out of accepted range [{},{}], rejecting authentication",
+                        iterations, MIN_ITERATIONS, MAX_ITERATIONS);
+                return false;
+            }
             byte[] salt = Base64.getDecoder().decode(parts[3]);
             byte[] expected = Base64.getDecoder().decode(parts[4]);
             byte[] actual = pbkdf2(clearTextPassword, salt, iterations);

@@ -120,13 +120,21 @@ public interface EncryptionUtil extends Service {
     /**
      * @param padding
      * @return
+     * @deprecated Exposes RSA in ECB mode and, when called with PKCS#1 v1.5 padding,
+     * the classic Bleichenbacher padding-oracle attack surface. Prefer the OAEP-SHA256
+     * default ({@link #getCipherRSAOAEPPAdding()}). Scheduled for removal.
      */
+    @Deprecated(since = "3.0.0", forRemoval = true)
     Cipher getCipherRSAECB(String padding) throws NoSuchPaddingException, NoSuchAlgorithmException, NoSuchProviderException;
 
     /**
      * @param ecb
      * @return
+     * @deprecated Uses RSA PKCS#1 v1.5 padding, which is vulnerable to Bleichenbacher
+     * padding-oracle attacks. Prefer the OAEP-SHA256 default ({@link #getCipherRSAOAEPPAdding()}).
+     * Scheduled for removal.
      */
+    @Deprecated(since = "3.0.0", forRemoval = true)
     Cipher getCipherRSAPKCS1Padding(boolean ecb);
 
     /**
@@ -288,4 +296,13 @@ public interface EncryptionUtil extends Service {
      * @return
      */
     byte[] generate16BytesSalt();
+
+    /**
+     * Generates a cryptographically secure random password of the requested length
+     * over a wide alphabet (upper/lower case letters, digits and a few symbols).
+     *
+     * @param length exact number of characters of the generated password
+     * @return the generated password
+     */
+    String generateRandomPassword(int length);
 }
