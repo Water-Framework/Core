@@ -49,4 +49,25 @@ public interface SecurityContext extends Service {
      */
     long getLoggedEntityId();
 
+    /**
+     * @return the id of the active company (tenant) for the current session, or null if not tenant-scoped
+     */
+    default Long getActiveCompanyId() {
+        return null;
+    }
+
+    /**
+     * @return the username of the admin/caller who impersonated this session, or null for a genuine login
+     */
+    default String getImpersonatedBy() {
+        return null;
+    }
+
+    /**
+     * @return true if the current session is an impersonation (a token minted by a caller acting as another user)
+     */
+    default boolean isImpersonated() {
+        return getImpersonatedBy() != null;
+    }
+
 }

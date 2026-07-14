@@ -17,13 +17,11 @@
 
 package it.water.core.security.model.principal;
 
-import lombok.AllArgsConstructor;
 import lombok.Getter;
 
 import java.io.Serializable;
 
 
-@AllArgsConstructor
 @Getter
 public class UserPrincipal implements java.security.Principal, Serializable {
     /**
@@ -33,4 +31,23 @@ public class UserPrincipal implements java.security.Principal, Serializable {
     private boolean isAdmin;
     private long loggedEntityId;
     private String issuer;
+    private Long companyId;
+    private String impersonatedBy;
+
+    public UserPrincipal(String name, boolean isAdmin, long loggedEntityId, String issuer) {
+        this(name, isAdmin, loggedEntityId, issuer, null);
+    }
+
+    public UserPrincipal(String name, boolean isAdmin, long loggedEntityId, String issuer, Long companyId) {
+        this(name, isAdmin, loggedEntityId, issuer, companyId, null);
+    }
+
+    public UserPrincipal(String name, boolean isAdmin, long loggedEntityId, String issuer, Long companyId, String impersonatedBy) {
+        this.name = name;
+        this.isAdmin = isAdmin;
+        this.loggedEntityId = loggedEntityId;
+        this.issuer = issuer;
+        this.companyId = companyId;
+        this.impersonatedBy = impersonatedBy;
+    }
 }

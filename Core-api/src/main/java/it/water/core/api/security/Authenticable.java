@@ -75,4 +75,18 @@ public interface Authenticable {
      * @return
      */
     Collection<Role> getRoles();
+
+    /**
+     * @return the active company (tenant) selected at login, or null when not tenant-scoped
+     */
+    default Long getActiveCompanyId() {
+        return null;
+    }
+
+    /**
+     * @return the username of the admin/caller who impersonated this session, or null for a genuine login
+     */
+    default String getImpersonatedBy() {
+        return null;
+    }
 }

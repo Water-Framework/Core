@@ -268,6 +268,66 @@ class SecurityTest implements Service {
     }
 
     /**
+     * Multitenancy Tassello 1 (see multitenancy-analysis-proposal.md, section 9):
+     * {@code WaterAbstractSecurityContext.getActiveCompanyId()} must reflect the companyId carried
+     * by the logged {@link UserPrincipal}, populated in {@code setLoggedPrincipals}.
+     * <ul>
+     *     <li>a {@link UserPrincipal} built with the new 5-arg constructor (companyId present)
+     *     propagates that value onto the security context;</li>
+     *     <li>a {@link UserPrincipal} built with the legacy 4-arg constructor (companyId absent)
+     *     keeps {@code getActiveCompanyId()} == null, i.e. backward compatible;</li>
+     *     <li>a security context with no logged {@link UserPrincipal} at all (null principals)
+     *     also returns null;</li>
+     *     <li>the bare {@code SecurityContext} default method (no {@code WaterAbstractSecurityContext}
+     *     involved) returns null as well, confirming the additive default is non-breaking.</li>
+     * </ul>
+     */
+    @Test
+    void testActiveCompanyIdPropagation() {
+        final Long ACTIVE_COMPANY_ID = 42L;
+
+        //UserPrincipal with an active company (5-arg ctor) -> propagated onto the security context
+        Set<Principal> principalsWithCompany = new HashSet<>();
+        principalsWithCompany.add(new UserPrincipal("tenantUser", false, 10, "test", ACTIVE_COMPANY_ID));
+        ExampleSecurityContext tenantContext = new ExampleSecurityContext(testPermissionManager, principalsWithCompany);
+        Assertions.assertEquals(ACTIVE_COMPANY_ID, tenantContext.getActiveCompanyId());
+
+        //UserPrincipal without an active company (legacy 4-arg ctor) -> null, backward compatible
+        Set<Principal> principalsLegacy = new HashSet<>();
+        principalsLegacy.add(new UserPrincipal("legacyUser", false, 11, "test"));
+        ExampleSecurityContext legacyContext = new ExampleSecurityContext(testPermissionManager, principalsLegacy);
+        Assertions.assertNull(legacyContext.getActiveCompanyId());
+
+        //No logged UserPrincipal at all (null principals) -> null
+        ExampleSecurityContext emptyContext = new ExampleSecurityContext(testPermissionManager, null);
+        Assertions.assertNull(emptyContext.getActiveCompanyId());
+
+        //Bare SecurityContext default method (no WaterAbstractSecurityContext involved) -> null
+        SecurityContext bareDefaultContext = new SecurityContext() {
+            @Override
+            public String getLoggedUsername() {
+                return null;
+            }
+
+            @Override
+            public boolean isLoggedIn() {
+                return false;
+            }
+
+            @Override
+            public boolean isAdmin() {
+                return false;
+            }
+
+            @Override
+            public long getLoggedEntityId() {
+                return 0;
+            }
+        };
+        Assertions.assertNull(bareDefaultContext.getActiveCompanyId());
+    }
+
+    /**
      * Testing encryption utils for all RSA algorithms
      */
     @Test
