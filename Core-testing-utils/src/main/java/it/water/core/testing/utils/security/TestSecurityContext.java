@@ -21,11 +21,13 @@ public class TestSecurityContext implements SecurityContext {
     private String loggedUserName;
     private boolean isAdmin;
     private long id;
+    private Long activeCompanyId;
 
-    private TestSecurityContext(String loggedUserName, boolean isAdmin, long id) {
+    private TestSecurityContext(String loggedUserName, boolean isAdmin, long id, Long activeCompanyId) {
         this.loggedUserName = loggedUserName;
         this.isAdmin = isAdmin;
         this.id = id;
+        this.activeCompanyId = activeCompanyId;
     }
 
     @Override
@@ -48,8 +50,18 @@ public class TestSecurityContext implements SecurityContext {
         return id;
     }
 
+    @Override
+    public Long getActiveCompanyId() {
+        return activeCompanyId;
+    }
+
     public static final TestSecurityContext createContext(long id, String username, boolean isAdmin) {
-        return new TestSecurityContext(username, isAdmin, id);
+        return new TestSecurityContext(username, isAdmin, id, null);
+    }
+
+    //tenant-aware overload: sets the active company on the test context (null = non-scoped)
+    public static final TestSecurityContext createContext(long id, String username, boolean isAdmin, Long activeCompanyId) {
+        return new TestSecurityContext(username, isAdmin, id, activeCompanyId);
     }
 
 }

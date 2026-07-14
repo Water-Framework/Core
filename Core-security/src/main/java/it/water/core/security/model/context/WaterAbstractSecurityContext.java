@@ -61,6 +61,10 @@ public abstract class WaterAbstractSecurityContext implements SecurityContext {
     @Getter
     private long loggedEntityId;
 
+    private Long activeCompanyId;
+
+    private String impersonatedBy;
+
     protected WaterAbstractSecurityContext(Set<java.security.Principal> loggedPrincipals) {
         this.setLoggedPrincipals(loggedPrincipals);
         this.permissionImplementation = SecurityConstants.PERMISSION_MANAGER_DEFAULT_IMPLEMENTATION;
@@ -88,6 +92,8 @@ public abstract class WaterAbstractSecurityContext implements SecurityContext {
                     this.loggedUser = p;
                     this.loggedEntityId = userPrincipal.getLoggedEntityId();
                     this.issuerClassName = userPrincipal.getIssuer();
+                    this.activeCompanyId = userPrincipal.getCompanyId();
+                    this.impersonatedBy = userPrincipal.getImpersonatedBy();
                 }
 
                 if (p instanceof RolePrincipal rolePrincipal) {
@@ -128,6 +134,22 @@ public abstract class WaterAbstractSecurityContext implements SecurityContext {
         return p.isAdmin();
     }
 
+
+    /**
+     * @return the active company (tenant) for the current session, or null if not tenant-scoped
+     */
+    @Override
+    public Long getActiveCompanyId() {
+        return this.activeCompanyId;
+    }
+
+    /**
+     * @return the username of the caller who impersonated this session, or null for a genuine login
+     */
+    @Override
+    public String getImpersonatedBy() {
+        return this.impersonatedBy;
+    }
 
     /**
      * Return information about user, if it is a user logged or not yet.
