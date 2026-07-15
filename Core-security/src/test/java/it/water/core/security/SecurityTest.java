@@ -268,7 +268,7 @@ class SecurityTest implements Service {
     }
 
     /**
-     * Multitenancy Tassello 1 (see multitenancy-analysis-proposal.md, section 9):
+     * Multitenancy Tassello 1 (see the `multitenancy-knowledge` skill, section 9):
      * {@code WaterAbstractSecurityContext.getActiveCompanyId()} must reflect the companyId carried
      * by the logged {@link UserPrincipal}, populated in {@code setLoggedPrincipals}.
      * <ul>

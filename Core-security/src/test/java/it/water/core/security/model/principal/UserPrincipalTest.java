@@ -19,7 +19,7 @@ import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
 /**
- * Multitenancy Tassello 1 (see multitenancy-analysis-proposal.md, section 9): unit tests for the
+ * Multitenancy Tassello 1 (see the `multitenancy-knowledge` skill, section 9): unit tests for the
  * additive {@code companyId} field on {@link UserPrincipal}.
  * <p>
  * Covers:

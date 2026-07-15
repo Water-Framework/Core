@@ -232,7 +232,7 @@ Core defines the tenant abstractions used framework-wide.
 - **Marker interfaces** (`it.water.core.api.entity.tenant`): `TenantResource` (single company — opaque nullable `Long companyId`, null = global) and `MultiTenantResource` (M:N, no column, resolved by a `TenantMembershipResolver`).
 - `SecurityContext.getActiveCompanyId()` and `getImpersonatedBy()` / `isImpersonated()` (additive default methods) — the single runtime carrier of the tenant/impersonation state, populated from the JWT claims via `UserPrincipal` / `WaterAbstractSecurityContext`.
 
-Deferred: company-aware role assignment/resolution and granular per-entity opt-out (see `multitenancy-analysis-proposal.md`).
+Deferred: company-aware role assignment/resolution and granular per-entity opt-out (see the `multitenancy-knowledge` skill).
 
 ## Dependencies
 
