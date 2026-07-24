@@ -13,8 +13,8 @@ import java.util.List;
  */
 public interface UserCompanyIntegrationClient extends EntityIntegrationClient {
 
-    User provisionUserForCompany(String name, String lastname, String username, String email,
-                                 String password, long companyId, boolean primary, boolean active);
+    User createUserForCompany(String name, String lastname, String username, String email,
+                              String password, long companyId, boolean primary, boolean active);
 
     List<Long> findCompanyIdsByUser(long userId);
 
