@@ -17,6 +17,7 @@ package it.water.core.service.integration.discovery;
 
 import com.sun.net.httpserver.HttpExchange;
 import com.sun.net.httpserver.HttpServer;
+import it.water.core.api.service.integration.discovery.DiscoverableServiceInfo;
 import it.water.core.api.service.integration.discovery.ServiceDiscoveryGlobalOptions;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Assertions;
@@ -42,7 +43,7 @@ class ServiceDiscoveryRegistryClientImplTest {
     void setUp() throws IOException {
         server = HttpServer.create(new InetSocketAddress(0), 0);
         server.createContext("/water/internal/serviceregistration", this::handleInternalDiscoveryRequest);
-        server.createContext("/water/api/serviceregistration", this::handlePublicDiscoveryRequest);
+        server.createContext("/water/serviceregistration", this::handlePublicDiscoveryRequest);
         server.start();
         serverPort = server.getAddress().getPort();
     }
@@ -78,6 +79,8 @@ class ServiceDiscoveryRegistryClientImplTest {
         Assertions.assertEquals("catalog-service", remoteInfo.getServiceId());
         Assertions.assertEquals("catalog-01", remoteInfo.getServiceInstanceId());
         Assertions.assertEquals("2.1.0", remoteInfo.getServiceVersion());
+        Assertions.assertEquals("remote-host", remoteInfo.getServiceHost());
+        Assertions.assertEquals("http://remote-host:8181/water", remoteInfo.getServiceEndpoint());
         Assertions.assertEquals("8181", remoteInfo.getServicePort());
         Assertions.assertEquals("/water", remoteInfo.getServiceRoot());
 
@@ -104,6 +107,73 @@ class ServiceDiscoveryRegistryClientImplTest {
     }
 
     @Test
+    void registerShouldLeaveInstanceUnregisteredWhenServerRejectsRequest() {
+        ServiceDiscoveryRegistryClientImpl client = new ServiceDiscoveryRegistryClientImpl();
+        client.setGlobalOptions(shortRetryOptions());
+        client.setup("http://localhost:" + serverPort + "/water", "9191");
+
+        DiscoverableServiceInfoImpl info = new DiscoverableServiceInfoImpl(
+                "http", "9191", "reject-service", "reject-01", "/reject", "1.0.0",
+                "public-host", null
+        );
+
+        client.registerService(info);
+
+        Assertions.assertFalse(client.isRegistered("reject-01"));
+    }
+
+    @Test
+    void registerShouldRejectUnsupportedServiceInfoImplementation() {
+        ServiceDiscoveryRegistryClientImpl client = new ServiceDiscoveryRegistryClientImpl();
+        client.setup("http://localhost:" + serverPort + "/water", "9191");
+
+        DiscoverableServiceInfo info = new DiscoverableServiceInfo() {
+            @Override
+            public String getServiceProtocol() {
+                return "http";
+            }
+
+            @Override
+            public String getServicePort() {
+                return "9191";
+            }
+
+            @Override
+            public String getServiceId() {
+                return "catalog-service";
+            }
+
+            @Override
+            public String getServiceInstanceId() {
+                return "catalog-unsupported";
+            }
+
+            @Override
+            public String getServiceRoot() {
+                return "/catalog";
+            }
+        };
+
+        Assertions.assertThrows(IllegalArgumentException.class, () -> client.registerService(info));
+    }
+
+    @Test
+    void unregisterShouldKeepRegistrationWhenServerReturnsError() {
+        ServiceDiscoveryRegistryClientImpl client = new ServiceDiscoveryRegistryClientImpl();
+        client.setup("http://localhost:" + serverPort + "/water", "9191");
+
+        DiscoverableServiceInfoImpl info = new DiscoverableServiceInfoImpl(
+                "http", "9191", "catalog-service", "error-01", "/catalog", "2.1.0",
+                "public-host", null
+        );
+        client.registerService(info);
+
+        client.unregisterService("error-service", "error-01");
+
+        Assertions.assertTrue(client.isRegistered("error-01"));
+    }
+
+    @Test
     void heartbeatReturnsTrueOn204AndFalseOn404() {
         ServiceDiscoveryRegistryClientImpl client = new ServiceDiscoveryRegistryClientImpl();
         client.setup("http://localhost:" + serverPort + "/water", "9191");
@@ -120,6 +190,14 @@ class ServiceDiscoveryRegistryClientImplTest {
     }
 
     @Test
+    void heartbeatShouldReturnFalseWhenServerReturnsError() {
+        ServiceDiscoveryRegistryClientImpl client = new ServiceDiscoveryRegistryClientImpl();
+        client.setup("http://localhost:" + serverPort + "/water", "9191");
+
+        Assertions.assertFalse(client.heartbeat("error-service", "error-instance"));
+    }
+
+    @Test
     void registerFailsWhenEndpointCannotBeResolved() {
         ServiceDiscoveryRegistryClientImpl client = new ServiceDiscoveryRegistryClientImpl();
         client.setup("http://localhost:" + serverPort + "/water", "9191");
@@ -133,17 +211,32 @@ class ServiceDiscoveryRegistryClientImplTest {
     }
 
     @Test
+    void getServiceInfoShouldUseWaterRootWhenDiscoveryUrlHasNoRoot() {
+        ServiceDiscoveryRegistryClientImpl client = new ServiceDiscoveryRegistryClientImpl();
+        client.setup("http://localhost:" + serverPort, "9191");
+
+        DiscoverableServiceInfoImpl remoteInfo = (DiscoverableServiceInfoImpl) client.getServiceInfo("42");
+
+        Assertions.assertNotNull(remoteInfo);
+        Assertions.assertEquals("catalog-service", remoteInfo.getServiceId());
+    }
+
+    @Test
     void getServiceInfoUsesStandardPortDefaults() {
         ServiceDiscoveryRegistryClientImpl client = new ServiceDiscoveryRegistryClientImpl();
         client.setup("http://localhost:" + serverPort + "/water", "9191");
 
         DiscoverableServiceInfoImpl httpInfo = (DiscoverableServiceInfoImpl) client.getServiceInfo("80");
         Assertions.assertNotNull(httpInfo);
+        Assertions.assertEquals("remote-host", httpInfo.getServiceHost());
+        Assertions.assertEquals("http://remote-host/water", httpInfo.getServiceEndpoint());
         Assertions.assertEquals("80", httpInfo.getServicePort());
         Assertions.assertEquals("/water", httpInfo.getServiceRoot());
 
         DiscoverableServiceInfoImpl httpsInfo = (DiscoverableServiceInfoImpl) client.getServiceInfo("443");
         Assertions.assertNotNull(httpsInfo);
+        Assertions.assertEquals("secure-host", httpsInfo.getServiceHost());
+        Assertions.assertEquals("https://secure-host/secure", httpsInfo.getServiceEndpoint());
         Assertions.assertEquals("443", httpsInfo.getServicePort());
         Assertions.assertEquals("/secure", httpsInfo.getServiceRoot());
     }
@@ -627,6 +720,10 @@ class ServiceDiscoveryRegistryClientImplTest {
         String path = exchange.getRequestURI().getPath();
         if ("POST".equals(method) && path.endsWith("/register")) {
             postBody.set(new String(exchange.getRequestBody().readAllBytes(), StandardCharsets.UTF_8));
+            if (postBody.get().contains("\"serviceName\":\"reject-service\"")) {
+                writeResponse(exchange, 500, "rejected");
+                return;
+            }
             writeResponse(exchange, 200, "{\"id\":42}");
             return;
         }
@@ -638,6 +735,11 @@ class ServiceDiscoveryRegistryClientImplTest {
         if ("DELETE".equals(method) && path.endsWith("/missing-service/missing-instance")) {
             deletePath.set(path);
             writeResponse(exchange, 204, "");
+            return;
+        }
+        if ("DELETE".equals(method) && path.endsWith("/error-service/error-01")) {
+            deletePath.set(path);
+            writeResponse(exchange, 500, "failed");
             return;
         }
         if ("PUT".equals(method) && path.endsWith("/heartbeat/catalog-service/catalog-01")) {
@@ -709,5 +811,49 @@ class ServiceDiscoveryRegistryClientImplTest {
         try (OutputStream os = exchange.getResponseBody()) {
             os.write(responseBytes);
         }
+    }
+
+    private ServiceDiscoveryGlobalOptions shortRetryOptions() {
+        return new ServiceDiscoveryGlobalOptions() {
+            @Override
+            public String getDiscoveryUrl() {
+                return "";
+            }
+
+            @Override
+            public String getDefaultHost() {
+                return "";
+            }
+
+            @Override
+            public long getHeartbeatIntervalSeconds() {
+                return 1L;
+            }
+
+            @Override
+            public long getRegistrationRetryInitialDelaySeconds() {
+                return 1L;
+            }
+
+            @Override
+            public long getRegistrationRetryMaxDelaySeconds() {
+                return 1L;
+            }
+
+            @Override
+            public long getHttpTimeoutSeconds() {
+                return 1L;
+            }
+
+            @Override
+            public int getRegistrationMaxAttempts() {
+                return 1;
+            }
+
+            @Override
+            public long[] getRegistrationRetryBackoffMs() {
+                return new long[]{0L};
+            }
+        };
     }
 }

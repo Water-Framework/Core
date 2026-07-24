@@ -36,6 +36,7 @@ import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
 
 import java.lang.reflect.Field;
+import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.net.http.HttpClient;
 import java.net.http.HttpResponse;
@@ -43,6 +44,8 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
 
 class ServiceRegistrationLifecycleSupportTest {
 
@@ -103,17 +106,15 @@ class ServiceRegistrationLifecycleSupportTest {
         FixedGlobalOptions globalOptions = new FixedGlobalOptions("http://127.0.0.1:8181/water", "127.0.0.1");
         InMemoryComponentRegistry registry = new InMemoryComponentRegistry();
         support.register(registry, options);
-        Thread.sleep(250L);
+        Assertions.assertFalse(client.awaitRegistration(250L, TimeUnit.MILLISECONDS));
         Assertions.assertNull(client.registeredInfo);
 
         registry.register(ServiceDiscoveryGlobalOptions.class, globalOptions);
         registry.register(ServiceDiscoveryRegistryClientInternal.class, client);
         registry.register(ServiceLivenessClient.class, livenessClient);
 
-        long timeoutAt = System.currentTimeMillis() + 2500L;
-        while (System.currentTimeMillis() < timeoutAt && client.registeredInfo == null) {
-            Thread.sleep(100L);
-        }
+        Assertions.assertTrue(client.awaitRegistration(2500L, TimeUnit.MILLISECONDS));
+        Assertions.assertTrue(livenessClient.awaitStart(2500L, TimeUnit.MILLISECONDS));
 
         Assertions.assertNotNull(client.registeredInfo);
         Assertions.assertNotNull(livenessClient.lastRegistration);
@@ -819,15 +820,30 @@ class ServiceRegistrationLifecycleSupportTest {
         Method method = ServiceRegistrationLifecycleSupport.class
                 .getDeclaredMethod("validateEndpointReachability", DiscoverableServiceInfoImpl.class);
         method.setAccessible(true);
-        return (Enum<?>) method.invoke(support, serviceInfo);
+        try {
+            return (Enum<?>) method.invoke(support, serviceInfo);
+        } catch (InvocationTargetException e) {
+            if (e.getCause() instanceof Exception cause) {
+                throw cause;
+            }
+            throw e;
+        }
     }
 
     @SuppressWarnings("unchecked")
     private static HttpClient mockHttpClientReturning(int statusCode) throws Exception {
+        return mockHttpClientReturning(statusCode, statusCode);
+    }
+
+    @SuppressWarnings("unchecked")
+    private static HttpClient mockHttpClientReturning(int firstStatusCode, int secondStatusCode) throws Exception {
         HttpClient httpClient = Mockito.mock(HttpClient.class);
-        HttpResponse<Void> response = Mockito.mock(HttpResponse.class);
-        Mockito.when(response.statusCode()).thenReturn(statusCode);
-        Mockito.when(httpClient.send(Mockito.any(), Mockito.any(HttpResponse.BodyHandler.class))).thenReturn(response);
+        HttpResponse<Void> firstResponse = Mockito.mock(HttpResponse.class);
+        HttpResponse<Void> secondResponse = Mockito.mock(HttpResponse.class);
+        Mockito.when(firstResponse.statusCode()).thenReturn(firstStatusCode);
+        Mockito.when(secondResponse.statusCode()).thenReturn(secondStatusCode);
+        Mockito.when(httpClient.send(Mockito.any(), Mockito.any(HttpResponse.BodyHandler.class)))
+                .thenReturn(firstResponse, secondResponse);
         return httpClient;
     }
 
@@ -902,14 +918,24 @@ class ServiceRegistrationLifecycleSupportTest {
         private DiscoverableServiceInfoImpl registeredInfo;
         private String unregisteredServiceName;
         private String unregisteredInstanceId;
+        private boolean throwOnUnregister;
+        private final CountDownLatch registrationLatch = new CountDownLatch(1);
 
         @Override
         public void registerService(DiscoverableServiceInfo registration) {
             this.registeredInfo = (DiscoverableServiceInfoImpl) registration;
+            registrationLatch.countDown();
+        }
+
+        private boolean awaitRegistration(long timeout, TimeUnit timeUnit) throws InterruptedException {
+            return registrationLatch.await(timeout, timeUnit);
         }
 
         @Override
         public void unregisterService(String serviceName, String instanceId) {
+            if (throwOnUnregister) {
+                throw new IllegalStateException("unregister failed");
+            }
             this.unregisteredServiceName = serviceName;
             this.unregisteredInstanceId = instanceId;
             if (registeredInfo != null && instanceId.equals(registeredInfo.getServiceInstanceId())) {
@@ -993,13 +1019,71 @@ class ServiceRegistrationLifecycleSupportTest {
 
     private static final class RecordingLivenessClient implements ServiceLivenessClient {
         private ServiceLivenessRegistration lastRegistration;
+        private ServiceLivenessListener lastListener;
         private boolean stopped;
+        private boolean throwOnStart;
+        private final CountDownLatch startLatch = new CountDownLatch(1);
 
         @Override
         public ServiceLivenessSession start(ServiceLivenessRegistration registration, ServiceLivenessListener listener) {
+            if (throwOnStart) {
+                throw new IllegalStateException("liveness failed");
+            }
             this.lastRegistration = registration;
+            this.lastListener = listener;
             this.stopped = false;
+            startLatch.countDown();
             return () -> stopped = true;
+        }
+
+        private boolean awaitStart(long timeout, TimeUnit timeUnit) throws InterruptedException {
+            return startLatch.await(timeout, timeUnit);
+        }
+    }
+
+    private static final class FixedClusterNodeOptions implements ClusterNodeOptions {
+        private final String nodeId;
+        private final String layer;
+        private final String ip;
+        private final String host;
+        private final boolean useIp;
+
+        private FixedClusterNodeOptions(String nodeId, String layer, String ip, String host, boolean useIp) {
+            this.nodeId = nodeId;
+            this.layer = layer;
+            this.ip = ip;
+            this.host = host;
+            this.useIp = useIp;
+        }
+
+        @Override
+        public boolean clusterModeEnabled() {
+            return true;
+        }
+
+        @Override
+        public String getNodeId() {
+            return nodeId;
+        }
+
+        @Override
+        public String getLayer() {
+            return layer;
+        }
+
+        @Override
+        public String getIp() {
+            return ip;
+        }
+
+        @Override
+        public String getHost() {
+            return host;
+        }
+
+        @Override
+        public boolean useIpInClusterRegistration() {
+            return useIp;
         }
     }
 

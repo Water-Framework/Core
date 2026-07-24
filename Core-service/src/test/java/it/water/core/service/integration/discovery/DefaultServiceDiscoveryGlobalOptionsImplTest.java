@@ -13,12 +13,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package it.water.core.service.integration.discovery;
 
 import it.water.core.api.bundle.ApplicationProperties;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
-
 import java.io.File;
 import java.util.HashMap;
 import java.util.Map;
@@ -326,5 +326,6 @@ class DefaultServiceDiscoveryGlobalOptionsImplTest {
         Map<String, String> p = new HashMap<>();
         p.put(ServiceDiscoveryGlobalConstants.PROP_DISCOVERY_URL, "  http://trimmed.example.com  ");
         Assertions.assertEquals("http://trimmed.example.com", buildWith(p).getDiscoveryUrl());
+
     }
 }

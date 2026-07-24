@@ -13,6 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package it.water.core.service.integration.discovery;
 
 import it.water.core.api.service.integration.discovery.DiscoverableServiceInfo;
@@ -370,5 +371,6 @@ class HttpHeartbeatServiceLivenessClientTest {
         @Override public long getHttpTimeoutSeconds() { return 10L; }
         @Override public int getRegistrationMaxAttempts() { return 3; }
         @Override public long[] getRegistrationRetryBackoffMs() { return new long[]{2000L, 4000L, 8000L}; }
+
     }
 }

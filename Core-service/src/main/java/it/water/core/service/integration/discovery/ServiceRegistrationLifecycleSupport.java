@@ -75,7 +75,7 @@ public abstract class ServiceRegistrationLifecycleSupport {
                               ServiceRegistrationOptions options,
                               ServiceDiscoveryGlobalOptions globalOptions,
                               ClusterNodeOptions clusterNodeOptions,
-                              ServiceLivenessClient livenessClient) {
+                              ServiceLivenessClient providedLivenessClient) {
         ServiceDiscoveryRegistryClientInternal effectiveClient = client != null ? client : this.client;
         if (effectiveClient == null) {
             log.warn("Service registration skipped: ServiceDiscoveryRegistryClient not available");
@@ -137,7 +137,7 @@ public abstract class ServiceRegistrationLifecycleSupport {
             this.client = effectiveClient;
             this.discoveryUrl = resolvedDiscoveryUrl;
             this.lastRegisteredServiceInfo = serviceInfo;
-            this.livenessClient = livenessClient;
+            this.livenessClient = providedLivenessClient;
             this.registeredServiceName = serviceName;
             this.registeredInstanceId = effectiveInstanceId;
             this.registrationRetryInitialDelaySeconds = resolvedRetryInitialDelay;
@@ -228,16 +228,16 @@ public abstract class ServiceRegistrationLifecycleSupport {
         ServiceDiscoveryGlobalOptions globalOptions = findComponentQuietly(componentRegistry, ServiceDiscoveryGlobalOptions.class);
         ServiceDiscoveryRegistryClientInternal discoveryClient = findComponentQuietly(componentRegistry, ServiceDiscoveryRegistryClientInternal.class);
         ClusterNodeOptions clusterNodeOptions = findComponentQuietly(componentRegistry, ClusterNodeOptions.class);
-        ServiceLivenessClient resolvedLivenessClient = findComponentQuietly(componentRegistry, ServiceLivenessClient.class);
+        ServiceLivenessClient runtimeLivenessClient = findComponentQuietly(componentRegistry, ServiceLivenessClient.class);
 
-        if (globalOptions == null || discoveryClient == null || resolvedLivenessClient == null) {
+        if (globalOptions == null || discoveryClient == null || runtimeLivenessClient == null) {
             log.debug("Service registration bootstrap still waiting for dependencies: globalOptions={}, client={}, livenessClient={}",
-                    globalOptions != null, discoveryClient != null, resolvedLivenessClient != null);
+                    globalOptions != null, discoveryClient != null, runtimeLivenessClient != null);
             return false;
         }
 
         cancelBootstrapRegistrationTaskLocked();
-        doRegister(discoveryClient, options, globalOptions, clusterNodeOptions, resolvedLivenessClient);
+        doRegister(discoveryClient, options, globalOptions, clusterNodeOptions, runtimeLivenessClient);
         return true;
     }
 
@@ -339,9 +339,9 @@ public abstract class ServiceRegistrationLifecycleSupport {
                 return EndpointValidationOutcome.REACHABLE;
             }
             return EndpointValidationOutcome.NOT_READY_OR_UNREACHABLE;
-        } catch (InterruptedException ie) {
+        } catch (InterruptedException e) {
             Thread.currentThread().interrupt();
-            log.debug("Endpoint reachability check interrupted for '{}'", endpoint);
+            log.debug("Endpoint reachability check interrupted for '{}': {}", endpoint, e.getMessage());
             return EndpointValidationOutcome.NOT_READY_OR_UNREACHABLE;
         } catch (Exception e) {
             log.debug("Endpoint reachability check skipped for '{}': {}", endpoint, e.getMessage());
