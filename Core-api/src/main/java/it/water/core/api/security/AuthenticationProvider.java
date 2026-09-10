@@ -52,6 +52,20 @@ public interface AuthenticationProvider extends Service {
     }
 
     /**
+     * Scopes the caller's own session to the given company: only {@code activeCompanyId} changes, the
+     * identity stays the caller's. Restricted to admin callers, trusting the requested company without
+     * a membership check. Additive and backward compatible: providers that do not support this inherit
+     * this default, which fails fast.
+     *
+     * @param callerUsername username of the authenticated admin requesting the company switch
+     * @param companyId      the company the caller wants to scope into
+     * @return the caller's own Authenticable with its active company set to companyId
+     */
+    default Authenticable assumeCompany(String callerUsername, Long companyId) {
+        throw new UnsupportedOperationException("Company selection not supported by this provider");
+    }
+
+    /**
      * Used to expose multiple authentication provider with different Issuers;
      *
      * @return
