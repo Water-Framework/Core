@@ -25,4 +25,13 @@ public interface UserCompanyIntegrationClient extends EntityIntegrationClient {
     List<Long> findUserIdsByCompany(long companyId);
 
     List<Long> findPrimaryUserIdsByCompany(long companyId);
+
+    /**
+     * Removes every user-company membership bound to the given company, leaving the
+     * associated users untouched. Idempotent: a company with no memberships is a no-op.
+     * Trusted inter-service operation: callers must enforce permissions beforehand.
+     *
+     * @param companyId opaque company id whose memberships must be removed
+     */
+    void removeMembershipsByCompany(long companyId);
 }
