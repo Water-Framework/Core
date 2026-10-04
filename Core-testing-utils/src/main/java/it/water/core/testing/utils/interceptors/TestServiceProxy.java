@@ -75,6 +75,9 @@ public class TestServiceProxy<S extends Service> extends WaterAbstractIntercepto
             throw new IllegalAccessException("Error while intercept method call for: " + proxy.getClass().getName() + " " + method.getName());
         } catch (InvocationTargetException e) {
             log.error("Invocation on proxy failed, please check exceptions!");
+            // mirrors the real runtimes: global interceptors are told about the failure, then it is
+            // rethrown unchanged
+            executeInterceptorOnErrorMethod(getService(), method, args, e.getTargetException());
             throw e.getTargetException();
         }
     }

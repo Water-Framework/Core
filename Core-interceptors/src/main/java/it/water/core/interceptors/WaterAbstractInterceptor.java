@@ -29,6 +29,7 @@ import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.lang.reflect.Type;
 import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 
 
 /**
@@ -38,6 +39,21 @@ import java.util.*;
 @NoArgsConstructor
 public abstract class WaterAbstractInterceptor<S extends Service> implements it.water.core.api.interceptors.Proxy {
     private static Logger log = LoggerFactory.getLogger(WaterAbstractInterceptor.class);
+
+    /**
+     * How long a resolved list of global interceptors stays valid. Deliberately short and not
+     * configurable: it only has to be long enough to keep the registry off the per-invocation path,
+     * while still letting a component registered later (OSGi bundles start in any order) become
+     * active on its own.
+     */
+    private static final long GLOBAL_INTERCEPTORS_CACHE_TTL_MILLIS = 1_000L;
+
+    /**
+     * Shared by every proxy: which global interceptors are registered depends on the registry, never
+     * on the instance, and a per-proxy cache would multiply the same entries by the number of
+     * components.
+     */
+    private static final Map<Class<?>, GlobalInterceptorsSnapshot> globalInterceptorsCache = new ConcurrentHashMap<>();
 
     //original service
     @Getter(AccessLevel.PROTECTED)
@@ -69,6 +85,27 @@ public abstract class WaterAbstractInterceptor<S extends Service> implements it.
     }
 
     /**
+     * Notifies the global interceptors that the invocation FAILED, in place of the after-hook. Runtimes
+     * must call it from their exception path and then rethrow: the hook observes, it never swallows.
+     * <p>
+     * Without this, an interceptor that opens per-call state in its before-hook (the traffic capture
+     * opens a span) would leak it on every exception, and every failure would be invisible to
+     * telemetry - the very calls worth investigating. Only the annotation-free interceptors are
+     * notified: the annotation-driven ones keep their historical success-only contract.
+     */
+    protected void executeInterceptorOnErrorMethod(S service, Method method, Object[] args, Throwable error) {
+        for (Object interceptor : resolveGlobalInterceptors(GlobalAfterMethodInterceptor.class)) {
+            try {
+                ((GlobalAfterMethodInterceptor) interceptor).interceptError(service, method, args, error);
+            } catch (Exception e) {
+                // a failing interceptor must never replace the business exception being propagated
+                log.warn("Global interceptor {} failed handling the error of {}.{}: {}",
+                        interceptor.getClass().getName(), service.getClass().getName(), method.getName(), e.getMessage(), e);
+            }
+        }
+    }
+
+    /**
      * Analyzes the method invocation searching for WaterInterceptorExecutor Annotation.
      *
      * @param method
@@ -80,8 +117,126 @@ public abstract class WaterAbstractInterceptor<S extends Service> implements it.
     protected void executeInterceptor(S service, Method method, Object[] args, Object result, @SuppressWarnings("rawtypes") Class<? extends MethodInterceptor> interceptorClass) throws NoSuchMethodException {
         interceptAnnotationsOnFields(service, method, args, result, interceptorClass);
         interceptAnnotationsOnMethod(service, method, args, result, interceptorClass);
+        interceptGlobally(service, method, args, result, interceptorClass);
     }
 
+    /**
+     * Runs the interceptors that apply to EVERY method, with no annotation opting in
+     * ({@link GlobalBeforeMethodInterceptor} / {@link GlobalAfterMethodInterceptor}).
+     * <p>
+     * What makes this affordable on a path that every call to every service walks through is the
+     * <b>cached resolution</b>: the registry is queried at most once per
+     * {@link #GLOBAL_INTERCEPTORS_CACHE_TTL_MILLIS} instead of once per invocation - a lookup is
+     * {@code getBeansOfType} plus a sort in Spring, which would be untenable here. The short TTL
+     * (rather than a permanent cache) is what lets a global interceptor registered late - the normal
+     * case in OSGi, where bundles start in any order - become active without a restart. With no global
+     * interceptor registered, which is the default deployment, the whole hook costs one map lookup.
+     * <p>
+     * <b>No filtering is applied here.</b> Every intercepted method is offered to the global
+     * interceptors, and each one decides what it cares about - the framework has no way to guess a
+     * meaningful scope for an arbitrary cross-cutting concern. Note that this means the two runtimes
+     * offer different sets: OSGi proxies interfaces only, whereas the Spring pointcut
+     * ({@code execution(* *(..)) && target(Service+)}) also matches the target's own methods. An
+     * implementation that must behave identically everywhere has to scope itself explicitly - the way
+     * the traffic capture does, by only accepting methods declared on Water's four architectural
+     * layers.
+     * <p>
+     * An interceptor that throws is isolated and logged: telemetry must never break business code.
+     */
+    @SuppressWarnings("rawtypes")
+    private void interceptGlobally(S service, Method method, Object[] args, Object result, Class<? extends MethodInterceptor> interceptorClass) {
+        boolean before = BeforeMethodInterceptor.class.isAssignableFrom(interceptorClass);
+        Class<?> globalType = before ? GlobalBeforeMethodInterceptor.class : GlobalAfterMethodInterceptor.class;
+        List<?> globalInterceptors = resolveGlobalInterceptors(globalType);
+        if (globalInterceptors.isEmpty()) {
+            return;
+        }
+        for (Object interceptor : globalInterceptors) {
+            try {
+                if (before) {
+                    ((GlobalBeforeMethodInterceptor) interceptor).interceptMethod(service, method, args);
+                } else {
+                    ((GlobalAfterMethodInterceptor) interceptor).interceptMethod(service, method, args, result);
+                }
+            } catch (Exception e) {
+                log.warn("Global interceptor {} failed on {}.{}: {}", interceptor.getClass().getName(),
+                        service.getClass().getName(), method.getName(), e.getMessage(), e);
+            }
+        }
+    }
+
+    /**
+     * Keeps the FIRST occurrence of each interceptor TYPE, discarding further instances of the same
+     * class.
+     * <p>
+     * A global interceptor normally declares two services - before and after are two interfaces on the
+     * same class - and the framework instantiates and registers the component once per declared
+     * service, so the registry hands back several DISTINCT instances of the same class (three, for the
+     * traffic capture). Running them all multiplies every downstream effect: one logical call produced
+     * three nested spans and three records, each pointing at the previous one as its parent - a call
+     * tree that looked deep while being the same hop reported repeatedly, with inflated depths.
+     * <p>
+     * Deduplicating by type rather than by reference is what actually fixes it, and it is sound for
+     * this contract: a global interceptor is a cross-cutting CONCERN, not a stateful participant -
+     * every instance of the same class would do exactly the same work. The trade-off is explicit: two
+     * deliberately different instances of the same interceptor class (e.g. registered with different
+     * component properties) would collapse into one. Use two classes if you need two behaviours.
+     * <p>
+     * The first occurrence wins, which preserves the registry's priority ordering.
+     */
+    private static List<?> deduplicateByType(List<?> interceptors) {
+        if (interceptors.size() < 2) {
+            return interceptors;
+        }
+        Set<Class<?>> seenTypes = new HashSet<>();
+        List<Object> unique = new ArrayList<>(interceptors.size());
+        for (Object interceptor : interceptors) {
+            if (seenTypes.add(interceptor.getClass())) {
+                unique.add(interceptor);
+            }
+        }
+        return unique;
+    }
+
+    /**
+     * Visible for testing: drops the cached global interceptors so a test can change what the registry
+     * returns without waiting out {@link #GLOBAL_INTERCEPTORS_CACHE_TTL_MILLIS}. Never call it from
+     * production code - the TTL is what keeps the registry off the per-invocation path.
+     */
+    static void clearGlobalInterceptorsCache() {
+        globalInterceptorsCache.clear();
+    }
+
+    /**
+     * @return the registered global interceptors of the given type, from the cache when it is still
+     * fresh; never {@code null}
+     */
+    private List<?> resolveGlobalInterceptors(Class<?> globalType) {
+        GlobalInterceptorsSnapshot snapshot = globalInterceptorsCache.get(globalType);
+        long now = System.nanoTime();
+        if (snapshot != null && now - snapshot.takenAtNanos < GLOBAL_INTERCEPTORS_CACHE_TTL_MILLIS * 1_000_000L) {
+            return snapshot.interceptors;
+        }
+        List<?> resolved = Collections.emptyList();
+        if (getComponentsRegistry() != null) {
+            try {
+                List<?> found = getComponentsRegistry().findComponents(globalType, null);
+                if (found != null) {
+                    resolved = deduplicateByType(found);
+                }
+            } catch (Exception e) {
+                // Exception, not just NoComponentRegistryFoundException: this runs on every service
+                // call INCLUDING the ones the container makes while it is still wiring itself up, when
+                // the registry may not be usable yet - SpringComponentRegistry throws a raw NPE if its
+                // ApplicationContext has not been injected, and letting that escape aborted the whole
+                // Spring context startup. A global interceptor must never break the caller, least of
+                // all the bootstrap. The short cache TTL makes the next call retry.
+                log.debug("Global interceptors of type {} not resolvable (yet): {}", globalType.getName(), e.getMessage());
+            }
+        }
+        globalInterceptorsCache.put(globalType, new GlobalInterceptorsSnapshot(resolved, now));
+        return resolved;
+    }
 
     /**
      * Returns the original component generic interfaces
@@ -270,4 +425,21 @@ public abstract class WaterAbstractInterceptor<S extends Service> implements it.
         Field[] fields = new Field[fieldsList.size()];
         return fieldsList.toArray(fields);
     }
+
+    /**
+     * @Author Aristide Cittadino
+     * Immutable list of resolved global interceptors plus the instant it was taken, replaced as a
+     * whole so a reader never observes a half-updated cache.
+     */
+    private static final class GlobalInterceptorsSnapshot {
+
+        private final List<?> interceptors;
+        private final long takenAtNanos;
+
+        private GlobalInterceptorsSnapshot(List<?> interceptors, long takenAtNanos) {
+            this.interceptors = interceptors;
+            this.takenAtNanos = takenAtNanos;
+        }
+    }
+
 }

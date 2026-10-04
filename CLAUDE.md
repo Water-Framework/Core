@@ -120,6 +120,90 @@ public interface PermissionManager extends Service {
 }
 ```
 
+## Traffic Capture (telemetry)
+
+Off by default. Two switches, both in `Core-service/src/main/resources/it.water.application.properties`:
+
+| Property | Default | Effect |
+|---|---|---|
+| `water.traffic.enabled` | `false` | master switch of the reporter: with this off nothing is ever reported |
+| `water.traffic.s2s.enabled` | `false` | Service-to-Service capture |
+| `water.traffic.s2s.exclude` | *(empty)* | comma-separated `Class` or `Class#method` prefixes to exclude |
+| `water.traffic.events.*` | see file | CRUD/domain-event capture (opt-in whitelist, captures nothing by default) |
+| `water.traffic.rest.*` | enabled | inbound REST capture |
+
+### The S2S capture is opt-out, within a fixed scope
+
+Once enabled it reports **every method declared by one of the four architectural layers** —
+`RestApi`, `BaseApi`, `BaseSystemApi`, `BaseRepository` — because those are exactly the boundaries a
+request crosses. The output is therefore the FLOW of a request (REST → Api → SystemApi → repository),
+not a log of every call in the process. Anything else is out of scope by construction: a component's
+own helper interfaces, any plain `Service`, the framework's plumbing, and the traffic pipeline itself.
+
+The scope is per **method**, not per component: a class that sits on a layer and also exposes methods
+of its own does not get those reported.
+
+```java
+@NoTraffic                              // on a method, or on a type for all of its methods
+public String hotAccessor() { ... }
+
+@ReportTraffic(operation = "lend")      // does NOT enable capture: only renames the operation
+public void lendBook(long id) { ... }
+```
+
+Records carry `parentId` + `depth`, so nested calls form a call tree instead of a flat set of records
+sharing a `correlationId`. A failed call is captured too, with `outcome=ERROR` plus `errorType` /
+`errorMessage`, and the exception reaches the caller unchanged.
+
+### Recommended configuration when you turn it on
+
+The defaults ship everything OFF on purpose — the pipeline is additive and must not change anyone's
+performance profile without an explicit choice. A sensible starting point for a deployment that wants
+request flows:
+
+```properties
+water.traffic.enabled=true            # master switch
+water.traffic.s2s.enabled=true        # flow across the four layers
+water.traffic.events.enabled=false    # CRUD events: redundant here, the repository layer is
+                                      # already captured by the S2S hop
+water.traffic.sampling.rate=0.1       # thin out per correlationId: a whole request tree is kept
+                                      # or dropped together, never half of it
+water.events.listeners.cache.ttl.ms=1000   # only when components do not change after startup
+```
+
+`water.traffic.payload.capture` stays `false`: payloads are never captured unless explicitly opted in.
+
+### Is it working? Ask the counters
+
+`TrafficReporterStats` (ingress) and `TrafficPublisherStats` (egress) are resolvable from the registry
+and answer the question a silent pipeline always raises:
+
+| Symptom | Look at |
+|---|---|
+| `recordsReceived` is 0 | the capture: switch off, method outside the four layers, or excluded |
+| received but not `recordsReported` | the sampling rate |
+| reported but nothing arrives downstream | the publisher (`droppedOverflow`, `queueSize`) |
+| `recordsFailed` > 0 | a defect: failures are swallowed to protect the caller, this is where they surface |
+
+### Writing a global interceptor
+
+`GlobalBeforeMethodInterceptor` / `GlobalAfterMethodInterceptor` (in `Core-api`) are invoked on
+**every** intercepted method, with no annotation opting in. Three rules, learned the hard way:
+
+- **Scope yourself explicitly.** The framework offers every method and does not filter. OSGi proxies
+  interfaces only while the Spring pointcut also matches the target's own methods, so an unscoped
+  implementation behaves differently per runtime — and since Water's own interceptors are `Service`s
+  that the chain invokes while dispatching, it will also end up observing the machinery observing it.
+- **Be cheap.** You are on the hottest path in the framework. Short-circuit on your own configuration
+  before doing anything; prefer a property read to a registry lookup.
+- **Never throw.** Not even indirectly: the hook runs on the calls a container makes while still
+  wiring itself, where a registry lookup can fail with a raw NPE. Absorb everything.
+
+Note that a global interceptor declaring both services is instantiated once per declared service, so
+the registry returns several distinct instances of it; `WaterAbstractInterceptor` deduplicates them
+**by class** before dispatching. Two deliberately different instances of the same interceptor class
+would collapse into one — use two classes if you need two behaviours.
+
 ## Interceptor Annotations
 
 ```java
