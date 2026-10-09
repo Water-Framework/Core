@@ -42,8 +42,11 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.crypto.*;
+import javax.crypto.spec.GCMParameterSpec;
 import javax.crypto.spec.IvParameterSpec;
+import javax.crypto.spec.OAEPParameterSpec;
 import javax.crypto.spec.PBEKeySpec;
+import javax.crypto.spec.PSource;
 import javax.crypto.spec.SecretKeySpec;
 import javax.security.auth.x500.X500Principal;
 import javax.security.auth.x500.X500PrivateCredential;
@@ -57,10 +60,13 @@ import java.security.cert.Certificate;
 import java.security.cert.X509Certificate;
 import java.security.spec.InvalidKeySpecException;
 import java.security.spec.KeySpec;
+import java.security.spec.MGF1ParameterSpec;
 import java.security.spec.PKCS8EncodedKeySpec;
 import java.security.spec.X509EncodedKeySpec;
+import java.util.Arrays;
 import java.util.Base64;
 import java.util.Date;
+import java.util.regex.Pattern;
 
 
 /**
@@ -72,6 +78,28 @@ public class WaterEncryprionUtilImpl implements EncryptionUtil {
     private final Logger log = LoggerFactory.getLogger(WaterEncryprionUtilImpl.class.getName());
     private static final long MILLIS_PER_DAY = 86400000L;
     private static final String SHA_WITH_RSA_ENC_ALGORITHM = "SHA256withRSA";
+    //AEAD (AES-256-GCM) constants: output = version(1) || iv(12) || ciphertext+tag
+    private static final byte AEAD_VERSION_AES256_GCM = 0x01;
+    private static final int AEAD_KEY_LENGTH = 32;
+    private static final int AEAD_IV_LENGTH = 12;
+    private static final int AEAD_TAG_BITS = 128;
+    private static final int AEAD_HEADER_LENGTH = 1 + AEAD_IV_LENGTH;
+    private static final int AEAD_MIN_SEALED_LENGTH = AEAD_HEADER_LENGTH + AEAD_TAG_BITS / 8;
+    private static final String AEAD_TRANSFORMATION = "AES/GCM/NoPadding";
+    private static final String AEAD_OPEN_ERROR = "Unable to open sealed data";
+    //RSA-OAEP key wrapping with explicit SHA-256 / MGF1-SHA-256 parameters (provider independent)
+    private static final String RSA_OAEP_TRANSFORMATION = "RSA/ECB/OAEPPadding";
+    private static final String KEY_UNWRAP_ERROR = "Unable to unwrap key";
+    //Named keystores: water.keystore.<name>.file|password|key.password|type
+    private static final String KEYSTORE_PROPERTY_PREFIX = "water.keystore.";
+    //PKCS12 by default: named keystores may also hold secret (symmetric) key entries, which JKS cannot store
+    private static final String DEFAULT_NAMED_KEYSTORE_TYPE = "PKCS12";
+    //Server keystore type: optional override, JKS kept as default for backward compatibility
+    private static final String SERVER_KEYSTORE_TYPE_PROPERTY = "water.keystore.type";
+    private static final String DEFAULT_SERVER_KEYSTORE_TYPE = "JKS";
+    private static final String SERVER_KEYSTORE_LABEL = "server";
+    private static final Pattern KEYSTORE_NAME_PATTERN = Pattern.compile("[A-Za-z0-9_-]+");
+    private static final SecureRandom SECURE_RANDOM = new SecureRandom();
     @Inject
     @Setter
     private ApplicationProperties props;
@@ -95,7 +123,16 @@ public class WaterEncryprionUtilImpl implements EncryptionUtil {
      */
 
     public String getServerKeystoreFilePath() {
-        String filePath = props.getProperty("water.keystore.file").toString();
+        return resolveKeystoreFilePath(props.getProperty("water.keystore.file").toString());
+    }
+
+    /**
+     * Resolves a keystore location, supporting the "classpath:" prefix.
+     *
+     * @param filePath configured location
+     * @return the file system path, or empty string if not configured / not found on the classpath
+     */
+    private String resolveKeystoreFilePath(String filePath) {
         if (filePath == null || filePath.isEmpty()) return "";
         if (filePath.toLowerCase().startsWith("classpath:")) {
             filePath = filePath.substring("classpath:".length());
@@ -119,6 +156,20 @@ public class WaterEncryprionUtilImpl implements EncryptionUtil {
 
     public String getServerKeystoreAlias() {
         return props.getProperty("water.keystore.alias").toString();
+    }
+
+    /**
+     * Single resolution point of the server keystore type.
+     *
+     * @return the value of {@code water.keystore.type}, or JKS when not set / blank (backward compatible default)
+     */
+    private String getServerKeystoreType() {
+        return resolveKeystoreType(props.getPropertyOrDefault(SERVER_KEYSTORE_TYPE_PROPERTY, DEFAULT_SERVER_KEYSTORE_TYPE), DEFAULT_SERVER_KEYSTORE_TYPE);
+    }
+
+    private String resolveKeystoreType(String configuredType, String defaultType) {
+        if (configuredType == null || configuredType.isBlank()) return defaultType;
+        return configuredType.trim();
     }
 
     /**
@@ -185,7 +236,7 @@ public class WaterEncryprionUtilImpl implements EncryptionUtil {
      */
     public Certificate getServerRootCert() throws PEMException {
         try (FileInputStream fis = new FileInputStream(getServerKeystoreFilePath())) {
-            KeyStore keystore = KeyStore.getInstance("JKS");
+            KeyStore keystore = KeyStore.getInstance(getServerKeystoreType());
             keystore.load(fis, getServerKeystorePassword().toCharArray());
             return keystore.getCertificate(getServerKeystoreAlias());
         } catch (Exception e) {
@@ -198,7 +249,7 @@ public class WaterEncryprionUtilImpl implements EncryptionUtil {
      */
     public KeyPair getServerKeyPair() {
         try (FileInputStream fis = new FileInputStream(getServerKeystoreFilePath())) {
-            KeyStore keystore = KeyStore.getInstance("JKS");
+            KeyStore keystore = KeyStore.getInstance(getServerKeystoreType());
             keystore.load(fis, getServerKeystorePassword().toCharArray());
             String alias = getServerKeystoreAlias();
             Key key = keystore.getKey(alias, getServerKeyPassword().toCharArray());
@@ -717,6 +768,249 @@ public class WaterEncryprionUtilImpl implements EncryptionUtil {
             sb.append(alphabet.charAt(random.nextInt(alphabet.length())));
         }
         return sb.toString();
+    }
+
+    /**
+     * AES-256-GCM authenticated encryption.
+     * Output: version(1 byte) || iv(12 bytes) || ciphertext+tag. The version byte is authenticated as a prefix of the AAD.
+     *
+     * @param key       32 bytes AES key
+     * @param plaintext data to protect
+     * @param aad       additional authenticated data (null = empty)
+     * @return sealed bytes
+     */
+    @Override
+    public byte[] sealAead(byte[] key, byte[] plaintext, byte[] aad) {
+        validateAeadKey(key);
+        if (plaintext == null)
+            throw new IllegalArgumentException("Plaintext must not be null");
+        byte[] iv = new byte[AEAD_IV_LENGTH];
+        SECURE_RANDOM.nextBytes(iv);
+        try {
+            Cipher cipher = Cipher.getInstance(AEAD_TRANSFORMATION);
+            cipher.init(Cipher.ENCRYPT_MODE, new SecretKeySpec(key, "AES"), new GCMParameterSpec(AEAD_TAG_BITS, iv));
+            updateAeadAad(cipher, AEAD_VERSION_AES256_GCM, aad);
+            byte[] cipherTextAndTag = cipher.doFinal(plaintext);
+            byte[] sealed = new byte[AEAD_HEADER_LENGTH + cipherTextAndTag.length];
+            sealed[0] = AEAD_VERSION_AES256_GCM;
+            System.arraycopy(iv, 0, sealed, 1, AEAD_IV_LENGTH);
+            System.arraycopy(cipherTextAndTag, 0, sealed, AEAD_HEADER_LENGTH, cipherTextAndTag.length);
+            return sealed;
+        } catch (GeneralSecurityException e) {
+            throw new WaterRuntimeException("Unable to seal data", e);
+        }
+    }
+
+    /**
+     * Verifies and decrypts data produced by {@link #sealAead(byte[], byte[], byte[])}.
+     * Every failure on the sealed data produces the same generic message (no oracle on the failure reason).
+     *
+     * @param key    32 bytes AES key
+     * @param sealed sealed bytes
+     * @param aad    additional authenticated data used when sealing (null = empty)
+     * @return plaintext
+     */
+    @Override
+    public byte[] openAead(byte[] key, byte[] sealed, byte[] aad) {
+        validateAeadKey(key);
+        if (sealed == null)
+            throw new IllegalArgumentException("Sealed data must not be null");
+        if (sealed.length < AEAD_MIN_SEALED_LENGTH || sealed[0] != AEAD_VERSION_AES256_GCM)
+            throw new WaterRuntimeException(AEAD_OPEN_ERROR);
+        try {
+            Cipher cipher = Cipher.getInstance(AEAD_TRANSFORMATION);
+            cipher.init(Cipher.DECRYPT_MODE, new SecretKeySpec(key, "AES"), new GCMParameterSpec(AEAD_TAG_BITS, sealed, 1, AEAD_IV_LENGTH));
+            updateAeadAad(cipher, sealed[0], aad);
+            return cipher.doFinal(sealed, AEAD_HEADER_LENGTH, sealed.length - AEAD_HEADER_LENGTH);
+        } catch (AEADBadTagException e) {
+            //wrong key, wrong aad or tampered data: no cause attached, nothing to leak
+            throw new WaterRuntimeException(AEAD_OPEN_ERROR);
+        } catch (GeneralSecurityException e) {
+            throw new WaterRuntimeException(AEAD_OPEN_ERROR, e);
+        }
+    }
+
+    /**
+     * Wraps key material with RSA-OAEP (SHA-256, MGF1-SHA-256).
+     *
+     * @param publicKey   RSA public key
+     * @param keyMaterial key bytes to wrap
+     * @return wrapped key
+     */
+    @Override
+    public byte[] wrapKeyWithRSAOAEP(PublicKey publicKey, byte[] keyMaterial) {
+        if (publicKey == null)
+            throw new IllegalArgumentException("Public key must not be null");
+        if (keyMaterial == null || keyMaterial.length == 0)
+            throw new IllegalArgumentException("Key material must not be empty");
+        try {
+            Cipher cipher = Cipher.getInstance(RSA_OAEP_TRANSFORMATION);
+            cipher.init(Cipher.ENCRYPT_MODE, publicKey, rsaOaepSha256Parameters());
+            return cipher.doFinal(keyMaterial);
+        } catch (GeneralSecurityException e) {
+            throw new WaterRuntimeException("Unable to wrap key", e);
+        }
+    }
+
+    /**
+     * Unwraps key material wrapped with {@link #wrapKeyWithRSAOAEP(PublicKey, byte[])}.
+     *
+     * @param privateKey RSA private key
+     * @param wrappedKey wrapped key bytes
+     * @return raw key material
+     */
+    @Override
+    public byte[] unwrapKeyWithRSAOAEP(PrivateKey privateKey, byte[] wrappedKey) {
+        if (privateKey == null)
+            throw new IllegalArgumentException("Private key must not be null");
+        if (wrappedKey == null || wrappedKey.length == 0)
+            throw new IllegalArgumentException("Wrapped key must not be empty");
+        try {
+            Cipher cipher = Cipher.getInstance(RSA_OAEP_TRANSFORMATION);
+            cipher.init(Cipher.DECRYPT_MODE, privateKey, rsaOaepSha256Parameters());
+            return cipher.doFinal(wrappedKey);
+        } catch (BadPaddingException | IllegalBlockSizeException e) {
+            //wrong private key or tampered data: no cause attached (no padding oracle details)
+            throw new WaterRuntimeException(KEY_UNWRAP_ERROR);
+        } catch (GeneralSecurityException e) {
+            throw new WaterRuntimeException(KEY_UNWRAP_ERROR, e);
+        }
+    }
+
+    /**
+     * @param alias key alias inside the server keystore
+     * @return key pair
+     */
+    @Override
+    public KeyPair getKeyPairByAlias(String alias) {
+        return getKeyPairByAlias(null, alias);
+    }
+
+    /**
+     * @param keystoreName logical keystore name (null/blank = server keystore)
+     * @param alias        key alias
+     * @return key pair
+     */
+    @Override
+    public KeyPair getKeyPairByAlias(String keystoreName, String alias) {
+        validateKeyAlias(alias);
+        KeystoreConfig config = resolveKeystoreConfig(keystoreName);
+        KeyPair keyPair = loadKeyEntry(config, alias, (keystore, entryAlias, keyPwd) -> {
+            Key key = keystore.getKey(entryAlias, keyPwd);
+            Certificate cert = keystore.getCertificate(entryAlias);
+            if (key instanceof PrivateKey privateKey && cert != null)
+                return new KeyPair(cert.getPublicKey(), privateKey);
+            return null;
+        });
+        if (keyPair == null)
+            throw new WaterRuntimeException("No key pair found for alias '" + alias + "' in keystore '" + config.label() + "', or error while loading it");
+        return keyPair;
+    }
+
+    /**
+     * @param keystoreName logical keystore name (null/blank = server keystore)
+     * @param alias        secret key entry alias
+     * @return raw bytes of the secret key, owned by the caller
+     */
+    @Override
+    public byte[] getSecretKeyByAlias(String keystoreName, String alias) {
+        validateKeyAlias(alias);
+        KeystoreConfig config = resolveKeystoreConfig(keystoreName);
+        byte[] secret = loadKeyEntry(config, alias, (keystore, entryAlias, keyPwd) -> {
+            Key key = keystore.getKey(entryAlias, keyPwd);
+            if (key instanceof SecretKey secretKey) {
+                //getEncoded may be null for non-extractable keys (e.g. hardware backed)
+                byte[] encoded = secretKey.getEncoded();
+                if (encoded != null && encoded.length > 0)
+                    return encoded;
+            }
+            return null;
+        });
+        if (secret == null)
+            throw new WaterRuntimeException("No secret key found for alias '" + alias + "' in keystore '" + config.label() + "', or error while loading it");
+        return secret;
+    }
+
+    private void validateKeyAlias(String alias) {
+        if (alias == null || alias.isBlank())
+            throw new IllegalArgumentException("Key alias must not be blank");
+    }
+
+    /**
+     * Resolves the configuration of the server keystore (null/blank name) or of a named keystore.
+     * Properties are read at every call so a rotated keystore is picked up without restart.
+     */
+    private KeystoreConfig resolveKeystoreConfig(String keystoreName) {
+        KeystoreConfig config;
+        if (keystoreName == null || keystoreName.isBlank()) {
+            config = new KeystoreConfig(SERVER_KEYSTORE_LABEL, getServerKeystoreFilePath(), getServerKeystorePassword(), getServerKeyPassword(), getServerKeystoreType());
+        } else {
+            if (!KEYSTORE_NAME_PATTERN.matcher(keystoreName).matches())
+                throw new IllegalArgumentException("Invalid keystore name");
+            String prefix = KEYSTORE_PROPERTY_PREFIX + keystoreName + ".";
+            String keystorePassword = props.getPropertyOrDefault(prefix + "password", (String) null);
+            config = new KeystoreConfig(keystoreName,
+                    resolveKeystoreFilePath(props.getPropertyOrDefault(prefix + "file", (String) null)),
+                    keystorePassword,
+                    props.getPropertyOrDefault(prefix + "key.password", keystorePassword),
+                    resolveKeystoreType(props.getPropertyOrDefault(prefix + "type", DEFAULT_NAMED_KEYSTORE_TYPE), DEFAULT_NAMED_KEYSTORE_TYPE));
+        }
+        if (config.filePath() == null || config.filePath().isEmpty() || config.keystorePassword() == null || config.keyPassword() == null)
+            throw new WaterRuntimeException("Keystore '" + config.label() + "' is not configured");
+        return config;
+    }
+
+    /**
+     * Opens the keystore and lets the extractor read the requested entry.
+     * Password buffers are always zeroed; paths and passwords are never logged.
+     *
+     * @return the extracted value, or null if the entry is missing / of the wrong kind / the keystore cannot be loaded
+     */
+    private <T> T loadKeyEntry(KeystoreConfig config, String alias, KeyEntryExtractor<T> extractor) {
+        char[] keystorePwd = config.keystorePassword().toCharArray();
+        char[] keyPwd = config.keyPassword().toCharArray();
+        try (FileInputStream fis = new FileInputStream(config.filePath())) {
+            KeyStore keystore = KeyStore.getInstance(config.type());
+            keystore.load(fis, keystorePwd);
+            return extractor.extract(keystore, alias, keyPwd);
+        } catch (Exception e) {
+            //never log paths or passwords, only keystore label and alias
+            log.error("Error while loading key '{}' from keystore '{}': {}", alias, config.label(), e.getClass().getSimpleName());
+        } finally {
+            Arrays.fill(keystorePwd, '\0');
+            Arrays.fill(keyPwd, '\0');
+        }
+        return null;
+    }
+
+    @FunctionalInterface
+    private interface KeyEntryExtractor<T> {
+        T extract(KeyStore keystore, String alias, char[] keyPassword) throws GeneralSecurityException;
+    }
+
+    /**
+     * Resolved keystore coordinates. toString is overridden so that path and passwords can never end up in a log.
+     */
+    private record KeystoreConfig(String label, String filePath, String keystorePassword, String keyPassword, String type) {
+        @Override
+        public String toString() {
+            return "KeystoreConfig[label=" + label + ", type=" + type + "]";
+        }
+    }
+
+    private void validateAeadKey(byte[] key) {
+        if (key == null || key.length != AEAD_KEY_LENGTH)
+            throw new IllegalArgumentException("AEAD key must be " + AEAD_KEY_LENGTH + " bytes long (AES-256)");
+    }
+
+    private void updateAeadAad(Cipher cipher, byte version, byte[] aad) {
+        cipher.updateAAD(new byte[]{version});
+        if (aad != null && aad.length > 0)
+            cipher.updateAAD(aad);
+    }
+
+    private OAEPParameterSpec rsaOaepSha256Parameters() {
+        return new OAEPParameterSpec("SHA-256", "MGF1", MGF1ParameterSpec.SHA256, PSource.PSpecified.DEFAULT);
     }
 }
 

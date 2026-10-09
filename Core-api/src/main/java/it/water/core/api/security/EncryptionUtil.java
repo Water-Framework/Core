@@ -143,7 +143,9 @@ public interface EncryptionUtil extends Service {
     Cipher getCipherRSAOAEPPAdding();
 
     /**
-     * @return Default cipher CBC/PKCS5PADDING
+     * @return Default cipher CBC/PKCS5PADDING.
+     * CBC provides confidentiality only (no integrity): for new data prefer the authenticated
+     * encryption API {@link #sealAead(byte[], byte[], byte[])} / {@link #openAead(byte[], byte[], byte[])}.
      */
     Cipher getCipherAES();
 
@@ -305,4 +307,116 @@ public interface EncryptionUtil extends Service {
      * @return the generated password
      */
     String generateRandomPassword(int length);
+
+    /**
+     * Authenticated encryption (AEAD) with AES-256-GCM.
+     * <p>
+     * A fresh 96-bit IV is drawn from {@link SecureRandom} for every call, the authentication tag is 128 bits.
+     * The output is self-describing so that the algorithm can evolve without ambiguity:
+     * <pre>
+     *   version (1 byte, 0x01 = AES-256-GCM, 96-bit IV, 128-bit tag) || IV (12 bytes) || ciphertext + tag (plaintext.length + 16 bytes)
+     * </pre>
+     * The version byte is itself authenticated (it is bound to the tag together with {@code aad}).
+     * The same {@code aad} must be supplied to {@link #openAead(byte[], byte[], byte[])}: it is not stored in the output.
+     * This is the preferred API for new data; {@link #getCipherAES()} (CBC) is kept for backward compatibility.
+     *
+     * @param key       AES key, exactly 32 bytes (AES-256), e.g. from {@link #generateRandomAESPassword()}
+     * @param plaintext data to protect, not null (may be empty)
+     * @param aad       additional authenticated data bound to the ciphertext (not encrypted, not stored);
+     *                  null is equivalent to an empty array
+     * @return sealed bytes in the format described above
+     * @throws IllegalArgumentException if key or plaintext is null, or key is not 32 bytes long
+     */
+    byte[] sealAead(byte[] key, byte[] plaintext, byte[] aad);
+
+    /**
+     * Inverse of {@link #sealAead(byte[], byte[], byte[])}: verifies the authentication tag and decrypts.
+     * <p>
+     * Any failure on the sealed data (wrong key, wrong aad, tampered or truncated data, unknown version)
+     * raises the same runtime exception with the same generic message, never a partial or null result.
+     * The caller owns the returned array and should zero it after use when it holds a secret.
+     *
+     * @param key    AES key, exactly 32 bytes (AES-256)
+     * @param sealed output of {@link #sealAead(byte[], byte[], byte[])}, not null
+     * @param aad    the same additional authenticated data used when sealing; null is equivalent to an empty array
+     * @return the plaintext
+     * @throws IllegalArgumentException if key or sealed is null, or key is not 32 bytes long
+     */
+    byte[] openAead(byte[] key, byte[] sealed, byte[] aad);
+
+    /**
+     * Wraps (encrypts) key material, typically a data encryption key, with an RSA public key using
+     * RSA-OAEP with SHA-256 and MGF1-SHA-256 (explicit parameters, provider independent).
+     *
+     * @param publicKey   RSA public key of the key encryption key, not null
+     * @param keyMaterial raw key bytes to wrap, not null nor empty
+     * @return the wrapped key
+     * @throws IllegalArgumentException on invalid input
+     */
+    byte[] wrapKeyWithRSAOAEP(PublicKey publicKey, byte[] keyMaterial);
+
+    /**
+     * Inverse of {@link #wrapKeyWithRSAOAEP(PublicKey, byte[])}.
+     * Any failure (wrong private key, tampered data) raises a runtime exception with a generic message,
+     * never an empty or null result. The caller owns the returned array and should zero it after use.
+     *
+     * @param privateKey RSA private key of the key encryption key, not null
+     * @param wrappedKey output of {@link #wrapKeyWithRSAOAEP(PublicKey, byte[])}, not null nor empty
+     * @return the raw key material
+     * @throws IllegalArgumentException on invalid input
+     */
+    byte[] unwrapKeyWithRSAOAEP(PrivateKey privateKey, byte[] wrappedKey);
+
+    /**
+     * Loads a key pair by alias from the server keystore ({@code water.keystore.file},
+     * {@code water.keystore.password}, key password {@code water.private.key.password},
+     * optional type {@code water.keystore.type}, default {@code JKS}).
+     * Unlike {@link #getServerKeyPair()} the alias is chosen by the caller, so a key other than the server
+     * (JWT) one can be kept in the same keystore.
+     *
+     * @param alias key entry alias, not blank
+     * @return the key pair (private key + public key of the entry certificate)
+     */
+    KeyPair getKeyPairByAlias(String alias);
+
+    /**
+     * Loads a key pair by alias from a named keystore configured through application properties:
+     * <ul>
+     *     <li>{@code water.keystore.<keystoreName>.file} (mandatory, supports the {@code classpath:} prefix)</li>
+     *     <li>{@code water.keystore.<keystoreName>.password} (mandatory)</li>
+     *     <li>{@code water.keystore.<keystoreName>.key.password} (optional, defaults to the keystore password)</li>
+     *     <li>{@code water.keystore.<keystoreName>.type} (optional, defaults to {@code PKCS12}, which unlike
+     *     {@code JKS} can also hold secret key entries)</li>
+     * </ul>
+     * A null or blank {@code keystoreName} selects the server keystore, as {@link #getKeyPairByAlias(String)}
+     * (type from {@code water.keystore.type}, default {@code JKS}).
+     * Properties are read at every call, so a rotated keystore is picked up without restart.
+     *
+     * @param keystoreName logical keystore name: letters, digits, '-' and '_' only; null/blank = server keystore
+     * @param alias        key entry alias, not blank
+     * @return the key pair (private key + public key of the entry certificate)
+     * @throws IllegalArgumentException if the alias is blank or the keystore name is invalid
+     * @throws RuntimeException         (a WaterRuntimeException) if the keystore is not configured, or the alias
+     *                                  is missing / not a private key entry / cannot be loaded
+     */
+    KeyPair getKeyPairByAlias(String keystoreName, String alias);
+
+    /**
+     * Loads the raw bytes of a secret (symmetric) key entry, e.g. an HMAC or AES sealing key, from a keystore.
+     * The keystore is resolved exactly as in {@link #getKeyPairByAlias(String, String)}: named keystores default
+     * to {@code PKCS12}; a null or blank {@code keystoreName} selects the server keystore, which must then be
+     * configured with a type able to hold secret keys ({@code water.keystore.type=PKCS12} or {@code JCEKS}).
+     * <p>
+     * The key algorithm is not returned: the caller knows what the key is for and rebuilds it, e.g.
+     * {@code new SecretKeySpec(bytes, "HmacSHA256")}, or passes it to {@link #sealAead(byte[], byte[], byte[])}.
+     * The caller owns the returned array and should zero it after use.
+     *
+     * @param keystoreName logical keystore name: letters, digits, '-' and '_' only; null/blank = server keystore
+     * @param alias        secret key entry alias, not blank
+     * @return the encoded secret key bytes, never null nor empty
+     * @throws IllegalArgumentException if the alias is blank or the keystore name is invalid
+     * @throws RuntimeException         (a WaterRuntimeException) if the keystore is not configured, or the alias
+     *                                  is missing / not a secret key entry / not extractable / cannot be loaded
+     */
+    byte[] getSecretKeyByAlias(String keystoreName, String alias);
 }
