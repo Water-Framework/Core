@@ -25,7 +25,9 @@ import java.lang.annotation.Target;
 
 /**
  * Author Aristide Cittadino
- * Annotation to limit method execution only to users with certain roles
+ * Annotation to limit method execution only to users with certain roles.
+ * A logged admin always passes the check.
+ * When multiple roles are listed, having at least one of them is enough.
  */
 @Target({ElementType.METHOD})
 @Retention(value = RetentionPolicy.RUNTIME)

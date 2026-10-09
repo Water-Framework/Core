@@ -65,6 +65,11 @@ public class TestEntityServiceImpl implements TestEntityService {
         return true;
     }
 
+    @AllowRoles(rolesNames = {TestProtectedResource.TEST_ROLE_NAME, "otherRole"})
+    public boolean allowAnyOfTwoRolesMethod() {
+        return true;
+    }
+
     @Override
     public TestProtectedEntity save(TestProtectedEntity entity) {
         return null;

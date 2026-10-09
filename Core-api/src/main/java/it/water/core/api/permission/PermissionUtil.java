@@ -22,11 +22,12 @@ import it.water.core.api.service.Service;
 public interface PermissionUtil extends Service {
 
     /**
-     * Returns true if user has at least one role listed in the rolesNames array
+     * Returns true if the given user has at least one of the roles listed in the rolesNames array.
+     * No admin exception is applied: the query concerns the passed user, not the logged one.
      *
-     * @param username
-     * @param rolesNames
-     * @return
+     * @param username   username of the user to check
+     * @param rolesNames role names, the user must have at least one of them
+     * @return true if the user has at least one of the roles
      */
     boolean userHasRoles(String username, String[] rolesNames);
 

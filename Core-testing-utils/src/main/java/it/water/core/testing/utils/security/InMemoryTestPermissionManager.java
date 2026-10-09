@@ -66,15 +66,19 @@ public class InMemoryTestPermissionManager implements TestPermissionManager {
 
     @Override
     public boolean userHasRoles(String username, String[] rolesNames) {
-        boolean hasAllRoles = false;
-        for (int i = 0; i < rolesNames.length; i++) {
-            boolean hasRole = roleManager.hasRole(userManager.findUser(username).getId(), rolesNames[i]);
-            if (i == 0)
-                hasAllRoles = hasRole;
-            else
-                hasAllRoles = hasAllRoles && hasRole;
+        //OR semantics: the user must have at least one of the given roles (aligned with PermissionManagerDefault)
+        if (rolesNames == null || rolesNames.length == 0)
+            return false;
+        User user = null;
+        try {
+            user = userManager.findUser(username);
+        } catch (NoResultException e) {
+            log.debug("No user found with username: {}", username);
         }
-        return hasAllRoles;
+        if (user == null)
+            return false;
+        long userId = user.getId();
+        return Arrays.stream(rolesNames).anyMatch(roleName -> roleManager.hasRole(userId, roleName));
     }
 
     @Override

@@ -31,4 +31,6 @@ public interface TestEntityService extends BaseEntityApi<TestProtectedEntity> {
     TestProtectedEntity permissionOnReturnMethod();
 
     boolean allowRolesMethod();
+
+    boolean allowAnyOfTwoRolesMethod();
 }

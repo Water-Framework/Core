@@ -37,7 +37,11 @@ import java.lang.reflect.Method;
 /**
  * @Author Aristide Cittadino
  * This class is the implementation of @AllowRoles annotation.
- * It simply verifies that the user has the a specific role before execute the invoked method.
+ * It verifies that the logged user has a specific role before executing the invoked method.
+ * Rules:
+ * - a missing security context is rejected with UnauthorizedException;
+ * - a logged admin always passes;
+ * - when multiple roles are listed, having at least one of them is enough.
  */
 @FrameworkComponent(services = {BeforeMethodInterceptor.class})
 public class AllowRolesInterceptor extends AbstractPermissionInterceptor implements BeforeMethodInterceptor<AllowRoles> {
@@ -64,6 +68,11 @@ public class AllowRolesInterceptor extends AbstractPermissionInterceptor impleme
             throw new WaterRuntimeException("@AllowRoles needs at least one role name");
         String[] roles = annotation.rolesNames();
         SecurityContext ctx = waterRuntime.getSecurityContext();
+        if (ctx == null)
+            throw new UnauthorizedException();
+        //admin always passes, consistently with the permission checks done by PermissionUtil
+        if (ctx.isLoggedIn() && ctx.isAdmin())
+            return;
         if (!waterPermissionUtil.userHasRoles(ctx.getLoggedUsername(), roles))
             throw new UnauthorizedException();
     }

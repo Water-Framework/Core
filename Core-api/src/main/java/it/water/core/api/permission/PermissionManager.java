@@ -40,10 +40,12 @@ public interface PermissionManager extends Service {
     Logger log = LoggerFactory.getLogger(PermissionManager.class.getName());
 
     /**
-     * Checks if the user corresponding to the username has the specified roles
+     * Returns true if the user corresponding to the username has at least one of the specified roles.
+     * No admin exception is applied: the query concerns the passed user, not the logged one.
      *
-     * @param rolesNames
-     * @return
+     * @param username   username of the user to check
+     * @param rolesNames role names, the user must have at least one of them
+     * @return true if the user has at least one of the roles
      */
     boolean userHasRoles(String username, String[] rolesNames);
 

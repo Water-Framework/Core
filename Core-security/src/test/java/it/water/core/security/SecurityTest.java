@@ -100,6 +100,10 @@ class SecurityTest implements Service {
     private User userOk;
     //User who does not have permissions
     private User userKo;
+    //Admin user who does NOT have the test role
+    private User userAdminNoRole;
+    //Non admin user who has ONLY the test role
+    private User userRoleOnly;
     //Default role for protected resource
     private Role testRole;
 
@@ -107,7 +111,10 @@ class SecurityTest implements Service {
     void beforeAll() {
         this.userOk = userManager.addUser("usernameOk", "username", "username", "email@mail.com", "pwd", "salt", true);
         this.userKo = userManager.addUser("usernameKo", "usernameKo", "usernameKo", "email1@mail.com", "pwd", "salt", false);
+        this.userAdminNoRole = userManager.addUser("usernameAdminNoRole", "usernameAdminNoRole", "usernameAdminNoRole", "email2@mail.com", "pwd", "salt", true);
+        this.userRoleOnly = userManager.addUser("usernameRoleOnly", "usernameRoleOnly", "usernameRoleOnly", "email3@mail.com", "pwd", "salt", false);
         this.testRole = roleManager.getRole(TestProtectedResource.TEST_ROLE_NAME);
+        roleManager.addRole(this.userRoleOnly.getId(), testRole);
         Action saveAction = this.actionsManager.getActions().get(TestProtectedResource.class.getName()).getAction(CrudActions.SAVE);
         roleManager.addRole(this.userOk.getId(), testRole);
         testPermissionManager.addPermissionIfNotExists(testRole, TestProtectedResource.class, saveAction);
@@ -191,6 +198,69 @@ class SecurityTest implements Service {
         Assertions.assertNotNull(testResourceService);
         Assertions.assertTrue(testResourceService.genericPermissionMethod());
         Assertions.assertTrue(testResourceService.genericPermissionMethodWithResourceParamName("name"));
+    }
+
+    /**
+     * An admin always passes @AllowRoles even without owning the required role.
+     */
+    @Test
+    void testAllowRoles_adminWithoutRole_passes() {
+        TestEntityService testService = initializer.getComponentRegistry().findComponent(TestEntityService.class, null);
+        initializer.impersonate(this.userAdminNoRole, runtime);
+        try {
+            Assertions.assertFalse(getPermissionUtil().userHasRoles(this.userAdminNoRole.getUsername(), new String[]{TestProtectedResource.TEST_ROLE_NAME}));
+            Assertions.assertTrue(testService.allowRolesMethod());
+            Assertions.assertTrue(testService.allowAnyOfTwoRolesMethod());
+        } finally {
+            initializer.impersonate(this.userOk, runtime);
+        }
+    }
+
+    /**
+     * Non admin without the role is still rejected, both with a single role and with multiple roles.
+     */
+    @Test
+    void testAllowRoles_nonAdminWithoutRole_throwsUnauthorized() {
+        TestEntityService testService = initializer.getComponentRegistry().findComponent(TestEntityService.class, null);
+        initializer.impersonate(this.userKo, runtime);
+        try {
+            Assertions.assertThrows(UnauthorizedException.class, testService::allowRolesMethod);
+            Assertions.assertThrows(UnauthorizedException.class, testService::allowAnyOfTwoRolesMethod);
+        } finally {
+            initializer.impersonate(this.userOk, runtime);
+        }
+    }
+
+    /**
+     * OR semantics: a non admin user having only one of the listed roles passes.
+     */
+    @Test
+    void testAllowRoles_nonAdminWithOnlyOneOfTwoRoles_passes() {
+        TestEntityService testService = initializer.getComponentRegistry().findComponent(TestEntityService.class, null);
+        initializer.impersonate(this.userRoleOnly, runtime);
+        try {
+            Assertions.assertFalse(runtime.getSecurityContext().isAdmin());
+            Assertions.assertTrue(testService.allowAnyOfTwoRolesMethod());
+            Assertions.assertTrue(testService.allowRolesMethod());
+        } finally {
+            initializer.impersonate(this.userOk, runtime);
+        }
+    }
+
+    /**
+     * The admin bypass must NOT leak into PermissionUtil.userHasRoles, which is a pure query on the given username.
+     */
+    @Test
+    void testUserHasRoles_loggedAdminQueryingUserWithoutRole_returnsFalse() {
+        PermissionUtil permissionUtil = getPermissionUtil();
+        initializer.impersonate(this.userOk, runtime);
+        try {
+            Assertions.assertTrue(runtime.getSecurityContext().isAdmin());
+            Assertions.assertFalse(permissionUtil.userHasRoles("usernameKo", new String[]{TestProtectedResource.TEST_ROLE_NAME}));
+            Assertions.assertTrue(permissionUtil.userHasRoles("usernameRoleOnly", new String[]{TestProtectedResource.TEST_ROLE_NAME, "otherRole"}));
+        } finally {
+            initializer.impersonate(this.userOk, runtime);
+        }
     }
 
     @Test

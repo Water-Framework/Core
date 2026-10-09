@@ -46,11 +46,12 @@ public class WaterPermissionUtilImpl implements PermissionUtil {
     private PermissionManager pm;
 
     /**
-     * Returns true if user has at least one role listed in the rolesNames array
+     * Returns true if the given user has at least one of the roles listed in the rolesNames array.
+     * No admin exception is applied: the query concerns the passed user, not the logged one.
      *
-     * @param username
-     * @param rolesNames
-     * @return
+     * @param username   username of the user to check
+     * @param rolesNames role names, the user must have at least one of them
+     * @return true if the user has at least one of the roles
      */
     public boolean userHasRoles(String username, String[] rolesNames) {
         log.debug("Checking {} has {} roles", username, rolesNames);
